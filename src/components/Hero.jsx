@@ -2,8 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styles from './Hero.module.css';
 import img1 from './img_1.jpg';
-import img2 from './img_2.jpg';
 import img3 from './img_3.jpg';
+import img4 from './img_4.png';
 
 function Title({ text, accent }) {
   const mark = String(accent || '').trim();
@@ -38,7 +38,7 @@ export default function Hero() {
         </div>
         <div className={styles.visual}>
           <img className={styles.glow} src={img1} alt="" />
-          <img className={styles.panel} src={img2} alt={title} />
+          <img className={styles.panel} src={img4} alt={title} />
         </div>
       </div>
     </section>
