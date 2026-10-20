@@ -865,7 +865,7 @@ function briefOf(guide, t) {
     guide.name.trim() ? `Nome: ${guide.name.trim()}` : '',
     entryTypeBrief(guide, t),
     `Entrada: ${guide.entry.trim()}`,
-    `Candle: ${guide.tf}.`,
+    'Tempos de candle: conforme descrito no gatilho (pode ser mais de um).',
     `Fontes: ${guide.sources.map((id) => sourceText[id]).join('; ')}.`,
     guide.list === 'yes'
       ? `Lista: ${guide.listText.trim()} Grave o preço em ctx.memory.`
@@ -878,7 +878,6 @@ function Guide({ busy, onCreate }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [guide, setGuide] = useState({
-    tf: '5m',
     sources: ['candles'],
     sourcesOther: '',
     entry: '',
@@ -892,7 +891,7 @@ function Guide({ busy, onCreate }) {
     exitText: '',
     name: '',
   });
-  const ids = ['entry', 'entryType', 'sources', 'tf', 'list', 'exit', 'review'];
+  const ids = ['entry', 'entryType', 'sources', 'list', 'exit', 'review'];
   const current = ids[step];
   function patch(partial) { setGuide({ ...guide, ...partial }); }
   function toggleSource(id) {
@@ -918,6 +917,7 @@ function Guide({ busy, onCreate }) {
         <>
           <h3>{t('guideEntry')}</h3>
           <textarea value={guide.entry} onChange={(e) => patch({ entry: e.target.value })} placeholder={t('guideEntryPh')} />
+          <p className="muted">{t('guideEntryHint')}</p>
         </>
       )}
       {current === 'entryType' && (
@@ -959,16 +959,6 @@ function Guide({ busy, onCreate }) {
               placeholder={t('guideSourcesOtherPh')}
             />
           )}
-        </>
-      )}
-      {current === 'tf' && (
-        <>
-          <h3>{t('guideTf')}</h3>
-          <div className="chips">
-            {['1m', '5m', '15m', '1h', '4h'].map((tf) => (
-              <button key={tf} type="button" className={guide.tf === tf ? 'on' : ''} onClick={() => patch({ tf })}>{tf}</button>
-            ))}
-          </div>
         </>
       )}
       {current === 'list' && (
