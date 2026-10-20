@@ -1534,62 +1534,154 @@ function LabLegacyRedirect() {
   return <Navigate to={`/${lng}/app/laboratorio`} replace />;
 }
 
+function LabMessage({ role, content }) {
+  const blocks = String(content || '').split('\n');
+  return (
+    <div className={`bubble ${role}`}>
+      {blocks.map((line, i) => {
+        const bold = /^\*\*(.+)\*\*$/.exec(line.trim());
+        if (bold) return <strong key={i}>{bold[1]}</strong>;
+        if (!line.trim()) return <br key={i} />;
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
+        return (
+          <p key={i}>
+            {parts.map((part, j) => {
+              const m = /^\*\*(.+)\*\*$/.exec(part);
+              return m ? <strong key={j}>{m[1]}</strong> : part;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function History() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const manifest = useManifestQuery();
   const symbols = useSymbolsQuery();
   const artifacts = useArtifactsQuery();
   const [q, setQ] = useState('');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [prompt, setPrompt] = useState('');
-  const [answer, setAnswer] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [err, setErr] = useState('');
   const [jobId, setJobId] = useState(null);
   const [ask] = useLabQueryMutation();
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
+  const chatEndRef = useRef(null);
+  const busy = !!jobId || job.data?.job?.status === 'running' || job.data?.job?.status === 'queued';
+
   useEffect(() => {
-    if (job.data?.job?.status === 'done') {
-      setAnswer(job.data.job.output?.payload);
-      setJobId(null);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, busy]);
+
+  useEffect(() => {
+    const st = job.data?.job?.status;
+    if (!st || st === 'queued' || st === 'running') return;
+    setJobId(null);
+    if (st === 'done') {
+      const pay = job.data.job.output?.payload || {};
+      const reply = job.data.job.output?.reply || pay.reply || '';
+      setMessages((prev) => [...prev, { role: 'assistant', content: reply, refs: pay.refs }]);
+      setErr('');
+    } else {
+      setMessages((prev) => [...prev, { role: 'assistant', content: job.data.job.error || t('labError') }]);
     }
-  }, [job.data]);
+  }, [job.data, t]);
+
   const list = useMemo(() => {
     const all = symbols.data?.symbols || [];
     const query = q.trim().toUpperCase();
     return all.filter((s) => !query || s.symbol.includes(query)).slice(0, 24);
   }, [symbols.data, q]);
+
+  async function submit(e) {
+    e.preventDefault();
+    const text = prompt.trim();
+    if (!text || busy) return;
+    setErr('');
+    const history = messages.map(({ role, content }) => ({ role, content }));
+    setMessages((prev) => [...prev, { role: 'user', content: text }]);
+    setPrompt('');
+    try {
+      const res = await ask({ prompt: text, history, locale: i18n.language }).unwrap();
+      setJobId(res.jobId);
+    } catch (error) {
+      setErr(errText(error, t));
+    }
+  }
+
   return (
-    <div className="wrap">
-      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('labNav')}</h2>
-      <p className="muted">{manifest.data ? `${manifest.data.start || ''} → ${manifest.data.end || ''} · ${manifest.data.symbols} pares · ${t('labNote')}` : ''}</p>
-      <form
-        className="panel composer-top"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const res = await ask({ prompt }).unwrap();
-          setJobId(res.jobId);
-        }}
-      >
-        <h3>{t('askLab')}</h3>
-        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-        <button className="solid" type="submit">{t('send')}</button>
-        {answer && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(answer.symbol || answer.note, null, 2)}</pre>}
-      </form>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} />
-      <div className="symbols" style={{ margin: '12px 0' }}>
-        {list.map((s) => (
-          <button type="button" key={s.symbol} className={symbol === s.symbol ? 'on' : ''} onClick={() => setSymbol(s.symbol)}>
-            <strong>{s.symbol}</strong>
-            <div className={s.changePct >= 0 ? 'up' : 'down'}>{Number(s.changePct).toFixed(1)}%</div>
-          </button>
-        ))}
-      </div>
-      <Candle symbol={symbol} />
-      <article className="panel" style={{ marginTop: 16 }}>
+    <div className="wrap lab-page">
+      <header className="lab-head">
+        <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('labNav')}</h2>
+        <p className="muted">{manifest.data ? `${manifest.data.start || ''} → ${manifest.data.end || ''} · ${manifest.data.symbols} pares · ${t('labNote')}` : t('labNote')}</p>
+      </header>
+      <section className="panel lab-chat" aria-busy={busy}>
+        <div className="lab-chat-head">
+          <h3>{t('askLab')}</h3>
+          <p className="muted">{t('labChatHint')}</p>
+        </div>
+        <div className="thread lab-thread">
+          {!messages.length && (
+            <p className="muted lab-empty">{t('labChatHint')}</p>
+          )}
+          {messages.map((m, i) => (
+            <div key={`${m.role}-${i}`} className="lab-turn">
+              <LabMessage role={m.role} content={m.content} />
+              {m.refs?.length > 0 && (
+                <details className="lab-refs muted">
+                  <summary>{t('labRefs')}</summary>
+                  <ul>
+                    {m.refs.map((r) => <li key={r.id || r.name}><strong>{r.name}</strong> — {r.summary}</li>)}
+                  </ul>
+                </details>
+              )}
+            </div>
+          ))}
+          {busy && (
+            <div className="bubble assistant lab-typing">
+              <span>{t('labThinking')}</span>
+              <div className="composer-bar" aria-hidden="true"><i /></div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+        <form className="lab-composer" onSubmit={submit}>
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder={t('labPlaceholder')}
+            disabled={busy}
+            rows={3}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e); }
+            }}
+          />
+          <div className="row">
+            <button className="solid" type="submit" disabled={busy || !prompt.trim()}>{busy ? t('labThinking') : t('send')}</button>
+          </div>
+          {err && <p className="err">{err}</p>}
+        </form>
+      </section>
+      <details className="panel lab-data">
+        <summary><strong>{t('labDataTitle')}</strong></summary>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} />
+        <div className="symbols" style={{ margin: '12px 0' }}>
+          {list.map((s) => (
+            <button type="button" key={s.symbol} className={symbol === s.symbol ? 'on' : ''} onClick={() => setSymbol(s.symbol)}>
+              <strong>{s.symbol}</strong>
+              <div className={s.changePct >= 0 ? 'up' : 'down'}>{Number(s.changePct).toFixed(1)}%</div>
+            </button>
+          ))}
+        </div>
+        <Candle symbol={symbol} />
         <h3>{t('sweeps')}</h3>
         {(artifacts.data?.artifacts || []).slice(0, 12).map((a) => (
           <p key={a.id}><strong>{a.name}</strong><br /><span className="muted">{a.summary}</span></p>
         ))}
-      </article>
+      </details>
     </div>
   );
 }
