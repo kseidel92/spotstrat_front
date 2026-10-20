@@ -1082,3 +1082,144 @@ body:has(.landing) { background: #07090d; }
 .binance-shots figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .production ol { padding-left: 18px; }
 .production ol li { margin: 6px 0; }
+
+.landing .shield {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 8px 28px 36px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+}
+.shield-mark {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  color: #d7ff6a;
+  border: 1px solid rgba(215, 255, 106, 0.45);
+  background: rgba(215, 255, 106, 0.08);
+}
+.landing .shield h2 {
+  font-family: Outfit, sans-serif;
+  font-weight: 640;
+  letter-spacing: -0.04em;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.05;
+  margin: 0;
+  max-width: 18ch;
+}
+.landing .shield p {
+  margin: 8px 0 0;
+  color: #c5d2df;
+  max-width: 62ch;
+  font-size: 17px;
+}
+.proof {
+  margin: 28px 0 4px;
+  padding: 4px 0 4px 16px;
+  border-left: 2px solid #7ad7ff;
+  max-width: 42ch;
+}
+.proof p {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.35;
+  color: #e7eef6;
+}
+.proof footer {
+  margin-top: 10px;
+  color: #8ea0b3;
+  font-size: 14px;
+}
+.landing .prices h1 {
+  font-family: Outfit, sans-serif;
+  font-weight: 650;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  max-width: 14ch;
+  margin: 8px 0 18px;
+}
+.price-split {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+.price-split p {
+  margin: 0;
+  max-width: 68ch;
+  padding: 14px 16px;
+  border: 1px solid rgba(160, 196, 220, 0.16);
+  background: rgba(8, 14, 22, 0.72);
+  color: #d5e2ee;
+}
+.landing .prices .price-grid { grid-template-columns: minmax(280px, 520px); }
+.plan-anchor { color: #d7ff6a; font-size: 16px; margin: 0 0 8px; }
+.plan-board.single { grid-template-columns: minmax(0, 560px); }
+.faq { margin-top: 42px; }
+.faq article {
+  padding: 16px 0;
+  border-top: 1px solid rgba(160, 196, 220, 0.16);
+}
+.faq h3 {
+  font-family: Outfit, sans-serif;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+}
+.faq p { margin: 0; max-width: 68ch; color: #c5d2df; }
+.landing footer.site {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+  border-top: 1px solid rgba(160, 196, 220, 0.16);
+}
+.landing footer.site nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin-bottom: 16px;
+}
+.landing footer.site a { color: #e7eef6; text-decoration: none; }
+.landing footer.site a.home { color: #d7ff6a; }
+.landing footer.site a:hover { color: #7ad7ff; }
+.legal-back { margin: 0 0 18px; }
+.legal-back a { color: #7ad7ff; text-decoration: none; }
+.legal-back a:hover { color: #e7eef6; }
+.landing footer.site .risk,
+.landing footer.site .copy {
+  max-width: 78ch;
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #8ea0b3;
+}
+.legal {
+  width: min(760px, calc(100% - 32px));
+  margin: 12px auto 24px;
+}
+.legal h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.05;
+  max-width: 16ch;
+}
+.legal h2 {
+  font-family: Outfit, sans-serif;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+  margin: 26px 0 8px;
+}
+.legal p { color: #c5d2df; line-height: 1.6; margin: 0 0 10px; }
+.auth-lead { font-size: 16px; margin: -4px 0 8px; max-width: none; }
+.auth-alt { font-size: 14px; }
+.auth-alt a { color: #8ea0b3; text-decoration: none; }
+.auth-alt a:hover { color: #7ad7ff; }
+.auth-page h2 { font-size: 28px; line-height: 1.15; }
+
+@media (max-width: 900px) {
+  .landing .shield { grid-template-columns: 1fr; padding-left: 16px; padding-right: 16px; }
+  .landing footer.site { padding-left: 16px; padding-right: 16px; }
+  .plan-board.single, .landing .prices .price-grid { grid-template-columns: 1fr; }
+}

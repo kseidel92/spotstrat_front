@@ -20,6 +20,7 @@ import {
 } from './store';
 import './styles.css';
 import Hero from './components/Hero';
+import { legalFor } from './legal';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
 import tradesShot from './components/img_trades.png';
@@ -127,6 +128,90 @@ function errText(error, t) {
   return map[code] || error?.data?.message || t('errGeneric');
 }
 
+function scrollPageTop() {
+  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  window.scrollTo({ top: 0, behavior });
+}
+
+function goFromFooter(nav, pathname, to) {
+  return (event) => {
+    event.preventDefault();
+    if (pathname !== to) nav(to);
+    requestAnimationFrame(() => requestAnimationFrame(scrollPageTop));
+  };
+}
+
+function SiteFooter() {
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  const { pathname } = useLocation();
+  const nav = useNavigate();
+  const open = (to) => goFromFooter(nav, pathname, to);
+  const home = `/${lng}`;
+  return (
+    <footer className="site">
+      <nav>
+        <Link className="home" to={home} onClick={open(home)}>← {t('footerHome')}</Link>
+        <Link to={`/${lng}/termos`} onClick={open(`/${lng}/termos`)}>{t('footerTerms')}</Link>
+        <Link to={`/${lng}/privacy`} onClick={open(`/${lng}/privacy`)}>{t('footerPrivacy')}</Link>
+        <Link to={`/${lng}/cookies`} onClick={open(`/${lng}/cookies`)}>{t('footerCookies')}</Link>
+        <a href="mailto:suporte@spotstrat.com">{t('footerMail')}</a>
+      </nav>
+      <p className="risk">{t('footerRisk')}</p>
+      <p className="copy">{t('footerCopy')}</p>
+    </footer>
+  );
+}
+
+function ShieldNote() {
+  const { t } = useTranslation();
+  return (
+    <section className="shield">
+      <span className="shield-mark" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3l7 3v6c0 4.2-2.8 7.4-7 8.5C7.8 19.4 5 16.2 5 12V6l7-3z" stroke="currentColor" strokeWidth="1.6" />
+          <rect x="9" y="11" width="6" height="5" rx="1" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M10 11V9.5a2 2 0 0 1 4 0V11" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+      </span>
+      <div>
+        <h2>{t('shieldT')}</h2>
+        <p>{t('shieldB')}</p>
+      </div>
+    </section>
+  );
+}
+
+function SocialProof() {
+  const { t } = useTranslation();
+  return (
+    <blockquote className="proof">
+      <p>“{t('quote')}”</p>
+      <footer>{t('quoteBy')}</footer>
+    </blockquote>
+  );
+}
+
+function Faq() {
+  const { t } = useTranslation();
+  const items = [
+    ['faq1q', 'faq1a'],
+    ['faq2q', 'faq2a'],
+    ['faq3q', 'faq3a'],
+  ];
+  return (
+    <section className="faq">
+      <h2>{t('faqT')}</h2>
+      {items.map(([q, a]) => (
+        <article key={q}>
+          <h3>{t(q)}</h3>
+          <p>{t(a)}</p>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 function PaperShell({ children }) {
   const { t } = useTranslation();
   const { lng } = useParams();
@@ -143,6 +228,7 @@ function PaperShell({ children }) {
         </nav>
       </header>
       {children}
+      <SiteFooter />
     </>
   );
 }
@@ -322,11 +408,13 @@ function Landing() {
         </nav>
       </header>
       <Hero />
+      <ShieldNote />
       <PathShow />
       <section className="band">
         <h2>{t('sayT')}</h2>
         <p className="lede">{t('sayL')}</p>
         <p className="lede">{t('presetsL')}</p>
+        <SocialProof />
       </section>
       <section className="trial-band">
         <img src="/robot-desk.png" alt="" />
@@ -337,9 +425,7 @@ function Landing() {
           <p className="mono dim">{t('freeNote')}</p>
         </div>
       </section>
-      <footer className="site">
-        <Link to={`/${lng}/privacy`}>{t('privacy')}</Link>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
@@ -360,14 +446,35 @@ function AuthFrame({ children }) {
         </nav>
       </header>
       <main className="auth-wrap">{children}</main>
+      <SiteFooter />
     </div>
   );
 }
 
-function Privacy() {
-  useLang();
+function Legal({ page }) {
+  const lng = useLang();
   const { t } = useTranslation();
-  return <AuthFrame><section className="band"><h1>{t('privacy')}</h1><p className="lede">{t('privacyBody')}</p></section></AuthFrame>;
+  const { pathname } = useLocation();
+  const nav = useNavigate();
+  const home = `/${lng}`;
+  const doc = legalFor(lng, page);
+  return (
+    <AuthFrame>
+      <article className="legal">
+        <p className="legal-back">
+          <Link to={home} onClick={goFromFooter(nav, pathname, home)}>← {t('footerHome')}</Link>
+        </p>
+        <h1>{doc.title}</h1>
+        <p className="mono dim">{doc.updated}</p>
+        {doc.sections.map((section) => (
+          <section key={section.h}>
+            <h2>{section.h}</h2>
+            {section.p.map((para) => <p key={para}>{para}</p>)}
+          </section>
+        ))}
+      </article>
+    </AuthFrame>
+  );
 }
 
 function Register() {
@@ -406,8 +513,8 @@ function Register() {
         <label>{t('password2')}</label><input type="password" required minLength={8} autoComplete="new-password" value={form.password2} onChange={set('password2')} />
         <label>{t('phone')}</label><input required autoComplete="tel" value={form.phone} onChange={set('phone')} placeholder="+5511999998888" />
         <p className="muted">{t('phoneHint')}</p>
-        <div className="row"><button className="solid" disabled={isLoading} type="submit">{t('cta')}</button></div>
-        <p><Link to={`/${lng}/login`}>{t('hasAccount')}</Link></p>
+        <div className="row"><button className="solid" disabled={isLoading} type="submit">{t('registerCta')}</button></div>
+        <p className="auth-alt"><Link to={`/${lng}/login`}>{t('hasAccount')}</Link></p>
       </form>
     </AuthFrame>
   );
@@ -491,12 +598,13 @@ function Login() {
       <GoogleEntry />
       <form className="auth card" onSubmit={submit}>
         <h2>{t('loginT')}</h2>
+        <p className="lede auth-lead">{t('loginLead')}</p>
         {err && <div className="error">{err}</div>}
         <label>{t('email')}</label><input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <label>{t('password')}</label><input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <label className="remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> {t('remember')}</label>
         <div className="row"><button className="solid" type="submit">{t('enter')}</button></div>
-        <p><Link to={`/${lng}/register`}>{t('noAccount')}</Link></p>
+        <p className="auth-alt"><Link to={`/${lng}/register`}>{t('noAccount')}</Link></p>
       </form>
     </AuthFrame>
   );
@@ -568,6 +676,7 @@ function Verify() {
     <AuthFrame>
       <form className="auth card" onSubmit={confirm}>
         <h2>{t('verifyT')}</h2>
+        <p className="lede auth-lead">{t('verifyLead')}</p>
         {codes && (
           <div className="codes">
             <div>{t('localNote')}</div>
@@ -1686,7 +1795,7 @@ function statusLabel(user, t) {
   return user.desk;
 }
 
-function PlanPicker() {
+function PlanPicker({ showBody = true }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const { data } = usePlansQuery();
@@ -1701,7 +1810,7 @@ function PlanPicker() {
       {['paper'].map((tier) => (
         <article key={tier} className={tier}>
           <h3>{t('planPaper')}</h3>
-          <p>{t('planPaperBody')}</p>
+          {showBody && <p>{t('planPaperBody')}</p>}
           {terms.map((term) => {
             const quote = term.paper;
             const label = term.months === 12 ? t('termYear') : term.months === 1 ? t('termMonth') : t('termMonths', { n: term.months });
@@ -2023,7 +2132,7 @@ function Prices() {
   const { t } = useTranslation();
   const { lng } = useParams();
   const plans = [
-    { key: 'paper', amount: 93.33, title: t('planPaper'), body: t('planPaperBody') },
+    { key: 'paper', amount: 93.33, title: t('planPaper') },
   ];
   return (
     <div className="landing">
@@ -2041,20 +2150,27 @@ function Prices() {
       <section className="band prices">
         <p className="kicker">{t('pricesNav')}</p>
         <h1>{t('pricesT')}</h1>
-        <p className="lede">{t('pricesL')}</p>
+        <div className="price-split">
+          <p>{t('planIncluded')}</p>
+          <p>{t('planOptional')}</p>
+        </div>
         <div className="price-grid">
           {plans.map((plan) => (
             <article key={plan.key} className={plan.key}>
               <h2>{plan.title}</h2>
               <p className="price-num">{localMoney(lng, plan.amount)}</p>
+              <p className="plan-anchor">{t('planAnchor')}</p>
               {lng !== 'pt-BR' && <p className="mono dim">{t('planTable')} · {brlMoney(plan.amount)}</p>}
             </article>
           ))}
         </div>
-        <PlanPicker />
+        <PlanPicker showBody={false} />
         <p className="mono dim">{t('planFx')}</p>
         <Link className="solid free" to={`/${lng}/register`}>{t('freeCta')}</Link>
+        <SocialProof />
+        <Faq />
       </section>
+      <SiteFooter />
     </div>
   );
 }
@@ -2067,7 +2183,9 @@ function App() {
         <Route path="/" element={<LangRedirect />} />
         <Route path="/:lng" element={<Guard><Landing /></Guard>} />
         <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
-        <Route path="/:lng/privacy" element={<Guard><Privacy /></Guard>} />
+        <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
+        <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
+        <Route path="/:lng/cookies" element={<Guard><Legal page="cookies" /></Guard>} />
         <Route path="/:lng/login" element={<Guard><Login /></Guard>} />
         <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
         <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
