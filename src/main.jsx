@@ -26,6 +26,7 @@ import TestimonialCard from './components/TestimonialCard';
 import Faq from './components/Faq';
 import LaunchPrice from './components/LaunchPrice';
 import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
+import Badge from './components/Badge';
 import { legalFor } from './legal';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
@@ -400,6 +401,7 @@ function Landing() {
       <section className="band">
         <h2>{t('sayT')}</h2>
         <p className="lede">{t('sayL')}</p>
+        <Badge>{t('presetsBadge')}</Badge>
         <p className="lede">{t('presetsL')}</p>
         <TestimonialCard />
       </section>
@@ -408,7 +410,7 @@ function Landing() {
         <div>
           <h2>{t('trialT')}</h2>
           <p className="lede">{t('trialB')}</p>
-          <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
+          <Link className="solid free" to={`/${lng}/register`} aria-label={t('finalCta')}>{t('finalCta')}</Link>
           <p className="mono dim">{t('freeNote')}</p>
         </div>
       </section>

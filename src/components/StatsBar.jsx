@@ -16,7 +16,7 @@ export default function StatsBar() {
           })}
         </span>
       </p>
-      <p className={styles.sub}>{t('earlySub', { when: t('earlyWhen') })}</p>
+      <p className={styles.sub}>{t('earlySub')}</p>
     </section>
   );
 }
