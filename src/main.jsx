@@ -19,6 +19,7 @@ import {
   useArtifactsQuery, useLabQueryMutation, useCheckoutMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
 } from './store';
 import './styles.css';
+import Hero from './components/Hero';
 
 function lngOf(pathname) {
   const part = pathname.split('/')[1];
@@ -310,19 +311,7 @@ function Landing() {
           <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
         </nav>
       </header>
-      <section className="stage">
-        <div>
-          <p className="kicker">{t('kicker')}</p>
-          <h1>{t('hero')}</h1>
-          <p className="lede">{t('lede')}</p>
-          <div className="row">
-            <Link className="solid free" to={`/${lng}/register`}>{t('freeCta')}</Link>
-            <Link className="ghost" to={`/${lng}/login`}>{t('enter')}</Link>
-          </div>
-          <p className="mono dim">{t('freeNote')}</p>
-        </div>
-        <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} />
-      </section>
+      <Hero />
       <PathShow />
       <section className="band">
         <h2>{t('sayT')}</h2>
