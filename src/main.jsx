@@ -295,10 +295,10 @@ function PathShow() {
             <p>{t('ex4')}</p>
           </div>
         )}
-        {i === 1 && <img className="path-shot frame" src={deskShot} alt={t('path2t')} />}
+        {i === 1 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} />}
         {i === 2 && <img className="path-shot frame" src={tradesShot} alt={t('path3t')} />}
         {i === 3 && <AlertVisual src={alertShot} alt={t('path4t')} />}
-        {i === 4 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} />}
+        {i === 4 && <img className="path-shot frame" src={deskShot} alt={t('path5t')} />}
       </div>
     </section>
   );
