@@ -129,6 +129,9 @@ textarea { min-height: 90px; resize: vertical; }
 .codes strong { display: block; font-size: 20px; letter-spacing: 0.08em; margin-top: 6px; }
 .suggest { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .suggest button { text-align: left; }
+.composer-top {
+  margin-bottom: 14px;
+}
 .composer-status {
   display: grid;
   gap: 6px;

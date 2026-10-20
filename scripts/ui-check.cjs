@@ -202,7 +202,7 @@ async function main() {
   text = await cdp.eval('document.body.innerText');
   check('explicação', text.includes('Tese') && text.includes('piso'));
 
-  await cdp.eval(`[...document.querySelectorAll('a')].find(a => a.textContent.trim() === 'Histórico').click()`);
+  await cdp.eval(`[...document.querySelectorAll('a')].find(a => a.textContent.trim() === 'Laboratório').click()`);
   await new Promise((r) => setTimeout(r, 1000));
   text = await cdp.eval('document.body.innerText');
   check('histórico', text.includes('BTCUSDT') && text.includes('sem livro'));

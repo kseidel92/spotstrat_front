@@ -620,7 +620,7 @@ function DeskBar() {
       <nav className="menu">
         <Link to={`/${lng}/app`}>{t('desk')}</Link>
         <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-        <Link to={`/${lng}/app/historico`}>{t('history')}</Link>
+        <Link to={`/${lng}/app/laboratorio`}>{t('labNav')}</Link>
         <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
       </nav>
@@ -1154,12 +1154,7 @@ function DeskHome() {
 
   return (
     <div className="wrap">
-      <div className="mare">
-        <span className={`pill ${mare?.label || ''}`}>{mare ? `${mare.label} · ${mare.upPct}% · ${mare.windowMin} min` : '…'} <Tip text={t('mareTip')} /></span>
-        <span className="muted">{t('connection')}: {connection}</span>
-        <span className="muted">{(live.prices.length ? live.prices : data?.prices || []).slice(0, 4).map((p) => `${p.symbol.replace('USDT', '')} ${p.price}`).join(' · ')}</span>
-      </div>
-      <form className="panel" onSubmit={submit} aria-busy={isLoading || !!jobId}>
+      <form className="panel composer-top" onSubmit={submit} aria-busy={isLoading || !!jobId}>
         <div className="modes">
           <button type="button" className={mode === 'trade' ? 'on' : ''} onClick={() => setMode('trade')}>{t('modeTrade')}</button>
           <button type="button" className={mode === 'alarm' ? 'on' : ''} onClick={() => setMode('alarm')}>{t('modeAlarm')}</button>
@@ -1304,6 +1299,11 @@ function DeskHome() {
         <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail={!(mode === 'trade' && compose === 'guide') && (exitMode === 'history' || (timeExit && timeMode === 'history')) ? t('workingHist') : ''} />
         {!(mode === 'trade' && compose === 'guide') && <button className="solid" disabled={isLoading || !!jobId || !prompt.trim()} type="submit">{(isLoading || jobId) ? t('working') : t('send')}</button>}
       </form>
+      <div className="mare">
+        <span className={`pill ${mare?.label || ''}`}>{mare ? `${mare.label} · ${mare.upPct}% · ${mare.windowMin} min` : '…'} <Tip text={t('mareTip')} /></span>
+        <span className="muted">{t('connection')}: {connection}</span>
+        <span className="muted">{(live.prices.length ? live.prices : data?.prices || []).slice(0, 4).map((p) => `${p.symbol.replace('USDT', '')} ${p.price}`).join(' · ')}</span>
+      </div>
       <section className="alarm-board">
         <header>
           <h2>{t('alarmsT')}</h2>
@@ -1432,6 +1432,31 @@ function StrategyPage() {
         <h2 style={{ fontFamily: 'Fraunces, serif' }}>{data?.strategy?.name}</h2>
         <Link className="solid" to={`/${lng}/app/strategies/${id}/producao`}>{t('toProd')}</Link>
       </div>
+      <article className="panel composer-top" style={{ marginTop: 12 }}>
+        <h3>{t('thread')}</h3>
+        <div className="thread">
+          {(data?.messages || []).map((m) => <div key={m.id} className={`bubble ${m.role}`}>{m.content}</div>)}
+        </div>
+        <form onSubmit={submit} aria-busy={!!jobId}>
+          <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('replyPh')} disabled={!!jobId} />
+          {steps && (
+            <AskSteps
+              key={steps.id}
+              questions={steps.questions}
+              busy={!!jobId}
+              onDone={(answer) => {
+                setSteps(null);
+                setErr('');
+                edit({ id, prompt: answer, threadId: data?.threadId }).unwrap()
+                  .then((res) => setJobId(res.jobId))
+                  .catch((error) => setErr(errText(error, t)));
+              }}
+            />
+          )}
+          <PromptStatus busy={!!jobId} status={job.data?.job?.status} err={err} />
+          <button className="solid" type="submit" disabled={!!jobId || !prompt.trim()}>{(jobId) ? t('working') : t('send')}</button>
+        </form>
+      </article>
       {live?.position && (
         <p className="up">{t('inPos')}: {live.position.symbol} · entrada {live.position.entry}{live.position.stop > 0 ? ` · stop ${Number(live.position.stop).toPrecision(6)}` : ''}{live.position.tp > 0 ? ` · alvo ${Number(live.position.tp).toPrecision(6)}` : ''} · uPnL {money(live.position.upnl)}</p>
       )}
@@ -1470,31 +1495,6 @@ function StrategyPage() {
         </table>
       </article>
       <article className="panel" style={{ marginTop: 12 }}>
-        <h3>{t('thread')}</h3>
-        <div className="thread">
-          {(data?.messages || []).map((m) => <div key={m.id} className={`bubble ${m.role}`}>{m.content}</div>)}
-        </div>
-        <form onSubmit={submit} aria-busy={!!jobId}>
-          <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('replyPh')} disabled={!!jobId} />
-          {steps && (
-            <AskSteps
-              key={steps.id}
-              questions={steps.questions}
-              busy={!!jobId}
-              onDone={(answer) => {
-                setSteps(null);
-                setErr('');
-                edit({ id, prompt: answer, threadId: data?.threadId }).unwrap()
-                  .then((res) => setJobId(res.jobId))
-                  .catch((error) => setErr(errText(error, t)));
-              }}
-            />
-          )}
-          <PromptStatus busy={!!jobId} status={job.data?.job?.status} err={err} />
-          <button className="solid" type="submit" disabled={!!jobId || !prompt.trim()}>{(jobId) ? t('working') : t('send')}</button>
-        </form>
-      </article>
-      <article className="panel" style={{ marginTop: 12 }}>
         <h3>{t('trades')}</h3>
         <TradeBook trades={data?.trades || []} position={live?.position} />
       </article>
@@ -1529,6 +1529,11 @@ function Candle({ symbol }) {
   return <div>{isFetching && <p>{t('loading')}</p>}<div className="chart" ref={ref} /></div>;
 }
 
+function LabLegacyRedirect() {
+  const { lng } = useParams();
+  return <Navigate to={`/${lng}/app/laboratorio`} replace />;
+}
+
 function History() {
   const { t } = useTranslation();
   const manifest = useManifestQuery();
@@ -1554,8 +1559,21 @@ function History() {
   }, [symbols.data, q]);
   return (
     <div className="wrap">
-      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('labT')}</h2>
+      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('labNav')}</h2>
       <p className="muted">{manifest.data ? `${manifest.data.start || ''} → ${manifest.data.end || ''} · ${manifest.data.symbols} pares · ${t('labNote')}` : ''}</p>
+      <form
+        className="panel composer-top"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const res = await ask({ prompt }).unwrap();
+          setJobId(res.jobId);
+        }}
+      >
+        <h3>{t('askLab')}</h3>
+        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+        <button className="solid" type="submit">{t('send')}</button>
+        {answer && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(answer.symbol || answer.note, null, 2)}</pre>}
+      </form>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} />
       <div className="symbols" style={{ margin: '12px 0' }}>
         {list.map((s) => (
@@ -1566,24 +1584,12 @@ function History() {
         ))}
       </div>
       <Candle symbol={symbol} />
-      <div className="split" style={{ marginTop: 16 }}>
-        <article className="panel">
-          <h3>{t('sweeps')}</h3>
-          {(artifacts.data?.artifacts || []).slice(0, 12).map((a) => (
-            <p key={a.id}><strong>{a.name}</strong><br /><span className="muted">{a.summary}</span></p>
-          ))}
-        </article>
-        <form className="panel" onSubmit={async (e) => {
-          e.preventDefault();
-          const res = await ask({ prompt }).unwrap();
-          setJobId(res.jobId);
-        }}>
-          <h3>{t('askLab')}</h3>
-          <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-          <button className="solid" type="submit">{t('send')}</button>
-          {answer && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(answer.symbol || answer.note, null, 2)}</pre>}
-        </form>
-      </div>
+      <article className="panel" style={{ marginTop: 16 }}>
+        <h3>{t('sweeps')}</h3>
+        {(artifacts.data?.artifacts || []).slice(0, 12).map((a) => (
+          <p key={a.id}><strong>{a.name}</strong><br /><span className="muted">{a.summary}</span></p>
+        ))}
+      </article>
     </div>
   );
 }
@@ -1985,7 +1991,8 @@ function App() {
         <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
         <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
         <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/historico" element={<Guard><RequireDesk><History /></RequireDesk></Guard>} />
+        <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><History /></RequireDesk></Guard>} />
+        <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
         <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
         <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
         <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
