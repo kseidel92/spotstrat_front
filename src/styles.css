@@ -584,16 +584,31 @@ body:has(.landing) { background: #07090d; }
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
   gap: 28px;
-  align-items: center;
+  align-items: start;
+}
+.landing .path-copy {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+}
+.landing .path-text {
+  min-height: 300px;
+}
+.landing .path-visual {
+  min-height: 420px;
 }
 .landing .path h2 {
   font-family: Fraunces, serif;
   font-size: clamp(36px, 4vw, 58px);
   line-height: 0.98;
   letter-spacing: -0.04em;
-  margin: 8px 0 14px;
+  margin: 0 0 14px;
+  min-height: 2.94em;
 }
-.landing .path-nav { display: flex; gap: 8px; align-items: center; margin-top: 22px; }
+.landing .path .lede {
+  margin: 0;
+}
+.landing .path-nav { display: flex; gap: 8px; align-items: center; margin-top: auto; }
 .landing .path-nav button {
   width: 36px;
   height: 36px;
@@ -609,6 +624,39 @@ body:has(.landing) { background: #07090d; }
   border-radius: 14px;
   background: rgba(12, 18, 26, 0.72);
   border: 1px solid rgba(122, 215, 255, 0.22);
+}
+.path-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  transition: transform 0.35s ease, filter 0.35s ease;
+}
+.path-shot.frame {
+  border: 1px solid rgba(160, 196, 220, 0.16);
+  background: #10161c;
+}
+.path-alert {
+  --rx: 0deg;
+  --ry: 0deg;
+  perspective: 1100px;
+  animation: alertFloat 5.6s ease-in-out infinite;
+}
+.path-alert:hover { animation-play-state: paused; }
+.path-shot.alert {
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.12s linear, filter 0.35s ease;
+  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.55));
+}
+.path-alert:hover .path-shot.alert {
+  filter: drop-shadow(0 28px 34px rgba(0, 210, 230, 0.22));
+}
+.path-visual:hover .path-shot.frame {
+  transform: translateY(-8px);
+}
+@keyframes alertFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 .path-meters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
 .path-meters article { margin: 0; }
@@ -963,6 +1011,9 @@ body:has(.landing) { background: #07090d; }
 @media (max-width: 640px) {
   .landing .stage h1, .landing .hero h1 { font-size: 34px; }
   .landing .band, .landing .stage, .landing .path, .landing .vault { padding-left: 16px; padding-right: 16px; }
+  .landing .path-copy, .landing .path-text, .landing .path-visual { min-height: 0; }
+  .landing .path-text { min-height: 220px; }
+  .landing .path h2 { min-height: 0; }
   .path-meters { grid-template-columns: 1fr; }
   .wrap { padding-left: 12px; padding-right: 12px; }
   .topbar, .deskbar { padding-left: 14px; padding-right: 14px; }

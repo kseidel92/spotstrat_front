@@ -9,7 +9,7 @@ import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
   store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn,
-  usePresetsQuery, useRegisterMutation, useLoginMutation, useGoogleMutation,
+  useRegisterMutation, useLoginMutation, useGoogleMutation,
   useVerifyEmailMutation, useVerifyPhoneMutation, useResendMutation, useSetPhoneMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
   useStrategiesQuery, useStrategyQuery, usePromptMutation, useEditPromptMutation,
@@ -20,6 +20,9 @@ import {
 } from './store';
 import './styles.css';
 import Hero from './components/Hero';
+import alertShot from './components/img_5.jpg';
+import deskShot from './components/img_6.jpg';
+import tradesShot from './components/img_trades.png';
 
 function lngOf(pathname) {
   const part = pathname.split('/')[1];
@@ -110,18 +113,18 @@ function Guard({ children }) {
 function errText(error, t) {
   const code = error?.data?.error;
   const map = {
-    email_taken: 'Este e-mail já tem conta.',
-    phone_taken: 'Este celular já está em uso.',
-    bad_credentials: 'E-mail ou senha não conferem.',
+    email_taken: t('errEmailTaken'),
+    phone_taken: t('errPhoneTaken'),
+    bad_credentials: t('errBadCredentials'),
     password_mismatch: t('passwordMismatch'),
-    bad_code: 'Código inválido ou vencido.',
+    bad_code: t('errBadCode'),
     rate_limited: error?.data?.message,
     prompt_limit: error?.data?.message,
     trial_expired: t('expired'),
     unverified: t('unverified'),
     stripe_off: t('payOff'),
   };
-  return map[code] || error?.data?.message || 'Erro.';
+  return map[code] || error?.data?.message || t('errGeneric');
 }
 
 function PaperShell({ children }) {
@@ -171,16 +174,6 @@ const EMA_BARS = [
   [100.4, 101.6, 100.1, 101.2],
   [101.2, 102.2, 100.6, 101.0],
   [101.0, 102.4, 100.8, 102.1],
-];
-const RISE_BARS = [
-  [80, 80.4, 79.6, 80.1],
-  [80.1, 80.5, 79.8, 80.0],
-  [80.0, 80.3, 79.7, 80.2],
-  [80.2, 80.6, 79.9, 80.1],
-  [80.1, 80.4, 79.8, 80.0],
-  [80.0, 81.2, 79.9, 80.9],
-  [80.0, 80.2, 79.4, 79.6],
-  [79.6, 81.1, 79.5, 80.8],
 ];
 
 function emaLine(bars, period) {
@@ -245,27 +238,53 @@ function CandleChart({ title, bars, mark }) {
   );
 }
 
+function AlertVisual({ src, alt }) {
+  const ref = useRef(null);
+  function move(e) {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty('--rx', `${(-py * 8).toFixed(2)}deg`);
+    el.style.setProperty('--ry', `${(px * 10).toFixed(2)}deg`);
+  }
+  function leave() {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty('--rx', '0deg');
+    el.style.setProperty('--ry', '0deg');
+  }
+  return (
+    <div className="path-alert" ref={ref} onMouseMove={move} onMouseLeave={leave}>
+      <img className="path-shot alert" src={src} alt={alt} />
+    </div>
+  );
+}
+
 function PathShow() {
   const { t } = useTranslation();
+  const steps = 5;
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => {
     if (paused) return undefined;
-    const timer = setInterval(() => setI((n) => (n + 1) % 4), 7000);
+    const timer = setInterval(() => setI((n) => (n + 1) % steps), 7000);
     return () => clearInterval(timer);
   }, [paused]);
   return (
     <section className="path" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div className="path-copy">
-        <p className="kicker">0{i + 1}</p>
-        <h2>{t(`path${i + 1}t`)}</h2>
-        <p className="lede">{t(`path${i + 1}`)}</p>
+        <div className="path-text">
+          <h2>{t(`path${i + 1}t`)}</h2>
+          <p className="lede">{t(`path${i + 1}`)}</p>
+        </div>
         <div className="path-nav">
-          <button type="button" onClick={() => setI((n) => (n + 3) % 4)} aria-label="prev">‹</button>
-          {[0, 1, 2, 3].map((n) => (
+          <button type="button" onClick={() => setI((n) => (n + steps - 1) % steps)} aria-label="prev">‹</button>
+          {Array.from({ length: steps }, (_, n) => (
             <button key={n} type="button" className={i === n ? 'on' : ''} onClick={() => setI(n)}>{n + 1}</button>
           ))}
-          <button type="button" onClick={() => setI((n) => (n + 1) % 4)} aria-label="next">›</button>
+          <button type="button" onClick={() => setI((n) => (n + 1) % steps)} aria-label="next">›</button>
         </div>
       </div>
       <div className="path-visual">
@@ -276,18 +295,10 @@ function PathShow() {
             <p>{t('ex4')}</p>
           </div>
         )}
-        {i === 1 && <CandleChart title={t('chartEma')} bars={EMA_BARS} mark={8} />}
-        {i === 2 && (
-          <div className="path-live">
-            <div className="path-meters">
-              <article><span>{t('infoMareT')}</span><strong>BOA</strong></article>
-              <article><span>{t('infoBookT')}</span><strong>62%</strong></article>
-              <article><span>{t('infoTapeT')}</span><strong>↑</strong></article>
-            </div>
-            <CandleChart title={t('chartRise')} bars={RISE_BARS} mark={7} />
-          </div>
-        )}
-        {i === 3 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} />}
+        {i === 1 && <img className="path-shot frame" src={deskShot} alt={t('path2t')} />}
+        {i === 2 && <img className="path-shot frame" src={tradesShot} alt={t('path3t')} />}
+        {i === 3 && <AlertVisual src={alertShot} alt={t('path4t')} />}
+        {i === 4 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} />}
       </div>
     </section>
   );
@@ -297,7 +308,6 @@ function Landing() {
   useLang();
   const { t } = useTranslation();
   const { lng } = useParams();
-  const { data } = usePresetsQuery(lng);
   return (
     <div className="landing">
       <header className="topbar">
@@ -316,15 +326,7 @@ function Landing() {
       <section className="band">
         <h2>{t('sayT')}</h2>
         <p className="lede">{t('sayL')}</p>
-        <div className="says">
-          <p>{t('ex1')}</p>
-          <p>{t('ex2')}</p>
-          <p>{t('ex3')}</p>
-          <p>{t('ex4')}</p>
-        </div>
-        <h2 className="later">{t('presetsT')}</h2>
         <p className="lede">{t('presetsL')}</p>
-        <p className="preset-names">{(data?.presets || []).map((p) => p.name).join(' · ')}</p>
       </section>
       <section className="trial-band">
         <img src="/robot-desk.png" alt="" />
@@ -441,7 +443,7 @@ function GoogleEntry() {
       <div className="gsi">
         <GoogleLogin
           onSuccess={(resp) => { if (resp?.credential) onToken.current(resp.credential); }}
-          onError={() => setErr('Não foi possível entrar com o Google.')}
+          onError={() => setErr(t('errGoogle'))}
           theme="outline"
           size="large"
           text="continue_with"
@@ -648,7 +650,7 @@ function questionsOf(output) {
   const ask = String(output?.ask || '').trim();
   const raw = (list.length ? list : (ask ? [ask] : [])).slice(0, 6);
   return raw.map((item) => (/Não achei o gatilho|Descreve o gatilho/.test(item)
-    ? 'Qual é o gatilho de entrada, com a porcentagem e o tempo?'
+    ? i18n.t('askTrigger')
     : item));
 }
 
@@ -1076,7 +1078,7 @@ function DeskHome() {
       if (!sound) continue;
       beep();
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        const note = `${hit.name || ''} · stop ${Number(hit.stop).toFixed(4)} · alvo ${Number(hit.tp).toFixed(4)}`;
+        const note = `${hit.name || ''} · ${t('resStop')} ${Number(hit.stop).toFixed(4)} · ${t('resTarget')} ${Number(hit.tp).toFixed(4)}`;
         new Notification(hit.symbol || 'SpotStrat', { body: note });
       }
     }
@@ -1447,7 +1449,7 @@ function StrategyPage() {
         </form>
       </article>
       {live?.position && (
-        <p className="up">{t('inPos')}: {live.position.symbol} · entrada {live.position.entry}{live.position.stop > 0 ? ` · stop ${Number(live.position.stop).toPrecision(6)}` : ''}{live.position.tp > 0 ? ` · alvo ${Number(live.position.tp).toPrecision(6)}` : ''} · uPnL {money(live.position.upnl)}</p>
+        <p className="up">{t('inPos')}: {live.position.symbol} · {t('thEntry')} {live.position.entry}{live.position.stop > 0 ? ` · ${t('resStop')} ${Number(live.position.stop).toPrecision(6)}` : ''}{live.position.tp > 0 ? ` · ${t('resTarget')} ${Number(live.position.tp).toPrecision(6)}` : ''} · uPnL {money(live.position.upnl)}</p>
       )}
       {running && (
         <article className="panel" style={{ marginTop: 12 }}>
