@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Proxy Vite: `/v1` → `http://127.0.0.1:4000` (API local).
+Interface em **http://127.0.0.1:7172**; proxy `/v1` → **http://127.0.0.1:7171** (API).
 
 ## Vercel
 
