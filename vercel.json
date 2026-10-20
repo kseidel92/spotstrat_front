@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "env": {
-    "VITE_WS_ORIGIN": "wss://advertiser-arabic-tree-beans.trycloudflare.com"
+    "VITE_WS_ORIGIN": "wss://florists-inquiry-identify-cnet.trycloudflare.com"
   },
   "rewrites": [
     {
