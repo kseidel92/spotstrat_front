@@ -618,7 +618,7 @@ function DeskBar() {
     <header className="deskbar">
       <Link className="brand" to={`/${lng}/app`}><i />SpotStrat</Link>
       <nav className="menu">
-        <Link to={`/${lng}/app`}>{t('desk')}</Link>
+        <Link to={`/${lng}/app`}>{t('strategiesNav')}</Link>
         <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
         <Link to={`/${lng}/app/laboratorio`}>{t('labNav')}</Link>
         <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
