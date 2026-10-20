@@ -829,12 +829,31 @@ function TradeBook({ trades, position }) {
   );
 }
 
-function briefOf(guide) {
+const ENTRY_TYPES = ['pattern', 'cross', 'breakout', 'momentum', 'other'];
+
+function entryTypeBrief(guide, t) {
+  const labels = {
+    pattern: t('typePattern'),
+    cross: t('typeCross'),
+    breakout: t('typeBreakout'),
+    momentum: t('typeMomentum'),
+    other: t('typeOther'),
+  };
+  if (guide.entryType === 'other') {
+    const text = guide.entryTypeText.trim();
+    return text ? `Tipo: ${text}` : `Tipo: ${labels.other}`;
+  }
+  if (guide.entryType && labels[guide.entryType]) return `Tipo: ${labels[guide.entryType]}`;
+  return '';
+}
+
+function briefOf(guide, t) {
   const sourceText = {
     candles: 'velas fechadas',
     trades: 'aggTrades, buyerMaker true é venda agressiva',
     book: 'livro com até 10 níveis em ctx.book()',
     ema: 'as médias que o texto citar',
+    other: guide.sourcesOther.trim() || 'outros (ver texto do gatilho)',
   };
   const exit = guide.exitKind === 'numbers'
     ? `Stop ${guide.stop}% e alvo ${guide.target}% a partir da entrada.`
@@ -844,9 +863,10 @@ function briefOf(guide) {
   return [
     'Brief.',
     guide.name.trim() ? `Nome: ${guide.name.trim()}` : '',
+    entryTypeBrief(guide, t),
+    `Entrada: ${guide.entry.trim()}`,
     `Candle: ${guide.tf}.`,
     `Fontes: ${guide.sources.map((id) => sourceText[id]).join('; ')}.`,
-    `Entrada: ${guide.entry.trim()}`,
     guide.list === 'yes'
       ? `Lista: ${guide.listText.trim()} Grave o preço em ctx.memory.`
       : 'Lista: não grava preço. A compra acontece no próprio gatilho.',
@@ -860,7 +880,10 @@ function Guide({ busy, onCreate }) {
   const [guide, setGuide] = useState({
     tf: '5m',
     sources: ['candles'],
+    sourcesOther: '',
     entry: '',
+    entryType: '',
+    entryTypeText: '',
     list: 'no',
     listText: '',
     exitKind: 'describe',
@@ -869,7 +892,7 @@ function Guide({ busy, onCreate }) {
     exitText: '',
     name: '',
   });
-  const ids = ['tf', 'sources', 'entry', 'list', 'exit', 'review'];
+  const ids = ['entry', 'entryType', 'sources', 'tf', 'list', 'exit', 'review'];
   const current = ids[step];
   function patch(partial) { setGuide({ ...guide, ...partial }); }
   function toggleSource(id) {
@@ -877,11 +900,13 @@ function Guide({ busy, onCreate }) {
     if (sources.length) patch({ sources });
   }
   const blocked = (current === 'entry' && !guide.entry.trim())
+    || (current === 'entryType' && (!guide.entryType || (guide.entryType === 'other' && !guide.entryTypeText.trim())))
+    || (current === 'sources' && guide.sources.includes('other') && !guide.sourcesOther.trim())
     || (current === 'list' && guide.list === 'yes' && !guide.listText.trim())
     || (current === 'exit' && guide.exitKind === 'numbers' && !(Number(guide.stop) > 0 && Number(guide.target) > 0))
     || (current === 'exit' && guide.exitKind === 'describe' && !guide.exitText.trim());
   const last = step === ids.length - 1;
-  const brief = briefOf(guide);
+  const brief = briefOf(guide, t);
   return (
     <div className="steps">
       <p className="steps-kicker">{t('guideSteps')}</p>
@@ -889,6 +914,53 @@ function Guide({ busy, onCreate }) {
         {ids.map((id, index) => <i key={id} className={index <= step ? 'on' : ''} />)}
       </div>
       <p className="steps-count">{t('stepOf', { n: step + 1, total: ids.length })}</p>
+      {current === 'entry' && (
+        <>
+          <h3>{t('guideEntry')}</h3>
+          <textarea value={guide.entry} onChange={(e) => patch({ entry: e.target.value })} placeholder={t('guideEntryPh')} />
+        </>
+      )}
+      {current === 'entryType' && (
+        <>
+          <h3>{t('guideEntryType')}</h3>
+          <div className="chips">
+            {ENTRY_TYPES.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={guide.entryType === id ? 'on' : ''}
+                onClick={() => patch({ entryType: id })}
+              >
+                {t(id === 'pattern' ? 'typePattern' : id === 'cross' ? 'typeCross' : id === 'breakout' ? 'typeBreakout' : id === 'momentum' ? 'typeMomentum' : 'typeOther')}
+              </button>
+            ))}
+          </div>
+          {guide.entryType === 'other' && (
+            <textarea
+              value={guide.entryTypeText}
+              onChange={(e) => patch({ entryTypeText: e.target.value })}
+              placeholder={t('guideEntryTypeOtherPh')}
+            />
+          )}
+        </>
+      )}
+      {current === 'sources' && (
+        <>
+          <h3>{t('guideSources')}</h3>
+          <div className="chips">
+            {[['candles', 'srcCandles'], ['trades', 'srcTrades'], ['book', 'srcBook'], ['ema', 'srcEma'], ['other', 'srcOther']].map(([id, key]) => (
+              <button key={id} type="button" className={guide.sources.includes(id) ? 'on' : ''} onClick={() => toggleSource(id)}>{t(key)}</button>
+            ))}
+          </div>
+          {guide.sources.includes('other') && (
+            <textarea
+              value={guide.sourcesOther}
+              onChange={(e) => patch({ sourcesOther: e.target.value })}
+              placeholder={t('guideSourcesOtherPh')}
+            />
+          )}
+        </>
+      )}
       {current === 'tf' && (
         <>
           <h3>{t('guideTf')}</h3>
@@ -897,22 +969,6 @@ function Guide({ busy, onCreate }) {
               <button key={tf} type="button" className={guide.tf === tf ? 'on' : ''} onClick={() => patch({ tf })}>{tf}</button>
             ))}
           </div>
-        </>
-      )}
-      {current === 'sources' && (
-        <>
-          <h3>{t('guideSources')}</h3>
-          <div className="chips">
-            {[['candles', 'srcCandles'], ['trades', 'srcTrades'], ['book', 'srcBook'], ['ema', 'srcEma']].map(([id, key]) => (
-              <button key={id} type="button" className={guide.sources.includes(id) ? 'on' : ''} onClick={() => toggleSource(id)}>{t(key)}</button>
-            ))}
-          </div>
-        </>
-      )}
-      {current === 'entry' && (
-        <>
-          <h3>{t('guideEntry')}</h3>
-          <textarea value={guide.entry} onChange={(e) => patch({ entry: e.target.value })} placeholder={t('guideEntryPh')} />
         </>
       )}
       {current === 'list' && (
