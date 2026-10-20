@@ -167,7 +167,7 @@ async function main() {
     console.log('parado em', await cdp.eval('location.pathname'), (await cdp.eval('document.body.innerText')).slice(0, 500));
   }
   check('desk 6 presets', onDesk && (text.match(/equity/g) || []).length >= 6);
-  check('alarmes no desk', text.includes('Alarmes') && text.includes('Só me avisar') && text.includes('Nenhum alarme armado'));
+  check('alarmes no desk', text.includes('Alarmes') && text.includes('Só me avisar') && text.includes('Nenhum alarme criado'));
   check('radios de saída', text.includes('histórico de 18 meses') && text.includes('Eu informo o stop'));
   check('carteira', text.includes('Carteira') && text.includes('1000') && !text.includes('spike') && !/serra/i.test(text));
   const ph = await cdp.eval('document.querySelector("textarea").placeholder');
