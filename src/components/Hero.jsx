@@ -33,7 +33,7 @@ export default function Hero() {
             <Title text={title} accent={t('heroAccent')} />
           </h1>
           <p className={styles.subtitle}>{t('lede')}</p>
-          <Link className={styles.cta} to={`/${lng}/register`}>{t('freeCta')}</Link>
+          <Link className={styles.cta} to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
           <p className={styles.note}>{t('freeNote')}</p>
         </div>
         <div className={styles.visual}>

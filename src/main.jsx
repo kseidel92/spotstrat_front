@@ -5,7 +5,6 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate,
 import { createChart } from 'lightweight-charts';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
   store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn,
@@ -17,9 +16,16 @@ import {
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmSeenMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery, useManifestQuery, useSymbolsQuery, useKlinesQuery,
   useArtifactsQuery, useLabQueryMutation, useCheckoutMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
+  useConfigQuery,
 } from './store';
 import './styles.css';
 import Hero from './components/Hero';
+import StatsBar from './components/StatsBar';
+import OpportunityCard from './components/OpportunityCard';
+import TestimonialCard from './components/TestimonialCard';
+import Faq from './components/Faq';
+import LaunchPrice from './components/LaunchPrice';
+import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
 import { legalFor } from './legal';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
@@ -124,6 +130,8 @@ function errText(error, t) {
     trial_expired: t('expired'),
     unverified: t('unverified'),
     stripe_off: t('payOff'),
+    google_off: t('errGoogleOff'),
+    upstream_fail: t('errUpstream'),
   };
   return map[code] || error?.data?.message || t('errGeneric');
 }
@@ -150,15 +158,22 @@ function SiteFooter() {
   const home = `/${lng}`;
   return (
     <footer className="site">
-      <nav>
-        <Link className="home" to={home} onClick={open(home)}>← {t('footerHome')}</Link>
+      <div className="foot-brand">
+        <Link className="brand" to={home} onClick={open(home)}>
+          <i aria-hidden="true" />SpotStrat
+        </Link>
+        <p className="tag">{t('footerTag')}</p>
+        <p className="copy">{t('footerCopy')}</p>
+      </div>
+      <nav className="foot-legal" aria-label={t('footerLegal')}>
         <Link to={`/${lng}/termos`} onClick={open(`/${lng}/termos`)}>{t('footerTerms')}</Link>
         <Link to={`/${lng}/privacy`} onClick={open(`/${lng}/privacy`)}>{t('footerPrivacy')}</Link>
         <Link to={`/${lng}/cookies`} onClick={open(`/${lng}/cookies`)}>{t('footerCookies')}</Link>
-        <a href="mailto:suporte@spotstrat.com">{t('footerMail')}</a>
       </nav>
-      <p className="risk">{t('footerRisk')}</p>
-      <p className="copy">{t('footerCopy')}</p>
+      <div className="foot-contact">
+        <a href="mailto:suporte@spotstrat.com">{t('footerMail')}</a>
+        <p className="risk">{t('footerRisk')}</p>
+      </div>
     </footer>
   );
 }
@@ -178,36 +193,6 @@ function ShieldNote() {
         <h2>{t('shieldT')}</h2>
         <p>{t('shieldB')}</p>
       </div>
-    </section>
-  );
-}
-
-function SocialProof() {
-  const { t } = useTranslation();
-  return (
-    <blockquote className="proof">
-      <p>“{t('quote')}”</p>
-      <footer>{t('quoteBy')}</footer>
-    </blockquote>
-  );
-}
-
-function Faq() {
-  const { t } = useTranslation();
-  const items = [
-    ['faq1q', 'faq1a'],
-    ['faq2q', 'faq2a'],
-    ['faq3q', 'faq3a'],
-  ];
-  return (
-    <section className="faq">
-      <h2>{t('faqT')}</h2>
-      {items.map(([q, a]) => (
-        <article key={q}>
-          <h3>{t(q)}</h3>
-          <p>{t(a)}</p>
-        </article>
-      ))}
     </section>
   );
 }
@@ -408,20 +393,22 @@ function Landing() {
         </nav>
       </header>
       <Hero />
+      <StatsBar />
+      <OpportunityCard />
       <ShieldNote />
       <PathShow />
       <section className="band">
         <h2>{t('sayT')}</h2>
         <p className="lede">{t('sayL')}</p>
         <p className="lede">{t('presetsL')}</p>
-        <SocialProof />
+        <TestimonialCard />
       </section>
       <section className="trial-band">
         <img src="/robot-desk.png" alt="" />
         <div>
           <h2>{t('trialT')}</h2>
           <p className="lede">{t('trialB')}</p>
-          <Link className="solid free" to={`/${lng}/register`}>{t('freeCta')}</Link>
+          <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
           <p className="mono dim">{t('freeNote')}</p>
         </div>
       </section>
@@ -526,8 +513,6 @@ function routeForDesk(lng, user) {
   return `/${lng}/app`;
 }
 
-const GOOGLE_CLIENT_ID = '98371392821-ca4oqqttpoje9uc952it3arfd47f2a2s.apps.googleusercontent.com';
-
 function GoogleEntry() {
   const { t } = useTranslation();
   const { lng } = useParams();
@@ -536,7 +521,11 @@ function GoogleEntry() {
   const onToken = useRef(() => {});
   const [err, setErr] = useState('');
   const [google] = useGoogleMutation();
-  const hl = lng === 'pt-BR' ? 'pt-BR' : String(lng || 'en').slice(0, 2);
+  const config = useConfigQuery(undefined, { refetchOnMountOrArgChange: true });
+  const clientId = config.isSuccess
+    ? String(config.data?.googleClientId || '').trim()
+    : (config.isError ? resolveGoogleClientId('') : '');
+  const hl = lng === 'pt-BR' || lng === 'es-MX' ? lng : String(lng || 'en').slice(0, 2);
   onToken.current = async (credential) => {
     setErr('');
     try {
@@ -547,19 +536,17 @@ function GoogleEntry() {
   };
   return (
     <div className="google-box">
-      <div className="gsi">
-        <GoogleLogin
-          onSuccess={(resp) => { if (resp?.credential) onToken.current(resp.credential); }}
-          onError={() => setErr(t('errGoogle'))}
-          theme="outline"
-          size="large"
-          text="continue_with"
-          shape="rectangular"
-          logo_alignment="left"
-          width="360"
+      {clientId ? (
+        <GoogleButton
+          clientId={clientId}
           locale={hl}
+          onCredential={(credential) => onToken.current(credential)}
+          onFail={() => setErr(t('errGoogle'))}
         />
-      </div>
+      ) : (
+        <div className="gsi" />
+      )}
+      {config.isSuccess && !clientId && <div className="error">{t('errGoogleOff')}</div>}
       {err && <div className="error">{err}</div>}
     </div>
   );
@@ -2151,13 +2138,14 @@ function Prices() {
         <p className="kicker">{t('pricesNav')}</p>
         <h1>{t('pricesT')}</h1>
         <div className="price-split">
-          <p>{t('planIncluded')}</p>
-          <p>{t('planOptional')}</p>
+          <p><strong>{t('planIncludedLead')}</strong> {t('planIncludedBody')}</p>
+          <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
         </div>
         <div className="price-grid">
           {plans.map((plan) => (
             <article key={plan.key} className={plan.key}>
               <h2>{plan.title}</h2>
+              <LaunchPrice />
               <p className="price-num">{localMoney(lng, plan.amount)}</p>
               <p className="plan-anchor">{t('planAnchor')}</p>
               {lng !== 'pt-BR' && <p className="mono dim">{t('planTable')} · {brlMoney(plan.amount)}</p>}
@@ -2166,18 +2154,27 @@ function Prices() {
         </div>
         <PlanPicker showBody={false} />
         <p className="mono dim">{t('planFx')}</p>
-        <Link className="solid free" to={`/${lng}/register`}>{t('freeCta')}</Link>
-        <SocialProof />
+        <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
         <Faq />
+        <TestimonialCard />
       </section>
       <SiteFooter />
     </div>
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    scrollPageTop();
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <SessionBoot>
       <Routes>
         <Route path="/" element={<LangRedirect />} />
@@ -2207,9 +2204,7 @@ function App() {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <App />
-      </GoogleOAuthProvider>
+      <App />
     </Provider>
   </StrictMode>,
 );

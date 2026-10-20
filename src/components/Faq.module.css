@@ -1,0 +1,34 @@
+.faq {
+  margin-top: 36px;
+  max-width: 760px;
+}
+
+.faq h2 {
+  margin: 0 0 8px;
+  font-family: Outfit, sans-serif;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.faq article {
+  padding: 16px 0;
+  border-top: 1px solid rgba(160, 196, 220, 0.16);
+}
+
+.faq h3 {
+  margin: 0 0 6px;
+  font-family: Outfit, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 640;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.faq p {
+  margin: 0;
+  max-width: 68ch;
+  color: #c5d2df;
+  line-height: 1.55;
+}
