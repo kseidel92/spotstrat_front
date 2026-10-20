@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/v1/:path*",
+      "destination": "https://spotstrat-cloud.vercel.app/v1/:path*"
+    },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ]
+}

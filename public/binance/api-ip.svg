@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" width="640" height="420">
+  <rect width="640" height="420" rx="16" fill="#101820"/>
+  <text x="28" y="42" fill="#e8c47a" font-family="Outfit, sans-serif" font-size="18">Restrição de IP</text>
+  <rect x="28" y="72" width="584" height="54" rx="12" fill="#18222c"/>
+  <circle cx="58" cy="99" r="10" fill="#101820" stroke="#c9d4de"/>
+  <text x="84" y="105" fill="#8ea0b0" font-family="Outfit, sans-serif" font-size="16">Sem restrição</text>
+  <rect x="28" y="140" width="584" height="54" rx="12" fill="#243628"/>
+  <circle cx="58" cy="167" r="10" fill="#3d8f5a"/>
+  <text x="84" y="173" fill="#f4efe6" font-family="Outfit, sans-serif" font-size="16">Restringir a IPs confiáveis</text>
+  <rect x="28" y="220" width="584" height="88" rx="12" fill="#18222c" stroke="#3a4c5c"/>
+  <text x="48" y="254" fill="#8ea0b0" font-family="Outfit, sans-serif" font-size="14">IP desta página</text>
+  <text x="48" y="286" fill="#e8c47a" font-family="ui-monospace, monospace" font-size="22">cole o seu IPv4 aqui</text>
+  <text x="28" y="360" fill="#8ea0b0" font-family="Outfit, sans-serif" font-size="15">A Binance recusa a chave se o pedido sair de outro IP.</text>
+</svg>

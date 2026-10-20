@@ -1,0 +1,25 @@
+{
+  "name": "spotstrat-front",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173"
+  },
+  "dependencies": {
+    "@react-oauth/google": "^0.13.5",
+    "@reduxjs/toolkit": "^2.6.1",
+    "i18next": "^24.2.2",
+    "lightweight-charts": "^4.2.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^15.4.1",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.2.0"
+  }
+}

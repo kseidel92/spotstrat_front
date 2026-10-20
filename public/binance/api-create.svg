@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" width="640" height="420">
+  <rect width="640" height="420" rx="16" fill="#101820"/>
+  <text x="28" y="42" fill="#e8c47a" font-family="Outfit, sans-serif" font-size="18">Binance · perfil</text>
+  <rect x="28" y="68" width="250" height="320" rx="12" fill="#18222c" stroke="#2c3c4c"/>
+  <text x="48" y="110" fill="#c9d4de" font-family="Outfit, sans-serif" font-size="16">Painel</text>
+  <text x="48" y="148" fill="#8ea0b0" font-family="Outfit, sans-serif" font-size="15">Segurança</text>
+  <rect x="40" y="168" width="226" height="36" rx="8" fill="#243628"/>
+  <text x="48" y="192" fill="#e8c47a" font-family="Outfit, sans-serif" font-size="15">Gerenciamento de API</text>
+  <text x="48" y="236" fill="#8ea0b0" font-family="Outfit, sans-serif" font-size="15">Verificação</text>
+  <rect x="300" y="68" width="312" height="140" rx="12" fill="#18222c" stroke="#2c3c4c"/>
+  <text x="320" y="108" fill="#f4efe6" font-family="Outfit, sans-serif" font-size="18">Criar API</text>
+  <rect x="320" y="128" width="200" height="36" rx="8" fill="#101820" stroke="#3a4c5c"/>
+  <text x="332" y="152" fill="#f4efe6" font-family="Outfit, sans-serif" font-size="15">Nome: TradeAI</text>
+  <rect x="320" y="230" width="160" height="40" rx="10" fill="#f4efe6"/>
+  <text x="348" y="256" fill="#1b1712" font-family="Outfit, sans-serif" font-size="15">Confirmar 2FA</text>
+</svg>

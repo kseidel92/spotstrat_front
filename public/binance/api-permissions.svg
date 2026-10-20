@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" width="640" height="420">
+  <rect width="640" height="420" rx="16" fill="#101820"/>
+  <text x="28" y="42" fill="#e8c47a" font-family="Outfit, sans-serif" font-size="18">Permissões da chave</text>
+  <g font-family="Outfit, sans-serif" font-size="18">
+    <rect x="28" y="78" width="584" height="64" rx="12" fill="#18222c"/>
+    <circle cx="64" cy="110" r="12" fill="#3d8f5a"/>
+    <text x="92" y="116" fill="#f4efe6">Ativar leitura</text>
+    <rect x="28" y="158" width="584" height="64" rx="12" fill="#18222c"/>
+    <circle cx="64" cy="190" r="12" fill="#3d8f5a"/>
+    <text x="92" y="196" fill="#f4efe6">Ativar trading Spot</text>
+    <rect x="28" y="238" width="584" height="64" rx="12" fill="#2a1c1c" stroke="#8a4034"/>
+    <circle cx="64" cy="270" r="12" fill="#101820" stroke="#c9d4de"/>
+    <text x="92" y="276" fill="#f4efe6">Ativar saques  deixe desligado</text>
+  </g>
+  <text x="28" y="360" fill="#8ea0b0" font-family="Outfit, sans-serif" font-size="15">Sem saque, a chave não move saldo.</text>
+</svg>
