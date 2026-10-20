@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "https://spotstrat-cloud.vercel.app/v1/:path*"
+      "destination": "https://spotstratcloud.vercel.app/v1/:path*"
     },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
