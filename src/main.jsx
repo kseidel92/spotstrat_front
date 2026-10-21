@@ -9,7 +9,7 @@ import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
   store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn,
   useRegisterMutation, useLoginMutation, useGoogleMutation,
-  useVerifyEmailMutation, useVerifyPhoneMutation, useResendMutation, useSetPhoneMutation,
+  useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
   useStrategiesQuery, useStrategyQuery, usePromptMutation, useEditPromptMutation,
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
@@ -18,7 +18,10 @@ import {
   useArtifactsQuery, useLabQueryMutation, useCheckoutMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
   useConfigQuery,
 } from './store';
+import './styles/variables.css';
 import './styles.css';
+import auth from './components/AuthScreen.module.css';
+import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
 import StatsBar from './components/StatsBar';
 import OpportunityCard from './components/OpportunityCard';
@@ -466,46 +469,247 @@ function Legal({ page }) {
   );
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function passwordStrength(password) {
+  if (!password) return null;
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  if (score <= 1) return 'weak';
+  if (score === 2) return 'medium';
+  return 'strong';
+}
+
+function Glyph({ children, size = 18 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      {children}
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return <Glyph><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="8" r="4" /></Glyph>;
+}
+
+function MailIcon() {
+  return <Glyph><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 7 9-7" /></Glyph>;
+}
+
+function LockIcon() {
+  return <Glyph><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></Glyph>;
+}
+
+function ArrowIcon() {
+  return <Glyph size={16}><path d="M19 12H5" /><path d="M11 18l-6-6 6-6" /></Glyph>;
+}
+
+function EyeIcon({ off }) {
+  const common = {
+    viewBox: '0 0 24 24',
+    width: 20,
+    height: 20,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+    focusable: 'false',
+  };
+  if (off) {
+    return (
+      <svg {...common}>
+        <path d="M3 3l18 18" />
+        <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+        <path d="M9.9 5.1A10.8 10.8 0 0 1 12 4.8c5.5 0 9.2 4.2 10.2 7.2a11.6 11.6 0 0 1-3.2 4.6" />
+        <path d="M6.1 6.1C4.2 7.4 2.8 9.2 1.8 12c1 2.8 4.7 7.2 10.2 7.2 1.5 0 2.9-.3 4.1-.8" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function ConsentLine({ lng }) {
+  const { t } = useTranslation();
+  const parts = t('agree').split(/(\{terms\}|\{privacy\})/);
+  return (
+    <p className={auth.legal}>
+      {parts.map((part, i) => {
+        if (part === '{terms}') return <Link key={i} to={`/${lng}/terms`}>{t('footerTerms')}</Link>;
+        if (part === '{privacy}') return <Link key={i} to={`/${lng}/privacy`}>{t('footerPrivacy')}</Link>;
+        return <span key={i}>{part}</span>;
+      })}
+    </p>
+  );
+}
+
+function AuthScreen({ children, social = false }) {
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  return (
+    <div className={auth.screen}>
+      <section className={auth.formCol}>
+        <header className={auth.top}>
+          <Link className={auth.back} to={`/${lng}`}><ArrowIcon />{t('authBack')}</Link>
+          <Flags />
+        </header>
+        <div className={auth.center}>
+          <Link className={auth.logo} to={`/${lng}`} aria-label="SpotStrat"><i />SpotStrat</Link>
+          <div className={auth.card}>
+            {social && <div className={auth.social}><GoogleEntry /></div>}
+            {children}
+          </div>
+        </div>
+      </section>
+      <aside className={auth.visual} aria-hidden="true">
+        <img src={authPanel} alt="" />
+        <span className={auth.overlay} />
+      </aside>
+    </div>
+  );
+}
+
 function Register() {
   useLang();
   const { t } = useTranslation();
   const { lng } = useParams();
   const nav = useNavigate();
-  const dispatch = useDispatch();
-  const [form, setForm] = useState({ name: '', email: '', password: '', password2: '', phone: '+55' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', password2: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState('');
   const [register, { isLoading }] = useRegisterMutation();
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const emailBad = form.email.length > 0 && !EMAIL_RE.test(form.email.trim());
+  const mismatch = form.password2.length > 0 && form.password !== form.password2;
+  const strength = passwordStrength(form.password);
+  const strengthKey = { weak: 'pwWeak', medium: 'pwMedium', strong: 'pwStrong' };
+  const strengthValue = { weak: 1, medium: 2, strong: 3 };
 
   async function submit(e) {
     e.preventDefault();
     setErr('');
-    if (form.password !== form.password2) {
-      setErr(t('passwordMismatch'));
-      return;
-    }
+    if (!EMAIL_RE.test(form.email.trim()) || form.password !== form.password2) return;
     try {
-      const { password2, ...body } = form;
-      const res = await register({ ...body, passwordConfirm: password2, locale: lng }).unwrap();
-      nav(`/${lng}/verify`, { state: { email: form.email, verification: res.verification, password: form.password } });
+      const res = await register({
+        name: form.name,
+        email: form.email.trim(),
+        password: form.password,
+        passwordConfirm: form.password2,
+        locale: lng,
+      }).unwrap();
+      nav(`/${lng}/verify`, { state: { email: form.email.trim(), verification: res.verification, password: form.password } });
     } catch (error) { setErr(errText(error, t)); }
   }
   return (
-    <AuthFrame>
-      <GoogleEntry />
-      <form className="auth card" onSubmit={submit}>
-        <h2>{t('registerT')}</h2>
-        {err && <div className="error">{err}</div>}
-        <label>{t('name')}</label><input autoComplete="name" value={form.name} onChange={set('name')} />
-        <label>{t('email')}</label><input type="email" required autoComplete="email" value={form.email} onChange={set('email')} />
-        <label>{t('password')}</label><input type="password" required minLength={8} autoComplete="new-password" value={form.password} onChange={set('password')} />
-        <label>{t('password2')}</label><input type="password" required minLength={8} autoComplete="new-password" value={form.password2} onChange={set('password2')} />
-        <label>{t('phone')}</label><input required autoComplete="tel" value={form.phone} onChange={set('phone')} placeholder="+5511999998888" />
-        <p className="muted">{t('phoneHint')}</p>
-        <div className="row"><button className="solid" disabled={isLoading} type="submit">{t('registerCta')}</button></div>
-        <p className="auth-alt"><Link to={`/${lng}/login`}>{t('hasAccount')}</Link></p>
+    <AuthScreen social>
+      <form className={auth.form} onSubmit={submit}>
+        <h1 className={auth.title}>{t('registerT')}</h1>
+        {err && <div className={auth.banner} role="alert">{err}</div>}
+        <div className={auth.field}>
+          <label htmlFor="reg-name">{t('name')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><UserIcon /></span>
+            <input id="reg-name" className={`${auth.input} ${auth.withIcon}`} autoFocus autoComplete="name" required value={form.name} onChange={set('name')} />
+          </div>
+        </div>
+        <div className={auth.field}>
+          <label htmlFor="reg-email">{t('email')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><MailIcon /></span>
+            <input
+              id="reg-email"
+              className={`${auth.input} ${auth.withIcon}${emailBad ? ` ${auth.invalid}` : ''}`}
+              type="email"
+              required
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              aria-invalid={emailBad || undefined}
+              aria-describedby={emailBad ? 'reg-email-error' : undefined}
+              value={form.email}
+              onChange={set('email')}
+            />
+          </div>
+          {emailBad && <p className={auth.fieldError} id="reg-email-error" role="alert">{t('emailInvalid')}</p>}
+        </div>
+        <div className={auth.field}>
+          <label htmlFor="reg-password">{t('password')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><LockIcon /></span>
+            <input
+              id="reg-password"
+              className={`${auth.input} ${auth.withIcon} ${auth.withToggle}`}
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              aria-describedby={strength ? 'reg-pw-strength' : undefined}
+              value={form.password}
+              onChange={set('password')}
+            />
+            <button
+              className={auth.pwToggle}
+              type="button"
+              aria-label={showPassword ? t('pwHide') : t('pwShow')}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((open) => !open)}
+            >
+              <EyeIcon off={showPassword} />
+            </button>
+          </div>
+          {strength && (
+            <>
+              <div
+                className={auth.meter}
+                role="meter"
+                aria-label={t('pwStrength')}
+                aria-valuemin={1}
+                aria-valuemax={3}
+                aria-valuenow={strengthValue[strength]}
+                aria-valuetext={t(strengthKey[strength])}
+              >
+                <span className={strength} />
+              </div>
+              <p className={`${auth.pwLabel} ${strength}`} id="reg-pw-strength">{t(strengthKey[strength])}</p>
+            </>
+          )}
+        </div>
+        <div className={auth.field}>
+          <label htmlFor="reg-password2">{t('password2')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><LockIcon /></span>
+            <input
+              id="reg-password2"
+              className={`${auth.input} ${auth.withIcon}${mismatch ? ` ${auth.invalid}` : ''}`}
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              aria-invalid={mismatch || undefined}
+              aria-describedby={mismatch ? 'reg-pw2-error' : undefined}
+              value={form.password2}
+              onChange={set('password2')}
+            />
+          </div>
+          {mismatch && <p className={auth.fieldError} id="reg-pw2-error" role="alert">{t('passwordMismatch')}</p>}
+        </div>
+        <button className={auth.submit} disabled={isLoading} type="submit" aria-busy={isLoading}>
+          {isLoading && <span className={auth.spin} aria-hidden="true" />}
+          {isLoading ? t('creatingAccount') : t('registerCta')}
+        </button>
+        <ConsentLine lng={lng} />
+        <p className={auth.alt}><Link to={`/${lng}/login`}>{t('hasAccount')}</Link></p>
       </form>
-    </AuthFrame>
+    </AuthScreen>
   );
 }
 
@@ -564,7 +768,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(rememberOn);
   const [err, setErr] = useState('');
-  const [login] = useLoginMutation();
+  const [login, { isLoading }] = useLoginMutation();
   const token = useSelector((s) => s.auth.token);
   const me = useMeQuery(undefined, { skip: !token });
   useEffect(() => {
@@ -580,22 +784,57 @@ function Login() {
       const res = await login({ email, password, remember }).unwrap();
       dispatch(setSession({ token: res.accessToken, user: res.user, remember }));
       nav(routeForDesk(lng, res.user));
-    } catch (error) { setErr(errText(error, t)); }
+    } catch (error) {
+      if (error?.data?.error === 'bad_credentials' || error?.status === 401) setErr(t('errBadCredentials'));
+      else setErr(errText(error, t));
+    }
   }
   return (
-    <AuthFrame>
-      <GoogleEntry />
-      <form className="auth card" onSubmit={submit}>
-        <h2>{t('loginT')}</h2>
-        <p className="lede auth-lead">{t('loginLead')}</p>
-        {err && <div className="error">{err}</div>}
-        <label>{t('email')}</label><input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <label>{t('password')}</label><input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <label className="remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> {t('remember')}</label>
-        <div className="row"><button className="solid" type="submit">{t('enter')}</button></div>
-        <p className="auth-alt"><Link to={`/${lng}/register`}>{t('noAccount')}</Link></p>
+    <AuthScreen social>
+      <form className={auth.form} onSubmit={submit}>
+        <h1 className={auth.title}>{t('loginT')}</h1>
+        <p className={auth.lead}>{t('loginLead')}</p>
+        <div className={auth.field}>
+          <label htmlFor="login-email">{t('email')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><MailIcon /></span>
+            <input id="login-email" className={`${auth.input} ${auth.withIcon}`} type="email" required autoComplete="email" autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+        </div>
+        <div className={auth.field}>
+          <label htmlFor="login-password">{t('password')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><LockIcon /></span>
+            <input id="login-password" className={`${auth.input} ${auth.withIcon}`} type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+        </div>
+        <p className={auth.forgot}>
+          <Link to={`/${lng}/forgot-password`}>{t('forgot')}</Link>
+        </p>
+        <label className={auth.remember} htmlFor="login-remember"><input id="login-remember" type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> {t('remember')}</label>
+        {err && <div className={auth.banner} role="alert">{err}</div>}
+        <button className={auth.submit} disabled={isLoading} type="submit" aria-busy={isLoading}>
+          {isLoading && <span className={auth.spin} aria-hidden="true" />}
+          {isLoading ? t('entering') : t('enter')}
+        </button>
+        <p className={auth.alt}><Link to={`/${lng}/register`}>{t('noAccount')}</Link></p>
       </form>
-    </AuthFrame>
+    </AuthScreen>
+  );
+}
+
+function ForgotPassword() {
+  useLang();
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  return (
+    <AuthScreen>
+      <section className={auth.form}>
+        <h1 className={auth.title}>{t('forgotT')}</h1>
+        <p className={auth.lead}>{t('forgotLead')}</p>
+        <p className={auth.alt}><Link to={`/${lng}/login`}>{t('backLogin')}</Link></p>
+      </section>
+    </AuthScreen>
   );
 }
 
@@ -609,14 +848,10 @@ function Verify() {
   const token = useSelector((s) => s.auth.token);
   const [codes, setCodes] = useState(loc.state?.verification || null);
   const [emailCode, setEmailCode] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
-  const [phone, setPhone] = useState('+55');
   const [err, setErr] = useState('');
   const [login] = useLoginMutation();
   const [verifyEmail] = useVerifyEmailMutation();
-  const [verifyPhone] = useVerifyPhoneMutation();
   const [resend] = useResendMutation();
-  const [setPhoneApi] = useSetPhoneMutation();
   const { data } = useMeQuery(undefined, { skip: !token });
   const swapping = useRef(false);
 
@@ -641,7 +876,6 @@ function Verify() {
     try {
       let user;
       if (emailCode) user = (await verifyEmail({ code: emailCode }).unwrap()).user;
-      if (phoneCode) user = (await verifyPhone({ code: phoneCode }).unwrap()).user;
       if (user) dispatch(setSession({ token: store.getState().auth.token, user }));
       if (user?.desk === 'trial' || user?.desk === 'active') nav(`/${lng}/app`);
       else setErr(t('unverified'));
@@ -651,48 +885,30 @@ function Verify() {
     setErr('');
     try {
       const res = await resend({ channel }).unwrap();
-      setCodes((prev) => ({ ...(prev || {}), [channel === 'sms' ? 'phoneCode' : 'emailCode']: res.code }));
-    } catch (error) { setErr(errText(error, t)); }
-  }
-  async function savePhone(e) {
-    e.preventDefault();
-    try {
-      const res = await setPhoneApi({ phone }).unwrap();
-      setCodes((prev) => ({ ...(prev || {}), phoneCode: res.verification?.phoneCode }));
+      setCodes((prev) => ({ ...(prev || {}), emailCode: res.code }));
     } catch (error) { setErr(errText(error, t)); }
   }
   return (
-    <AuthFrame>
-      <form className="auth card" onSubmit={confirm}>
-        <h2>{t('verifyT')}</h2>
-        <p className="lede auth-lead">{t('verifyLead')}</p>
-        {codes && (
-          <div className="codes">
+    <AuthScreen>
+      <form className={auth.form} onSubmit={confirm}>
+        <h1 className={auth.title}>{t('verifyT')}</h1>
+        <p className={auth.lead}>{t('verifyLead')}</p>
+        {codes?.emailCode && (
+          <div className={auth.codes}>
             <div>{t('localNote')}</div>
-            {codes.emailCode && <strong>{t('emailCode')} {codes.emailCode}</strong>}
-            {codes.phoneCode && <strong>{t('phoneCode')} {codes.phoneCode}</strong>}
+            <strong>{t('emailCode')} {codes.emailCode}</strong>
           </div>
         )}
-        {err && <div className="error">{err}</div>}
-        <label>{t('emailCode')}</label>
-        <input inputMode="numeric" value={emailCode} onChange={(e) => setEmailCode(e.target.value)} />
-        <label>{t('phoneCode')}</label>
-        <input inputMode="numeric" value={phoneCode} onChange={(e) => setPhoneCode(e.target.value)} />
-        <div className="row"><button className="solid" type="submit" disabled={!token || (!!loc.state?.password && data?.user?.email !== loc.state?.email)}>{t('confirm')}</button></div>
-        <div className="row">
-          <button className="tiny" type="button" onClick={() => resendChannel('email')}>{t('resendEmail')}</button>
-          <button className="tiny" type="button" onClick={() => resendChannel('sms')}>{t('resendPhone')}</button>
+        {err && <div className={auth.banner} role="alert">{err}</div>}
+        <div className={auth.field}>
+          <label htmlFor="verify-email">{t('emailCode')}</label>
+          <input id="verify-email" className={auth.input} inputMode="numeric" autoComplete="one-time-code" value={emailCode} onChange={(e) => setEmailCode(e.target.value)} />
         </div>
-        {(loc.state?.needsPhone || (data && !data.user.phone)) && (
-          <>
-            <label>{t('phone')}</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <button className="ghost" type="button" onClick={savePhone}>{t('savePhone')}</button>
-          </>
-        )}
-        <p className="muted">{data?.user?.email}</p>
+        <button className={auth.submit} type="submit" disabled={!token || (!!loc.state?.password && data?.user?.email !== loc.state?.email)}>{t('confirm')}</button>
+        <button className={auth.ghost} type="button" onClick={() => resendChannel('email')}>{t('resendEmail')}</button>
+        <p className={auth.hint}>{data?.user?.email}</p>
       </form>
-    </AuthFrame>
+    </AuthScreen>
   );
 }
 
@@ -2183,9 +2399,11 @@ function App() {
         <Route path="/:lng" element={<Guard><Landing /></Guard>} />
         <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
         <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
+        <Route path="/:lng/terms" element={<Guard><Legal page="terms" /></Guard>} />
         <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
         <Route path="/:lng/cookies" element={<Guard><Legal page="cookies" /></Guard>} />
         <Route path="/:lng/login" element={<Guard><Login /></Guard>} />
+        <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
         <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
         <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
         <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />

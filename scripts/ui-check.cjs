@@ -110,7 +110,6 @@ async function main() {
   await go('http://127.0.0.1:5173/pt-BR/register');
   const stamp = Date.now();
   const email = `ui${stamp}@tradeai.local`;
-  const phone = `+55119${String(stamp).slice(-8)}`;
   await cdp.eval(`
     const set = (el, value) => {
       const d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value');
@@ -122,7 +121,6 @@ async function main() {
     set(inputs[1], ${JSON.stringify(email)});
     set(inputs[2], 'senha-forte');
     set(inputs[3], 'senha-forte');
-    set(inputs[4], ${JSON.stringify(phone)});
     document.querySelector('button.solid').click();
   `);
   for (let i = 0; i < 30; i++) {
@@ -131,23 +129,21 @@ async function main() {
     await new Promise((r) => setTimeout(r, 200));
   }
   text = await cdp.eval('document.body.innerText');
-  check('verify mostra códigos', /Código do e-mail \d{6}/.test(text) && /Código do celular \d{6}/.test(text));
+  check('verify mostra código de e-mail', /Código do e-mail \d{6}/.test(text) && text.includes('Enviamos um código para seu e-mail'));
   for (let i = 0; i < 30; i++) {
     const ready = await cdp.eval('document.querySelector("button.solid") && !document.querySelector("button.solid").disabled');
     if (ready) break;
     await new Promise((r) => setTimeout(r, 200));
   }
   const emailCode = (text.match(/Código do e-mail (\d{6})/) || [])[1];
-  const phoneCode = (text.match(/Código do celular (\d{6})/) || [])[1];
   await cdp.eval(`(() => {
     const setNative = (el, value) => {
       const d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value');
       d.set.call(el, value);
       el.dispatchEvent(new Event('input', { bubbles: true }));
     };
-    const inputs = [...document.querySelectorAll('input')];
+    const inputs = [...document.querySelectorAll('form.auth input')];
     setNative(inputs[0], ${JSON.stringify(emailCode)});
-    setNative(inputs[1], ${JSON.stringify(phoneCode)});
     document.querySelector('button.solid').click();
   })()`);
   let onDesk = false;
