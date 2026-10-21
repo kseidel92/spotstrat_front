@@ -485,6 +485,8 @@ textarea { min-height: 90px; resize: vertical; }
 body:has(.landing) { background: #07090d; }
 
 .landing {
+  --page: 1120px;
+  --gutter: 28px;
   min-height: 100vh;
   color: #e7eef6;
   background:
@@ -504,6 +506,8 @@ body:has(.landing) { background: #07090d; }
   background: rgba(7, 9, 13, 0.78);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(160, 196, 220, 0.12);
+  padding-left: max(var(--gutter), calc((100% - var(--page)) / 2));
+  padding-right: max(var(--gutter), calc((100% - var(--page)) / 2));
 }
 .landing .brand { font-family: Outfit, sans-serif; font-weight: 650; }
 .landing .brand i {
@@ -578,9 +582,10 @@ body:has(.landing) { background: #07090d; }
   border-left: 1px solid rgba(122, 215, 255, 0.45);
 }
 .landing .path {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 10px 28px 56px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 10px max(var(--gutter), calc((100% - var(--page)) / 2)) 56px;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
   gap: 28px;
@@ -731,7 +736,8 @@ body:has(.landing) { background: #07090d; }
   outline-offset: 3px;
 }
 .trial-band {
-  max-width: 1080px;
+  width: min(var(--page, 1120px), calc(100% - 2 * var(--gutter, 28px)));
+  max-width: none;
   margin: 0 auto 28px;
   padding: 22px;
   display: grid;
@@ -888,7 +894,12 @@ body:has(.landing) { background: #07090d; }
   max-width: 14ch;
   margin: 10px 0 18px;
 }
-.landing .band { max-width: 1080px; margin: 0 auto; padding: 12px 28px 76px; }
+.landing .band {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 12px max(var(--gutter), calc((100% - var(--page)) / 2)) 76px;
+}
 .landing .band h2, .landing .vault h2 {
   font-family: Outfit, sans-serif;
   font-weight: 640;
@@ -1099,6 +1110,10 @@ body:has(.landing) { background: #07090d; }
 .auth-page .codes { background: rgba(122, 215, 255, 0.07); border-color: rgba(122, 215, 255, 0.3); color: #d7e6f4; }
 .auth-page .error { background: #3a221e; color: #ffc7be; }
 
+@media (max-width: 800px) {
+  .landing { --gutter: 16px; }
+}
+
 @media (max-width: 900px) {
   .landing .hero, .landing .preset-grid, .landing .does, .landing .stage, .landing .path, .landing .ideal, .trial-band, .chart-grid, .landing .price-grid,
   .desk .info-hero, .desk .info-steps, .desk .info-split, .desk .info-cols, .desk .info-grid { grid-template-columns: 1fr; }
@@ -1130,12 +1145,11 @@ body:has(.landing) { background: #07090d; }
   .alarm-hit, .alarm-list article { flex-direction: column; align-items: stretch; }
   .mare { flex-wrap: wrap; }
   .choice-fields input { width: 100%; max-width: 140px; }
-  .trial-band { margin-left: 16px; margin-right: 16px; }
   .landing .ideal img, .trial-band img { max-height: 420px; }
 }
 @media (max-width: 640px) {
   .landing .stage h1, .landing .hero h1 { font-size: 34px; }
-  .landing .band, .landing .stage, .landing .path, .landing .vault { padding-left: 16px; padding-right: 16px; }
+  .landing .stage, .landing .vault { padding-left: 16px; padding-right: 16px; }
   .landing .path-copy, .landing .path-text, .landing .path-visual { min-height: 0; }
   .landing .path-text { min-height: 220px; }
   .landing .path h2 { min-height: 0; }
@@ -1214,9 +1228,10 @@ body:has(.landing) { background: #07090d; }
 .production ol li { margin: 6px 0; }
 
 .landing .shield {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 8px 28px 36px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 8px max(var(--gutter), calc((100% - var(--page)) / 2)) 36px;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 16px;
@@ -1273,9 +1288,10 @@ body:has(.landing) { background: #07090d; }
 .plan-anchor { color: #d7ff6a; font-size: 16px; margin: 0 0 8px; }
 .plan-board.single { grid-template-columns: minmax(0, 560px); }
 .landing footer.site {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 36px 28px 48px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 36px max(var(--gutter), calc((100% - var(--page)) / 2)) 48px;
   border-top: 1px solid rgba(160, 196, 220, 0.16);
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr) minmax(0, 1.15fr);
@@ -1349,11 +1365,9 @@ body:has(.landing) { background: #07090d; }
 .auth-page h2 { font-size: 28px; line-height: 1.15; }
 
 @media (max-width: 900px) {
-  .landing .shield { grid-template-columns: 1fr; padding-left: 16px; padding-right: 16px; }
+  .landing .shield { grid-template-columns: 1fr; }
   .landing footer.site {
     grid-template-columns: 1fr;
-    padding-left: 16px;
-    padding-right: 16px;
     gap: 28px;
   }
   .plan-board.single, .landing .prices .price-grid { grid-template-columns: 1fr; }

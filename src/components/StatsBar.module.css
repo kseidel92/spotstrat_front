@@ -1,7 +1,7 @@
 .wrap {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 4px 28px 8px;
+  width: 100%;
+  margin: 0;
+  padding: 4px max(var(--gutter, 28px), calc((100% - var(--page, 1120px)) / 2)) 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -46,11 +46,6 @@
 }
 
 @media (max-width: 800px) {
-  .wrap {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
   .pill {
     border-radius: 16px;
   }

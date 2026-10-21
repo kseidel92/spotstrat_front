@@ -31,9 +31,9 @@
 .grid {
   position: relative;
   z-index: 2;
-  width: min(1240px, 100%);
-  margin: 0 auto;
-  padding: 72px 24px 64px;
+  width: 100%;
+  margin: 0;
+  padding: 72px max(var(--gutter, 28px), calc((100% - var(--page, 1120px)) / 2)) 64px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 36px;
@@ -140,7 +140,8 @@
   .grid {
     grid-template-columns: 1fr 1fr;
     gap: 48px;
-    padding: 80px 40px;
+    padding-top: 80px;
+    padding-bottom: 80px;
   }
 
   .title {
@@ -174,7 +175,8 @@
   }
 
   .grid {
-    padding: 48px 16px 56px;
+    padding-top: 48px;
+    padding-bottom: 56px;
   }
 
   .cta {
