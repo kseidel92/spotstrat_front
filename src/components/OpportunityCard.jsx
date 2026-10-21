@@ -1,15 +1,15 @@
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { EARLY_ACCESS } from '../stats';
+import { LIVE } from '../stats';
 import styles from './OpportunityCard.module.css';
 
 export default function OpportunityCard() {
   const { t } = useTranslation();
   const { lng } = useParams();
   const stats = [
-    [EARLY_ACCESS.production, 'statProduction'],
-    [EARLY_ACCESS.betaTraders, 'statBeta'],
-    [EARLY_ACCESS.created, 'statCreated'],
+    [LIVE.production, 'statProduction'],
+    [LIVE.activeTraders, 'statActive'],
+    [LIVE.created, 'statCreated'],
   ];
   return (
     <section className={styles.wrap} aria-labelledby="opp-title">

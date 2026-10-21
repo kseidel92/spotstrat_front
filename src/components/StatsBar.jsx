@@ -1,22 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { EARLY_ACCESS } from '../stats';
+import { LIVE } from '../stats';
 import styles from './StatsBar.module.css';
 
 export default function StatsBar() {
   const { t } = useTranslation();
+  const line = t('liveLine', {
+    production: LIVE.production,
+    active: LIVE.activeTraders,
+  });
   return (
-    <section className={styles.wrap} aria-label={t('earlyLabel')}>
+    <section className={styles.wrap} aria-label={line}>
       <p className={styles.pill}>
         <span className={styles.dot} aria-hidden="true" />
-        <strong>{t('earlyLabel')}:</strong>
-        <span>
-          {t('earlyLine', {
-            production: EARLY_ACCESS.production,
-            beta: EARLY_ACCESS.betaTraders,
-          })}
-        </span>
+        <strong>{line}</strong>
       </p>
-      <p className={styles.sub}>{t('earlySub')}</p>
     </section>
   );
 }
