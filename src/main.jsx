@@ -15,7 +15,7 @@ import {
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmSeenMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery, useManifestQuery, useSymbolsQuery, useKlinesQuery,
-  useArtifactsQuery, useLabQueryMutation, useCheckoutMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
+  useArtifactsQuery, useLabQueryMutation, useCheckoutMutation, useCancelPlanMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
   useConfigQuery,
 } from './store';
 import './styles/variables.css';
@@ -134,6 +134,7 @@ function errText(error, t) {
     trial_expired: t('expired'),
     unverified: t('unverified'),
     stripe_off: t('payOff'),
+    nothing_to_cancel: t('cancelOnlyPaid'),
     google_off: t('errGoogleOff'),
     upstream_fail: t('errUpstream'),
   };
@@ -415,6 +416,7 @@ function Landing() {
           <p className="lede">{t('trialB')}</p>
           <Link className="solid free" to={`/${lng}/register`} aria-label={t('finalCta')}>{t('finalCta')}</Link>
           <p className="mono dim">{t('freeNote')}</p>
+          <p>{t('cancelHome')}</p>
         </div>
       </section>
       <SiteFooter />
@@ -2041,12 +2043,14 @@ function Account() {
   const user = data?.user;
   const [patch, { isLoading }] = usePatchMeMutation();
   const [remove] = useDeleteMeMutation();
+  const [cancelPlan, { isLoading: canceling }] = useCancelPlanMutation();
   const dispatch = useDispatch();
   const { lng } = useParams();
   const nav = useNavigate();
   const [name, setName] = useState('');
   const [ready, setReady] = useState(false);
   const [msg, setMsg] = useState('');
+  const [cancelErr, setCancelErr] = useState('');
   useEffect(() => {
     if (!user || ready) return;
     setName(user.name || '');
@@ -2060,13 +2064,25 @@ function Account() {
     setMsg(t('save'));
   }
   const ends = user?.accessEndsAt || user?.trialEndsAt;
+  const cancelPending = user?.refundStatus === 'pending';
+  const paidOpen = user?.planStatus === 'active' && (user?.desk === 'paper' || user?.desk === 'pro');
+  async function requestCancel() {
+    if (!confirm(t('cancelConfirm'))) return;
+    setCancelErr('');
+    try {
+      const res = await cancelPlan().unwrap();
+      dispatch(setSession({ token: store.getState().auth.token, user: res.user }));
+    } catch (error) {
+      setCancelErr(errText(error, t));
+    }
+  }
   return (
     <div className="wrap account-page">
       <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('account')}</h2>
       <p>{user?.email}</p>
       <p className="plan-chip">{statusLabel(user, t)} · {t('accessUntil')} {ends ? new Date(ends).toLocaleString() : '—'} · {user?.daysLeft === 1 ? t('dayLeft') : t('daysLeft', { n: user?.daysLeft || 0 })}</p>
       {user?.expiring && <div className="warn">{t('expiring', { n: user.daysLeft })}</div>}
-      {user?.desk === 'expired' && <div className="error">{t('expired')}</div>}
+      {user?.desk === 'expired' && !cancelPending && <div className="error">{t('expired')}</div>}
       <form className="panel" onSubmit={save}>
         <label>{t('name')}</label>
         <input value={name} onChange={(e) => setName(e.target.value)} />
@@ -2078,6 +2094,18 @@ function Account() {
         <p>{t('payOff')}</p>
         <p className="muted">{t('paySim')}</p>
         <PlanPicker />
+      </article>
+      <article className="panel" style={{ marginTop: 12 }}>
+        <h3>{t('cancelTitle')}</h3>
+        <p>{t('cancelPolicy')}</p>
+        {cancelPending ? <p className="ok">{t('cancelRequested')}</p> : paidOpen ? (
+          <button className="danger" type="button" disabled={canceling} onClick={requestCancel}>
+            {canceling ? t('canceling') : t('cancelCta')}
+          </button>
+        ) : (
+          <p className="muted">{t('cancelOnlyPaid')}</p>
+        )}
+        {cancelErr && <div className="error">{cancelErr}</div>}
       </article>
       <div className="row">
         <button className="danger" type="button" onClick={async () => {
@@ -2125,6 +2153,7 @@ function Checkout() {
     <div className="wrap" style={{ maxWidth: 560 }}>
       <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('checkoutT')}</h2>
       <p className="warn">{t('paySim')}</p>
+      <p>{t('cancelPolicy')}</p>
       <p>{tier === 'pro' ? t('planPro') : t('planPaper')} · {label}</p>
       {quote && <p className="price-num">{localMoney(lng, quote.total)}</p>}
       <form className="panel" onSubmit={submit}>
@@ -2358,6 +2387,7 @@ function Prices() {
         <div className="price-split">
           <p><strong>{t('planIncludedLead')}</strong> {t('planIncludedBody')}</p>
           <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
+          <p><strong>{t('cancelTitle')}</strong> {t('cancelPolicy')}</p>
         </div>
         <div className="price-grid">
           {plans.map((plan) => (

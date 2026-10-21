@@ -60,7 +60,7 @@ const pt = {
   },
   terms: {
     title: 'Termos de Uso',
-    updated: 'Última atualização: 20 de outubro de 2026',
+    updated: 'Última atualização: 21 de outubro de 2026',
     sections: [
       {
         h: '1. O serviço',
@@ -77,7 +77,8 @@ const pt = {
       {
         h: '3. Assinatura',
         p: [
-          'Há um plano, o Desk Completo. O preço, a moeda e o período aparecem na tela de preços antes da cobrança. Você cancela quando quiser, direto no painel, sem multa.',
+          'Há um plano, o Desk Completo. O preço, a moeda e o período aparecem na tela de preços antes da cobrança.',
+          'Você cancela quando quiser, direto no painel da conta. Devolvemos o dinheiro proporcional aos dias que ainda faltam no período pago. Não há multa e não há taxa. O reembolso não sai no instante do clique: o cancelamento fica solicitado e o valor dos dias restantes é enviado em breve.',
         ],
       },
       {
@@ -196,7 +197,7 @@ const en = {
   },
   terms: {
     title: 'Terms of Use',
-    updated: 'Last updated: October 20, 2026',
+    updated: 'Last updated: October 21, 2026',
     sections: [
       {
         h: '1. The service',
@@ -213,7 +214,8 @@ const en = {
       {
         h: '3. Subscription',
         p: [
-          'There is one plan, the Full Desk. Price, currency and period are shown on the pricing page before you are charged. You can cancel anytime in the account panel, with no penalty.',
+          'There is one plan, the Full Desk. Price, currency and period are shown on the pricing page before you are charged.',
+          'You can cancel anytime in the account panel. We refund the money for the days still left in the paid period. There is no penalty and no fee. The refund does not leave the moment you click: the cancellation is requested, and the amount for the remaining days is sent soon.',
         ],
       },
       {
@@ -287,11 +289,11 @@ const es = {
   },
   terms: {
     title: 'Términos de Uso',
-    updated: 'Última actualización: 20 de octubre de 2026',
+    updated: 'Última actualización: 21 de octubre de 2026',
     sections: [
       { h: '1. El servicio', p: ['Spotstrat sirve para describir estrategias en lenguaje natural, simularlas con velas de Binance y, si quieres, generar una versión de producción que corre en tu máquina.'] },
       { h: '2. Cuenta y día gratis', p: ['El registro pide nombre, correo, contraseña y teléfono. Al confirmar el código del correo, liberas 1 día gratis. No pedimos tarjeta para empezar.'] },
-      { h: '3. Suscripción', p: ['Hay un plan, el Desk Completo. El precio, la moneda y el período aparecen en la pantalla de precios antes del cobro. Cancelas cuando quieras, en el panel, sin multa.'] },
+      { h: '3. Suscripción', p: ['Hay un plan, el Desk Completo. El precio, la moneda y el período aparecen en la pantalla de precios antes del cobro.', 'Cancelas cuando quieras, en el panel de la cuenta. Devolvemos el dinero proporcional a los días que aún faltan del período pagado. No hay multa ni tarifa. El reembolso no sale en el instante del clic: la cancelación queda solicitada y el valor de los días restantes se envía pronto.'] },
       { h: '4. Credenciales de Binance', p: ['Spotstrat no recoge, no guarda y no accede a tus claves de API. La producción corre en tu máquina, sin intermediario.'] },
       { h: '5. Pago', p: ['El cobro lo hacen procesadores de pago. Spotstrat no guarda el número de la tarjeta.'] },
       { h: '6. Riesgo', p: ['Operar criptomonedas puede hacer perder dinero. Los resultados pasados, también en el simulador, no garantizan resultados futuros. El simulador no es el motor de la exchange. Spotstrat no es asesoría de inversión y no responde por pérdidas financieras.'] },
@@ -326,11 +328,11 @@ const fr = {
   },
   terms: {
     title: 'Conditions d’utilisation',
-    updated: 'Dernière mise à jour : 20 octobre 2026',
+    updated: 'Dernière mise à jour : 21 octobre 2026',
     sections: [
       { h: '1. Le service', p: ['Spotstrat sert à décrire une stratégie en langage clair, à la simuler sur les bougies Binance et, si vous le voulez, à produire une version qui tourne sur votre machine.'] },
       { h: '2. Compte et jour gratuit', p: ['L’inscription demande le nom, l’e-mail, le mot de passe et le téléphone. Après le code envoyé par e-mail, vous avez 1 jour gratuit. Pas de carte pour commencer.'] },
-      { h: '3. Abonnement', p: ['Un seul plan, le Desk complet. Le prix, la devise et la durée sont affichés avant le paiement. Vous résiliez quand vous voulez, dans le compte, sans pénalité.'] },
+      { h: '3. Abonnement', p: ['Un seul plan, le Desk complet. Le prix, la devise et la durée sont affichés avant le paiement.', 'Vous résiliez quand vous voulez, dans le compte. Nous remboursons la part des jours qui restent sur la période payée. Il n’y a ni pénalité ni frais. Le remboursement ne part pas à l’instant du clic : la résiliation est demandée et le montant des jours restants est envoyé bientôt.'] },
       { h: '4. Identifiants Binance', p: ['Spotstrat ne collecte pas, ne stocke pas et n’accède pas à vos clés d’API. La production tourne sur votre machine, sans intermédiaire.'] },
       { h: '5. Paiement', p: ['L’abonnement est encaissé par des prestataires de paiement. Spotstrat ne stocke pas le numéro de carte.'] },
       { h: '6. Risque', p: ['Trader des cryptomonnaies peut faire perdre de l’argent. Les résultats passés, y compris dans le simulateur, ne garantissent rien. Le simulateur n’est pas le moteur de l’exchange. Spotstrat n’est pas un conseil en investissement et n’est pas responsable des pertes.'] },
@@ -365,11 +367,11 @@ const de = {
   },
   terms: {
     title: 'Nutzungsbedingungen',
-    updated: 'Zuletzt aktualisiert: 20. Oktober 2026',
+    updated: 'Zuletzt aktualisiert: 21. Oktober 2026',
     sections: [
       { h: '1. Der Dienst', p: ['Spotstrat beschreibt Strategien in Alltagssprache, simuliert sie an Binance-Kerzen und kann eine Produktionsversion erzeugen, die auf Ihrem Rechner läuft.'] },
       { h: '2. Konto und Gratistag', p: ['Die Anmeldung fragt Name, E-Mail, Passwort und Telefon. Nach dem Code an Ihre E-Mail ist 1 Tag frei. Zum Start keine Karte.'] },
-      { h: '3. Abo', p: ['Es gibt einen Plan, das komplette Desk. Preis, Währung und Laufzeit stehen auf der Preisseite vor der Zahlung. Sie kündigen jederzeit im Konto, ohne Strafe.'] },
+      { h: '3. Abo', p: ['Es gibt einen Plan, das komplette Desk. Preis, Währung und Laufzeit stehen auf der Preisseite vor der Zahlung.', 'Sie kündigen jederzeit im Konto. Wir erstatten den Anteil der Tage, die im bezahlten Zeitraum noch fehlen. Es gibt keine Strafe und keine Gebühr. Die Erstattung geht nicht im Moment des Klicks raus: die Kündigung wird beantragt und der Betrag der restlichen Tage wird in Kürze gesendet.'] },
       { h: '4. Binance-Zugangsdaten', p: ['Spotstrat erhebt, speichert und sieht Ihre API-Schlüssel nicht. Die Produktion läuft auf Ihrem Rechner, ohne Mittler.'] },
       { h: '5. Zahlung', p: ['Das Abo ziehen Zahlungsdienstleister ein. Spotstrat speichert die Kartennummer nicht.'] },
       { h: '6. Risiko', p: ['Der Handel mit Kryptowährungen kann Geld verlieren. Frühere Ergebnisse, auch in der Simulation, sind keine Garantie. Der Simulator ist nicht die Matching Engine der Börse. Spotstrat ist keine Anlageberatung und haftet nicht für finanzielle Verluste.'] },
@@ -404,11 +406,11 @@ const ja = {
   },
   terms: {
     title: '利用規約',
-    updated: '最終更新: 2026年10月20日',
+    updated: '最終更新: 2026年10月21日',
     sections: [
       { h: '1. サービス', p: ['Spotstratは、普通の言葉で戦略を書き、Binanceのローソクで試し、必要ならあなたのマシンで動く本番版を作るためのサービスです。'] },
       { h: '2. 口座と無料の1日', p: ['登録は名前、メール、パスワード、電話です。メールのコードを確認すると無料の1日が開きます。開始にカードは不要です。'] },
-      { h: '3. プラン', p: ['プランはフルデスクの一つです。価格、通貨、期間は請求の前に価格画面で示します。解約はパネルからいつでもでき、違約金はありません。'] },
+      { h: '3. プラン', p: ['プランはフルデスクの一つです。価格、通貨、期間は請求の前に価格画面で示します。', '解約はアカウントのパネルからいつでもできます。支払済みの期間のうち、残っている日数に応じた金額を返します。違約金も手数料もありません。クリックした瞬間に返金は出ません。解約を受け付け、残りの日数分をまもなく送ります。'] },
       { h: '4. Binanceの認証情報', p: ['SpotstratはAPIキーを集めず、保存せず、見ません。本番はあなたのマシンで、仲介なしに動きます。'] },
       { h: '5. 支払い', p: ['料金は決済事業者が処理します。Spotstratはカード番号を保存しません。'] },
       { h: '6. リスク', p: ['暗号資産の取引は損失を出すことがあります。シミュレーターを含む過去の結果は将来を保証しません。シミュレーターは取引所の約定エンジンではありません。Spotstratは投資助言ではなく、金銭的損失の責任を負いません。'] },
