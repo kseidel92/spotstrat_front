@@ -176,7 +176,7 @@ function SiteFooter() {
         <Link to={`/${lng}/cookies`} onClick={open(`/${lng}/cookies`)}>{t('footerCookies')}</Link>
       </nav>
       <div className="foot-contact">
-        <a href="mailto:suporte@spotstrat.com">{t('footerMail')}</a>
+        <a href="mailto:support@spotstrat.com">{t('footerMail')}</a>
         <p className="risk">{t('footerRisk')}</p>
       </div>
     </footer>
@@ -566,7 +566,12 @@ function AuthScreen({ children, social = false }) {
         <div className={auth.center}>
           <Link className={auth.logo} to={`/${lng}`} aria-label="SpotStrat"><i />SpotStrat</Link>
           <div className={auth.card}>
-            {social && <div className={auth.social}><GoogleEntry /></div>}
+            {social && (
+              <>
+                <div className={auth.social}><GoogleEntry /></div>
+                <p className={auth.or}><span>{t('authOr')}</span></p>
+              </>
+            )}
             {children}
           </div>
         </div>
@@ -1333,7 +1338,7 @@ function DeskHome() {
   const [variants, setVariants] = useState(false);
   const [wallet, setWallet] = useState('1000');
   const [mareMode, setMareMode] = useState('any');
-  const [channels, setChannels] = useState({ sound: true, email: false, sms: false });
+  const [channels, setChannels] = useState({ sound: true, email: false });
   const [prompt, setPrompt] = useState('');
   const [compose, setCompose] = useState('guide');
   const [threadId, setThreadId] = useState(null);
@@ -1562,10 +1567,6 @@ function DeskHome() {
               <input type="checkbox" checked={channels.email} onChange={(e) => setChannels({ ...channels, email: e.target.checked })} />
               <span>{t('chEmail')}</span>
             </label>
-            <label className={channels.sms ? 'on' : ''}>
-              <input type="checkbox" checked={channels.sms} onChange={(e) => setChannels({ ...channels, sms: e.target.checked })} />
-              <span>{t('chSms')}</span>
-            </label>
             <p className="muted">{t('chHint')}</p>
           </fieldset>
         )}
@@ -1621,8 +1622,8 @@ function DeskHome() {
               <strong>{hit.symbol}</strong>
               <span className="muted"> · {hit.name}</span>
               <p>{t('thEntry')} {px(hit.price)} · {t('resStop')} {px(hit.stop)} ({Number(hit.stopPct).toFixed(2)}%) · {t('resTarget')} {px(hit.tp)} ({Number(hit.tpPct).toFixed(2)}%)</p>
-              {(hit.deliveries || []).filter((item) => item.channel !== 'sound').map((item) => (
-                <p className="muted" key={item.channel}>{item.channel === 'email' ? t('chEmail') : t('chSms')} · {item.to || '—'} · {item.status === 'sent' ? 'ok' : t('chHint')}</p>
+              {(hit.deliveries || []).filter((item) => item.channel === 'email').map((item) => (
+                <p className="muted" key={item.channel}>{t('chEmail')} · {item.to || '—'} · {item.status === 'sent' ? 'ok' : t('chHint')}</p>
               ))}
             </div>
             <button className="tiny" type="button" onClick={() => alarmSeen(hit.id)}>{t('alarmSeen')}</button>
@@ -1638,9 +1639,8 @@ function DeskHome() {
                 <span className="muted">{t('resStop')} {alarm.stopPct}% · {t('resTarget')} {alarm.tpPct}%</span>
               </div>
               <div className="actions">
-                <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { alarmChannels({ id: alarm.id, channels: { ...(alarm.channels || {}), sound: e.target.checked } }); if (e.target.checked) armAudio(); }} /> {t('chSound')}</label>
-                <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => alarmChannels({ id: alarm.id, channels: { sound: alarm.channels?.sound !== false, email: e.target.checked, sms: !!alarm.channels?.sms } })} /> {t('chEmail')}</label>
-                <label className="check"><input type="checkbox" checked={!!alarm.channels?.sms} onChange={(e) => alarmChannels({ id: alarm.id, channels: { sound: alarm.channels?.sound !== false, email: !!alarm.channels?.email, sms: e.target.checked } })} /> {t('chSms')}</label>
+                <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { alarmChannels({ id: alarm.id, channels: { sound: e.target.checked, email: !!alarm.channels?.email } }); if (e.target.checked) armAudio(); }} /> {t('chSound')}</label>
+                <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => alarmChannels({ id: alarm.id, channels: { sound: alarm.channels?.sound !== false, email: e.target.checked } })} /> {t('chEmail')}</label>
                 {alarm.status === 'armed'
                   ? <button className="tiny" type="button" onClick={() => alarmPause(alarm.id)}>{t('alarmPause')}</button>
                   : <button className="tiny" type="button" onClick={() => alarmArm(alarm.id)}>{t('alarmArm')}</button>}

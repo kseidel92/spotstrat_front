@@ -118,7 +118,27 @@
   box-shadow: 0 0 40px rgba(6, 182, 212, 0.1);
 }
 
-.social { margin-bottom: 8px; }
+.social { margin-bottom: 0; }
+
+.or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 18px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.or::before,
+.or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
 
 .social :global(.google-box) {
   max-width: none;

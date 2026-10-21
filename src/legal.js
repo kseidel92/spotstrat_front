@@ -6,7 +6,7 @@ const pt = {
       {
         h: '1. Quem é o controlador',
         p: [
-          'O controlador dos seus dados é o Spotstrat. Para questões de privacidade, o Encarregado de Dados (DPO) pode ser contatado pelo e-mail privacidade@spotstrat.com.',
+          'O controlador dos seus dados é o Spotstrat. Para questões de privacidade, o Encarregado de Dados (DPO) pode ser contatado pelo e-mail support@spotstrat.com.',
         ],
       },
       {
@@ -29,7 +29,7 @@ const pt = {
         h: '4. Seus direitos (LGPD)',
         p: [
           'Você pode, a qualquer momento, pedir confirmação da existência de tratamento e acesso aos dados, correção de dados incompletos ou desatualizados, eliminação dos dados (exceto os que a lei exige manter) e revogação do consentimento.',
-          'Para exercer esses direitos, envie um e-mail para privacidade@spotstrat.com.',
+          'Para exercer esses direitos, envie um e-mail para support@spotstrat.com.',
         ],
       },
       {
@@ -108,7 +108,7 @@ const pt = {
       {
         h: '8. Contato',
         p: [
-          'Dúvidas sobre estes termos: suporte@spotstrat.com. Questões de privacidade: privacidade@spotstrat.com.',
+          'Dúvidas sobre estes termos ou sobre privacidade: support@spotstrat.com.',
         ],
       },
     ],
@@ -128,7 +128,7 @@ const pt = {
         h: 'Como gerenciar',
         p: [
           'Você pode bloquear ou apagar cookies no navegador. Se bloquear os essenciais, será preciso entrar de novo a cada visita.',
-          'Dúvidas: privacidade@spotstrat.com.',
+          'Dúvidas: support@spotstrat.com.',
         ],
       },
     ],
@@ -143,7 +143,7 @@ const en = {
       {
         h: '1. Who is the controller',
         p: [
-          'The controller of your data is Spotstrat. For privacy questions, the data protection officer can be reached at privacidade@spotstrat.com.',
+          'The controller of your data is Spotstrat. For privacy questions, the data protection officer can be reached at support@spotstrat.com.',
         ],
       },
       {
@@ -166,7 +166,7 @@ const en = {
         h: '4. Your rights',
         p: [
           'You may ask for confirmation that we process your data and for access to it, correction of incomplete or outdated data, deletion (except what the law requires us to keep) and withdrawal of consent.',
-          'To use these rights, email privacidade@spotstrat.com.',
+          'To use these rights, email support@spotstrat.com.',
         ],
       },
       {
@@ -245,7 +245,7 @@ const en = {
       {
         h: '8. Contact',
         p: [
-          'Questions about these terms: suporte@spotstrat.com. Privacy questions: privacidade@spotstrat.com.',
+          'Questions about these terms or about privacy: support@spotstrat.com.',
         ],
       },
     ],
@@ -265,7 +265,7 @@ const en = {
         h: 'How to manage them',
         p: [
           'You can block or delete cookies in the browser. If you block the essential ones, you will need to sign in again on each visit.',
-          'Questions: privacidade@spotstrat.com.',
+          'Questions: support@spotstrat.com.',
         ],
       },
     ],
@@ -277,10 +277,10 @@ const es = {
     title: 'Política de Privacidad',
     updated: 'Última actualización: 20 de octubre de 2026',
     sections: [
-      { h: '1. Quién es el responsable', p: ['El responsable de tus datos es Spotstrat. Para privacidad, el encargado puede escribirse a privacidade@spotstrat.com.'] },
+      { h: '1. Quién es el responsable', p: ['El responsable de tus datos es Spotstrat. Para privacidad, el encargado puede escribirse a support@spotstrat.com.'] },
       { h: '2. Qué datos recogemos y por qué', p: ['Recogemos solo lo necesario para operar el servicio.', 'Datos de cuenta: nombre, correo y teléfono. Sirven para crear la cuenta, confirmar la identidad y liberar la prueba gratis.', 'Datos de uso: estrategias creadas, registros de acceso e interacciones con la IA. Sirven para mejorar el producto y cuidar la seguridad.', 'Datos de pago: los procesan terceros especializados. Spotstrat no guarda números de tarjeta.', 'Credenciales de Binance: Spotstrat no las recoge, no las guarda y no tiene acceso a tus claves de API. La ejecución en producción ocurre solo en tu máquina.'] },
       { h: '3. Con quién compartimos', p: ['No vendemos tus datos. Los compartimos solo con proveedores de infraestructura, con procesadores de pago y con autoridades cuando la ley lo exige.'] },
-      { h: '4. Tus derechos', p: ['Puedes pedir confirmación y acceso, corrección, eliminación (salvo lo que la ley obliga a conservar) y revocación del consentimiento.', 'Escríbenos a privacidade@spotstrat.com.'] },
+      { h: '4. Tus derechos', p: ['Puedes pedir confirmación y acceso, corrección, eliminación (salvo lo que la ley obliga a conservar) y revocación del consentimiento.', 'Escríbenos a support@spotstrat.com.'] },
       { h: '5. Seguridad', p: ['Usamos medidas técnicas y organizativas, incluido el cifrado en tránsito y el acceso restringido. Ningún sistema es infalible.'] },
       { h: '6. Conservación', p: ['Conservamos los datos mientras la cuenta esté activa. Tras la cancelación, los eliminamos en un plazo de 30 días, salvo obligación legal, como registros fiscales.'] },
       { h: '7. Cookies', p: ['Usamos cookies esenciales para mantener la sesión y el idioma, y cookies analíticas, si existen, para entender el uso del sitio. El detalle está en la Política de Cookies.'] },
@@ -298,7 +298,7 @@ const es = {
       { h: '5. Pago', p: ['El cobro lo hacen procesadores de pago. Spotstrat no guarda el número de la tarjeta.'] },
       { h: '6. Riesgo', p: ['Operar criptomonedas puede hacer perder dinero. Los resultados pasados, también en el simulador, no garantizan resultados futuros. El simulador no es el motor de la exchange. Spotstrat no es asesoría de inversión y no responde por pérdidas financieras.'] },
       { h: '7. Uso aceptable', p: ['La cuenta es tuya. No revendas el acceso, no intentes entrar al servicio sin permiso y no uses la plataforma para fraude.'] },
-      { h: '8. Contacto', p: ['Dudas de estos términos: suporte@spotstrat.com. Privacidad: privacidade@spotstrat.com.'] },
+      { h: '8. Contacto', p: ['Dudas de estos términos o de privacidad: support@spotstrat.com.'] },
     ],
   },
   cookies: {
@@ -306,7 +306,7 @@ const es = {
     updated: 'Última actualización: 20 de octubre de 2026',
     sections: [
       { h: 'Qué usamos', p: ['Las cookies esenciales mantienen la sesión y el idioma. Sin ellas, el acceso deja de funcionar.', 'Las analíticas, si existen, solo sirven para entender el uso del sitio. No vendemos datos de cookies.'] },
-      { h: 'Cómo gestionarlas', p: ['Puedes bloquearlas o borrarlas en el navegador. Si bloqueas las esenciales, tendrás que entrar de nuevo en cada visita.', 'Dudas: privacidade@spotstrat.com.'] },
+      { h: 'Cómo gestionarlas', p: ['Puedes bloquearlas o borrarlas en el navegador. Si bloqueas las esenciales, tendrás que entrar de nuevo en cada visita.', 'Dudas: support@spotstrat.com.'] },
     ],
   },
 };
@@ -316,10 +316,10 @@ const fr = {
     title: 'Politique de confidentialité',
     updated: 'Dernière mise à jour : 20 octobre 2026',
     sections: [
-      { h: '1. Responsable', p: ['Le responsable de vos données est Spotstrat. Pour la confidentialité, écrivez à privacidade@spotstrat.com.'] },
+      { h: '1. Responsable', p: ['Le responsable de vos données est Spotstrat. Pour la confidentialité, écrivez à support@spotstrat.com.'] },
       { h: '2. Données collectées', p: ['Nous ne collectons que le nécessaire.', 'Compte : nom, e-mail et téléphone, pour créer le compte, confirmer l’identité et ouvrir l’essai gratuit.', 'Usage : stratégies, journaux d’accès et échanges avec l’IA, pour améliorer le produit et la sécurité.', 'Paiement : traité par des tiers. Spotstrat ne stocke pas les numéros de carte.', 'Identifiants Binance : Spotstrat ne les collecte pas, ne les stocke pas et n’y a pas accès. La production tourne uniquement sur votre machine.'] },
       { h: '3. Partage', p: ['Nous ne vendons pas vos données. Nous les partageons seulement avec l’hébergement, le paiement et les autorités si la loi l’exige.'] },
-      { h: '4. Vos droits', p: ['Vous pouvez demander l’accès, la correction, l’effacement (sauf obligation légale) et le retrait du consentement.', 'Écrivez à privacidade@spotstrat.com.'] },
+      { h: '4. Vos droits', p: ['Vous pouvez demander l’accès, la correction, l’effacement (sauf obligation légale) et le retrait du consentement.', 'Écrivez à support@spotstrat.com.'] },
       { h: '5. Sécurité', p: ['Nous protégeons les données par des mesures techniques et organisationnelles, dont le chiffrement en transit et des accès restreints.'] },
       { h: '6. Conservation', p: ['Nous gardons les données tant que le compte est actif. Après résiliation, nous les supprimons sous 30 jours, sauf obligation légale.'] },
       { h: '7. Cookies', p: ['Des cookies essentiels maintiennent la session et la langue. Les cookies d’analyse, s’ils existent, servent à comprendre l’usage du site. Le détail est dans la politique cookies.'] },
@@ -337,7 +337,7 @@ const fr = {
       { h: '5. Paiement', p: ['L’abonnement est encaissé par des prestataires de paiement. Spotstrat ne stocke pas le numéro de carte.'] },
       { h: '6. Risque', p: ['Trader des cryptomonnaies peut faire perdre de l’argent. Les résultats passés, y compris dans le simulateur, ne garantissent rien. Le simulateur n’est pas le moteur de l’exchange. Spotstrat n’est pas un conseil en investissement et n’est pas responsable des pertes.'] },
       { h: '7. Usage acceptable', p: ['Le compte est le vôtre. Ne revendez pas l’accès, n’essayez pas d’entrer dans le service sans droit, et n’utilisez pas la plateforme pour une fraude.'] },
-      { h: '8. Contact', p: ['Questions sur ces conditions : suporte@spotstrat.com. Confidentialité : privacidade@spotstrat.com.'] },
+      { h: '8. Contact', p: ['Questions sur ces conditions ou sur la confidentialité : support@spotstrat.com.'] },
     ],
   },
   cookies: {
@@ -345,7 +345,7 @@ const fr = {
     updated: 'Dernière mise à jour : 20 octobre 2026',
     sections: [
       { h: 'Ce que nous utilisons', p: ['Les cookies essentiels gardent la session et la langue. Sans eux, la connexion ne tient pas.', 'Les cookies d’analyse, s’ils existent, servent seulement à comprendre l’usage. Nous ne vendons pas ces données.'] },
-      { h: 'Comment les gérer', p: ['Vous pouvez les bloquer ou les effacer dans le navigateur. Si vous bloquez les essentiels, il faudra vous reconnecter à chaque visite.', 'Questions : privacidade@spotstrat.com.'] },
+      { h: 'Comment les gérer', p: ['Vous pouvez les bloquer ou les effacer dans le navigateur. Si vous bloquez les essentiels, il faudra vous reconnecter à chaque visite.', 'Questions : support@spotstrat.com.'] },
     ],
   },
 };
@@ -355,10 +355,10 @@ const de = {
     title: 'Datenschutzerklärung',
     updated: 'Zuletzt aktualisiert: 20. Oktober 2026',
     sections: [
-      { h: '1. Verantwortlicher', p: ['Verantwortlicher für Ihre Daten ist Spotstrat. Datenschutzfragen gehen an privacidade@spotstrat.com.'] },
+      { h: '1. Verantwortlicher', p: ['Verantwortlicher für Ihre Daten ist Spotstrat. Datenschutzfragen gehen an support@spotstrat.com.'] },
       { h: '2. Welche Daten und warum', p: ['Wir erheben nur, was der Dienst braucht.', 'Konto: Name, E-Mail und Telefon, um das Konto anzulegen, die Identität zu bestätigen und den Gratistag freizuschalten.', 'Nutzung: Strategien, Zugriffsprotokolle und Gespräche mit der KI, um das Produkt und die Sicherheit zu verbessern.', 'Zahlung: über spezialisierte Dritte. Spotstrat speichert keine Kartennummern.', 'Binance-Zugangsdaten: Spotstrat erhebt sie nicht, speichert sie nicht und hat keinen Zugriff. Die Produktion läuft nur auf Ihrem Rechner.'] },
       { h: '3. Weitergabe', p: ['Wir verkaufen keine Daten. Weitergabe nur an Hosting, Zahlungsdienstleister und Behörden, wenn das Gesetz es verlangt.'] },
-      { h: '4. Ihre Rechte', p: ['Sie können Auskunft, Berichtigung, Löschung (soweit keine Pflicht zur Aufbewahrung besteht) und Widerruf der Einwilligung verlangen.', 'Schreiben Sie an privacidade@spotstrat.com.'] },
+      { h: '4. Ihre Rechte', p: ['Sie können Auskunft, Berichtigung, Löschung (soweit keine Pflicht zur Aufbewahrung besteht) und Widerruf der Einwilligung verlangen.', 'Schreiben Sie an support@spotstrat.com.'] },
       { h: '5. Sicherheit', p: ['Wir schützen Daten mit technischen und organisatorischen Maßnahmen, einschließlich Verschlüsselung auf dem Transportweg und eingeschränktem Zugriff.'] },
       { h: '6. Speicherdauer', p: ['Wir speichern die Daten, solange das Konto aktiv ist. Nach der Kündigung löschen wir sie innerhalb von 30 Tagen, außer bei gesetzlicher Pflicht, etwa Steuerunterlagen.'] },
       { h: '7. Cookies', p: ['Essenzielle Cookies halten die Sitzung und die Sprache. Analyse-Cookies, falls vorhanden, zeigen nur, wie die Seite genutzt wird. Einzelheiten stehen in der Cookie-Richtlinie.'] },
@@ -376,7 +376,7 @@ const de = {
       { h: '5. Zahlung', p: ['Das Abo ziehen Zahlungsdienstleister ein. Spotstrat speichert die Kartennummer nicht.'] },
       { h: '6. Risiko', p: ['Der Handel mit Kryptowährungen kann Geld verlieren. Frühere Ergebnisse, auch in der Simulation, sind keine Garantie. Der Simulator ist nicht die Matching Engine der Börse. Spotstrat ist keine Anlageberatung und haftet nicht für finanzielle Verluste.'] },
       { h: '7. Zulässige Nutzung', p: ['Das Konto gehört Ihnen. Verkaufen Sie den Zugang nicht weiter, greifen Sie den Dienst nicht an und nutzen Sie ihn nicht für Betrug.'] },
-      { h: '8. Kontakt', p: ['Fragen zu diesen Bedingungen: suporte@spotstrat.com. Datenschutz: privacidade@spotstrat.com.'] },
+      { h: '8. Kontakt', p: ['Fragen zu diesen Bedingungen oder zum Datenschutz: support@spotstrat.com.'] },
     ],
   },
   cookies: {
@@ -384,7 +384,7 @@ const de = {
     updated: 'Zuletzt aktualisiert: 20. Oktober 2026',
     sections: [
       { h: 'Was wir nutzen', p: ['Essenzielle Cookies halten Sitzung und Sprache. Ohne sie funktioniert die Anmeldung nicht.', 'Analyse-Cookies, falls vorhanden, dienen nur dem Verständnis der Nutzung. Wir verkaufen diese Daten nicht.'] },
-      { h: 'Verwaltung', p: ['Sie können Cookies im Browser blockieren oder löschen. Ohne die essenziellen müssen Sie sich bei jedem Besuch neu anmelden.', 'Fragen: privacidade@spotstrat.com.'] },
+      { h: 'Verwaltung', p: ['Sie können Cookies im Browser blockieren oder löschen. Ohne die essenziellen müssen Sie sich bei jedem Besuch neu anmelden.', 'Fragen: support@spotstrat.com.'] },
     ],
   },
 };
@@ -394,10 +394,10 @@ const ja = {
     title: 'プライバシーポリシー',
     updated: '最終更新: 2026年10月20日',
     sections: [
-      { h: '1. 管理者', p: ['データの管理者はSpotstratです。プライバシーの問い合わせは privacidade@spotstrat.com まで。'] },
+      { h: '1. 管理者', p: ['データの管理者はSpotstratです。プライバシーの問い合わせは support@spotstrat.com まで。'] },
       { h: '2. 集めるデータと理由', p: ['サービスの運営に必要なものだけを集めます。', '口座: 名前、メール、電話。口座の作成、本人確認、無料日の開放に使います。', '利用状況: 作った戦略、アクセス記録、AIとのやり取り。製品の改善と安全のためです。', '支払い: 専門の第三者に処理させます。Spotstratはカード番号を保存しません。', 'Binanceの認証情報: SpotstratはAPIキーを集めず、保存せず、アクセスしません。本番の実行はあなたのマシンだけで行われます。'] },
       { h: '3. 共有', p: ['データは売りません。共有先はホスティング、決済事業者、法律が求める当局だけです。'] },
-      { h: '4. あなたの権利', p: ['開示、訂正、削除（法令で残すものを除く）、同意の撤回を求められます。', 'privacidade@spotstrat.com に連絡してください。'] },
+      { h: '4. あなたの権利', p: ['開示、訂正、削除（法令で残すものを除く）、同意の撤回を求められます。', 'support@spotstrat.com に連絡してください。'] },
       { h: '5. 安全', p: ['通信の暗号化とアクセス制限を含む技術上・組織上の対策を取っています。'] },
       { h: '6. 保管', p: ['口座が有効な間、データを保管します。解約後は30日以内に削除します。税務記録など法令で残すものは除きます。'] },
       { h: '7. Cookie', p: ['必須Cookieはログインと言語を保ちます。分析Cookieがある場合は、サイトの使われ方を知るためだけです。詳細はCookieポリシーにあります。'] },
@@ -415,7 +415,7 @@ const ja = {
       { h: '5. 支払い', p: ['料金は決済事業者が処理します。Spotstratはカード番号を保存しません。'] },
       { h: '6. リスク', p: ['暗号資産の取引は損失を出すことがあります。シミュレーターを含む過去の結果は将来を保証しません。シミュレーターは取引所の約定エンジンではありません。Spotstratは投資助言ではなく、金銭的損失の責任を負いません。'] },
       { h: '7. 利用の範囲', p: ['口座はあなた本人のものです。アクセスの転売、サービスへの不正な侵入、詐欺への利用はできません。'] },
-      { h: '8. 連絡先', p: ['規約: suporte@spotstrat.com。プライバシー: privacidade@spotstrat.com。'] },
+      { h: '8. 連絡先', p: ['規約とプライバシー: support@spotstrat.com。'] },
     ],
   },
   cookies: {
@@ -423,7 +423,7 @@ const ja = {
     updated: '最終更新: 2026年10月20日',
     sections: [
       { h: '使うもの', p: ['必須Cookieはログインと言語を保ちます。これがないとセッションは続きません。', '分析Cookieがある場合は、サイトの使われ方を知るためだけです。Cookieのデータは売りません。'] },
-      { h: '管理', p: ['ブラウザでCookieを拒否または削除できます。必須Cookieを止めると、訪問のたびに入り直す必要があります。', '問い合わせ: privacidade@spotstrat.com。'] },
+      { h: '管理', p: ['ブラウザでCookieを拒否または削除できます。必須Cookieを止めると、訪問のたびに入り直す必要があります。', '問い合わせ: support@spotstrat.com。'] },
     ],
   },
 };
