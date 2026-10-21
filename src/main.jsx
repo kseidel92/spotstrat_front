@@ -1585,6 +1585,10 @@ function DeskHome() {
       setErr(t('walletBad'));
       return;
     }
+    if (mode === 'alarm' && !channels.sound && !channels.email) {
+      setErr(t('chNeed'));
+      return;
+    }
     const guided = mode === 'trade' && compose === 'guide';
     try {
       const res = await sendPrompt({
@@ -1639,7 +1643,7 @@ function DeskHome() {
             <small>{t('walletHint')}</small>
           </div>
         )}
-        {!(mode === 'trade' && compose === 'guide') && <>
+        {mode === 'trade' && compose !== 'guide' && <>
         <fieldset className="choice" disabled={isLoading || !!jobId}>
           <legend>{t('optExit')}</legend>
           <label className={exitMode === 'history' ? 'on' : ''}>
@@ -1712,11 +1716,11 @@ function DeskHome() {
           <fieldset className="choice" disabled={isLoading || !!jobId}>
             <legend>{t('optCh')}</legend>
             <label className={channels.sound ? 'on' : ''}>
-              <input type="checkbox" checked={channels.sound} onChange={(e) => { setChannels({ ...channels, sound: e.target.checked }); if (e.target.checked) armAudio(); }} />
+              <input type="checkbox" checked={channels.sound} onChange={(e) => { if (!e.target.checked && !channels.email) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, sound: e.target.checked }); if (e.target.checked) armAudio(); }} />
               <span>{t('chSound')}</span>
             </label>
             <label className={channels.email ? 'on' : ''}>
-              <input type="checkbox" checked={channels.email} onChange={(e) => setChannels({ ...channels, email: e.target.checked })} />
+              <input type="checkbox" checked={channels.email} onChange={(e) => { if (!e.target.checked && !channels.sound) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, email: e.target.checked }); }} />
               <span>{t('chEmail')}</span>
             </label>
             <p className="muted">{t('chHint')}</p>
@@ -1731,6 +1735,10 @@ function DeskHome() {
               setPrompt(answer);
               setSteps(null);
               setErr('');
+              if (mode === 'alarm' && !channels.sound && !channels.email) {
+                setErr(t('chNeed'));
+                return;
+              }
               sendPrompt({
                 prompt: answer,
                 threadId,
@@ -1755,7 +1763,7 @@ function DeskHome() {
             }}
           />
         )}
-        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail={!(mode === 'trade' && compose === 'guide') && (exitMode === 'history' || (timeExit && timeMode === 'history')) ? t('workingHist') : ''} />
+        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail={mode === 'trade' && compose !== 'guide' && (exitMode === 'history' || (timeExit && timeMode === 'history')) ? t('workingHist') : ''} />
         {!(mode === 'trade' && compose === 'guide') && <button className="solid" disabled={isLoading || !!jobId || !prompt.trim()} type="submit">{(isLoading || jobId) ? t('working') : t('send')}</button>}
       </form>
       <div className="mare">
@@ -1766,7 +1774,6 @@ function DeskHome() {
       <section className="alarm-board">
         <header>
           <h2>{t('alarmsT')}</h2>
-          <p className="muted">{t('alarmsL')}</p>
         </header>
         {hits.filter((hit) => !hit.seen).map((hit) => (
           <article className="alarm-hit" key={hit.id}>
@@ -1791,8 +1798,8 @@ function DeskHome() {
                 <span className="muted">{t('resStop')} {alarm.stopPct}% · {t('resTarget')} {alarm.tpPct}%</span>
               </div>
               <div className="actions">
-                <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { alarmChannels({ id: alarm.id, channels: { sound: e.target.checked, email: !!alarm.channels?.email } }); if (e.target.checked) armAudio(); }} /> {t('chSound')}</label>
-                <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => alarmChannels({ id: alarm.id, channels: { sound: alarm.channels?.sound !== false, email: e.target.checked } })} /> {t('chEmail')}</label>
+                <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { const email = !!alarm.channels?.email; if (!e.target.checked && !email) return; alarmChannels({ id: alarm.id, channels: { sound: e.target.checked, email } }); if (e.target.checked) armAudio(); }} /> {t('chSound')}</label>
+                <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => { const sound = alarm.channels?.sound !== false; if (!e.target.checked && !sound) return; alarmChannels({ id: alarm.id, channels: { sound, email: e.target.checked } }); }} /> {t('chEmail')}</label>
                 {alarm.status === 'armed'
                   ? <button className="tiny" type="button" onClick={() => alarmPause(alarm.id)}>{t('alarmPause')}</button>
                   : <button className="tiny" type="button" onClick={() => alarmArm(alarm.id)}>{t('alarmArm')}</button>}
