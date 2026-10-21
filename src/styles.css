@@ -503,13 +503,63 @@ body:has(.landing) { background: #07090d; }
   position: sticky;
   top: 0;
   z-index: 2;
+  flex-wrap: nowrap;
+  gap: 10px;
   background: rgba(7, 9, 13, 0.78);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(160, 196, 220, 0.12);
   padding-left: max(var(--gutter), calc((100% - var(--page)) / 2));
   padding-right: max(var(--gutter), calc((100% - var(--page)) / 2));
 }
-.landing .brand { font-family: Outfit, sans-serif; font-weight: 650; }
+.landing .topbar .flags {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.landing .topbar .flags button {
+  border-radius: 999px;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+.landing .topbar .flags button.on {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.landing .topbar .menu {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.landing .topbar .menu a {
+  text-decoration: none;
+  color: #cbd5e1;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.landing .topbar .menu a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+.landing .topbar .menu a.solid {
+  background: #06b6d4;
+  color: #0a0e1a;
+  border-color: #06b6d4;
+  border-radius: 999px;
+  font-weight: 650;
+  padding: 8px 14px;
+}
+.landing .topbar .menu a.solid:hover {
+  background: #22d3ee;
+  color: #0a0e1a;
+}
+.landing .topbar .menu a:focus-visible {
+  outline: 2px solid #e7fbff;
+  outline-offset: 2px;
+}
+.landing .brand { font-family: Outfit, sans-serif; font-weight: 650; white-space: nowrap; }
+.landing .topbar .brand,
+.landing .topbar .menu { flex: 0 0 auto; }
 .landing .brand i {
   background: #7ad7ff;
   box-shadow: 0 0 0 4px rgba(122, 215, 255, 0.16);
@@ -1123,21 +1173,28 @@ body:has(.landing) { background: #07090d; }
   .landing .stage h1, .landing .hero h1 { font-size: 40px; max-width: 12ch; }
   .landing .flow li { font-size: 18px; }
   .landing .vault-card { padding: 24px 16px; }
-  .landing .topbar, .desk .deskbar { flex-wrap: wrap; row-gap: 12px; align-items: center; }
-  .landing .spacer, .deskbar .spacer { display: none; }
-  .landing .brand, .deskbar .brand { order: 1; margin-right: auto; }
-  .landing .topbar .menu, .deskbar .menu {
+  .desk .deskbar { flex-wrap: wrap; row-gap: 12px; align-items: center; }
+  .deskbar .spacer { display: none; }
+  .deskbar .brand { order: 1; margin-right: auto; }
+  .deskbar .menu {
     order: 4;
     flex: 1 1 100%;
     gap: 12px 20px;
   }
   .deskbar .tiny { order: 2; }
-  .landing .flags, .deskbar .flags {
+  .deskbar .flags {
     order: 3;
     flex: 1 1 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
   }
+  .landing .topbar .spacer { display: none; }
+  .landing .topbar .flags {
+    flex: 1 1 auto;
+    min-width: 72px;
+    overflow-x: auto;
+  }
+  .landing .topbar .menu a { padding: 7px 8px; font-size: 14px; }
   .landing .flags button, .deskbar .flags button { padding: 6px 8px; }
   .landing .flag-label, .desk .flag-label { display: none; }
   .landing .spec { min-height: 0; }
@@ -1148,6 +1205,10 @@ body:has(.landing) { background: #07090d; }
   .landing .ideal img, .trial-band img { max-height: 420px; }
 }
 @media (max-width: 640px) {
+  .landing .topbar .brand { font-size: 18px; }
+  .landing .topbar .flags { min-width: 52px; }
+  .landing .topbar .menu { gap: 2px; }
+  .landing .topbar .menu a { padding: 6px 6px; font-size: 13px; }
   .landing .stage h1, .landing .hero h1 { font-size: 34px; }
   .landing .stage, .landing .vault { padding-left: 16px; padding-right: 16px; }
   .landing .path-copy, .landing .path-text, .landing .path-visual { min-height: 0; }

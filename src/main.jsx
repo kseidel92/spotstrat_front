@@ -388,7 +388,6 @@ function Landing() {
     <div className="landing">
       <header className="topbar">
         <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
-        <span className="mono rail">{t('rail')}</span>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
@@ -2372,7 +2371,6 @@ function Prices() {
     <div className="landing">
       <header className="topbar">
         <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
-        <span className="mono rail">{t('rail')}</span>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
