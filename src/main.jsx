@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
   store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn,
-  useRegisterMutation, useLoginMutation, useGoogleMutation,
+  useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
   useStrategiesQuery, useStrategyQuery, usePromptMutation, useEditPromptMutation,
@@ -774,6 +774,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(rememberOn);
   const [err, setErr] = useState('');
+  const loc = useLocation();
   const [login, { isLoading }] = useLoginMutation();
   const token = useSelector((s) => s.auth.token);
   const me = useMeQuery(undefined, { skip: !token });
@@ -800,6 +801,7 @@ function Login() {
       <form className={auth.form} onSubmit={submit}>
         <h1 className={auth.title}>{t('loginT')}</h1>
         <p className={auth.lead}>{t('loginLead')}</p>
+        {loc.state?.notice && <div className={auth.note} role="status">{loc.state.notice}</div>}
         <div className={auth.field}>
           <label htmlFor="login-email">{t('email')}</label>
           <div className={auth.control}>
@@ -833,13 +835,163 @@ function ForgotPassword() {
   useLang();
   const { t } = useTranslation();
   const { lng } = useParams();
+  const nav = useNavigate();
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [err, setErr] = useState('');
+  const [forgot, { isLoading: sending }] = useForgotMutation();
+  const [resetPassword, { isLoading: saving }] = useResetPasswordMutation();
+  const emailBad = email.length > 0 && !EMAIL_RE.test(email.trim());
+  const mismatch = password2.length > 0 && password !== password2;
+  const strength = passwordStrength(password);
+  const strengthKey = { weak: 'pwWeak', medium: 'pwMedium', strong: 'pwStrong' };
+  const strengthValue = { weak: 1, medium: 2, strong: 3 };
+
+  async function askCode(e) {
+    e.preventDefault();
+    setErr('');
+    if (!EMAIL_RE.test(email.trim())) return;
+    try {
+      await forgot({ email: email.trim(), locale: lng }).unwrap();
+      setSent(true);
+    } catch (error) { setErr(errText(error, t)); }
+  }
+
+  async function save(e) {
+    e.preventDefault();
+    setErr('');
+    if (!EMAIL_RE.test(email.trim()) || password !== password2 || password.length < 8) return;
+    try {
+      await resetPassword({
+        email: email.trim(),
+        code: code.trim(),
+        password,
+        passwordConfirm: password2,
+      }).unwrap();
+      nav(`/${lng}/login`, { state: { notice: t('resetDone') } });
+    } catch (error) { setErr(errText(error, t)); }
+  }
+
+  if (!sent) {
+    return (
+      <AuthScreen>
+        <form className={auth.form} onSubmit={askCode}>
+          <h1 className={auth.title}>{t('forgotT')}</h1>
+          <p className={auth.lead}>{t('forgotLead')}</p>
+          {err && <div className={auth.banner} role="alert">{err}</div>}
+          <div className={auth.field}>
+            <label htmlFor="forgot-email">{t('email')}</label>
+            <div className={auth.control}>
+              <span className={auth.leadIcon}><MailIcon /></span>
+              <input
+                id="forgot-email"
+                className={`${auth.input} ${auth.withIcon}${emailBad ? ` ${auth.invalid}` : ''}`}
+                type="email"
+                required
+                autoFocus
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                aria-invalid={emailBad || undefined}
+                aria-describedby={emailBad ? 'forgot-email-error' : undefined}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            {emailBad && <p className={auth.fieldError} id="forgot-email-error" role="alert">{t('emailInvalid')}</p>}
+          </div>
+          <button className={auth.submit} disabled={sending} type="submit" aria-busy={sending}>
+            {sending && <span className={auth.spin} aria-hidden="true" />}
+            {sending ? t('forgotSending') : t('forgotSend')}
+          </button>
+          <p className={auth.alt}><Link to={`/${lng}/login`}>{t('backLogin')}</Link></p>
+        </form>
+      </AuthScreen>
+    );
+  }
+
   return (
     <AuthScreen>
-      <section className={auth.form}>
+      <form className={auth.form} onSubmit={save}>
         <h1 className={auth.title}>{t('forgotT')}</h1>
-        <p className={auth.lead}>{t('forgotLead')}</p>
+        <p className={auth.lead}>{t('forgotSent')}</p>
+        {err && <div className={auth.banner} role="alert">{err}</div>}
+        <div className={auth.field}>
+          <label htmlFor="forgot-code">{t('emailCode')}</label>
+          <input id="forgot-code" className={auth.input} inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
+        </div>
+        <div className={auth.field}>
+          <label htmlFor="forgot-password">{t('forgotNew')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><LockIcon /></span>
+            <input
+              id="forgot-password"
+              className={`${auth.input} ${auth.withIcon} ${auth.withToggle}`}
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              aria-describedby={strength ? 'forgot-pw-strength' : undefined}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              className={auth.pwToggle}
+              type="button"
+              aria-label={showPassword ? t('pwHide') : t('pwShow')}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((open) => !open)}
+            >
+              <EyeIcon off={showPassword} />
+            </button>
+          </div>
+          {strength && (
+            <>
+              <div
+                className={auth.meter}
+                role="meter"
+                aria-label={t('pwStrength')}
+                aria-valuemin={1}
+                aria-valuemax={3}
+                aria-valuenow={strengthValue[strength]}
+                aria-valuetext={t(strengthKey[strength])}
+              >
+                <span className={strength} />
+              </div>
+              <p className={`${auth.pwLabel} ${strength}`} id="forgot-pw-strength">{t(strengthKey[strength])}</p>
+            </>
+          )}
+        </div>
+        <div className={auth.field}>
+          <label htmlFor="forgot-password2">{t('password2')}</label>
+          <div className={auth.control}>
+            <span className={auth.leadIcon}><LockIcon /></span>
+            <input
+              id="forgot-password2"
+              className={`${auth.input} ${auth.withIcon}${mismatch ? ` ${auth.invalid}` : ''}`}
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              aria-invalid={mismatch || undefined}
+              aria-describedby={mismatch ? 'forgot-pw2-error' : undefined}
+              value={password2}
+              onChange={(e) => setPassword2(e.target.value)}
+            />
+          </div>
+          {mismatch && <p className={auth.fieldError} id="forgot-pw2-error" role="alert">{t('passwordMismatch')}</p>}
+        </div>
+        <button className={auth.submit} disabled={saving} type="submit" aria-busy={saving}>
+          {saving && <span className={auth.spin} aria-hidden="true" />}
+          {saving ? t('forgotSaving') : t('forgotSave')}
+        </button>
+        <button className={auth.ghost} type="button" disabled={sending} onClick={askCode}>{t('resendEmail')}</button>
         <p className={auth.alt}><Link to={`/${lng}/login`}>{t('backLogin')}</Link></p>
-      </section>
+      </form>
     </AuthScreen>
   );
 }
@@ -1623,7 +1775,7 @@ function DeskHome() {
               <span className="muted"> · {hit.name}</span>
               <p>{t('thEntry')} {px(hit.price)} · {t('resStop')} {px(hit.stop)} ({Number(hit.stopPct).toFixed(2)}%) · {t('resTarget')} {px(hit.tp)} ({Number(hit.tpPct).toFixed(2)}%)</p>
               {(hit.deliveries || []).filter((item) => item.channel === 'email').map((item) => (
-                <p className="muted" key={item.channel}>{t('chEmail')} · {item.to || '—'} · {item.status === 'sent' ? 'ok' : t('chHint')}</p>
+                <p className="muted" key={item.channel}>{t('chEmail')} · {item.to || '—'} · {item.status === 'sent' ? 'ok' : item.status === 'capped' ? t('alarmMailCap') : t('chHint')}</p>
               ))}
             </div>
             <button className="tiny" type="button" onClick={() => alarmSeen(hit.id)}>{t('alarmSeen')}</button>

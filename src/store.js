@@ -81,6 +81,8 @@ export const api = createApi({
     me: build.query({ query: () => '/me', providesTags: ['Me'] }),
     register: build.mutation({ query: (body) => ({ url: '/auth/register', method: 'POST', body }) }),
     login: build.mutation({ query: (body) => ({ url: '/auth/login', method: 'POST', body }) }),
+    forgot: build.mutation({ query: (body) => ({ url: '/auth/forgot', method: 'POST', body }) }),
+    resetPassword: build.mutation({ query: (body) => ({ url: '/auth/reset-password', method: 'POST', body }) }),
     google: build.mutation({ query: (body) => ({ url: '/auth/google', method: 'POST', body }) }),
     verifyEmail: build.mutation({ query: (body) => ({ url: '/auth/verify-email', method: 'POST', body }), invalidatesTags: ['Me'] }),
     verifyPhone: build.mutation({ query: (body) => ({ url: '/auth/verify-phone', method: 'POST', body }), invalidatesTags: ['Me'] }),
@@ -128,7 +130,7 @@ export const api = createApi({
 });
 
 export const {
-  usePresetsQuery, useMeQuery, useRegisterMutation, useLoginMutation, useGoogleMutation,
+  usePresetsQuery, useMeQuery, useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useVerifyPhoneMutation, useResendMutation, useSetPhoneMutation,
   useLogoutMutation, usePatchMeMutation, useDeleteMeMutation, useStrategiesQuery, useStrategyQuery,
   usePromptMutation, useEditPromptMutation, useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmSeenMutation, useAlarmChannelsMutation, usePauseMutation, useResumeMutation, useResetMutation,
