@@ -7,7 +7,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
-  store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn, patchAlarmChannels,
+  store, api, ingest, connectStream, focusStrategy, setSession, clearSession, rememberOn, patchAlarmChannels,
   useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
@@ -28,6 +28,7 @@ import StatsBar from './components/StatsBar';
 import OpportunityCard from './components/OpportunityCard';
 import TestimonialCard from './components/TestimonialCard';
 import Faq from './components/Faq';
+import { ConfirmProvider, useConfirm } from './confirm';
 import LaunchPrice from './components/LaunchPrice';
 import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
 import Badge from './components/Badge';
@@ -213,6 +214,7 @@ function PaperShell({ children }) {
         <div className="spacer" />
         <Flags />
         <nav className="menu">
+          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
           <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
           <Link to={`/${lng}/login`}>{t('enter')}</Link>
           <Link className="solid" to={`/${lng}/register`}>{t('cta')}</Link>
@@ -392,6 +394,7 @@ function Landing() {
         <div className="spacer" />
         <Flags />
         <nav className="menu">
+          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
           <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
           <Link to={`/${lng}/login`}>{t('enter')}</Link>
           <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
@@ -434,6 +437,7 @@ function AuthFrame({ children }) {
         <div className="spacer" />
         <Flags />
         <nav className="menu">
+          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
           <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
           <Link to={`/${lng}/login`}>{t('enter')}</Link>
           <Link className="solid" to={`/${lng}/register`}>{t('cta')}</Link>
@@ -1083,7 +1087,8 @@ function DeskBar() {
       <Link className="brand" to={`/${lng}/app`}><i />SpotStrat</Link>
       <nav className="menu">
         <Link to={`/${lng}/app`}>{t('strategiesNav')}</Link>
-        <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
+        <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
+        <Link to={`/${lng}/app/precos`}>{t('pricesNav')}</Link>
         <Link to={`/${lng}/app/laboratorio`}>{t('labNav')}</Link>
         <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
@@ -1112,7 +1117,7 @@ function RequireDesk({ children, allowExpired = false }) {
   // if (desk === 'unverified' || desk === 'locked') return <Navigate to={`/${lng}/verify`} replace />;
   // if (desk === 'expired' && !allowExpired) return <Navigate to={`/${lng}/app/account`} replace />;
   void token; void error; void allowExpired; void lng;
-  return <div className="desk"><DeskBar />{children}</div>;
+  return <div className="desk"><DeskBar /><AlarmWatcher />{children}</div>;
 }
 
 function cleanJobError(text, t) {
@@ -1726,58 +1731,44 @@ function SoundPick({ kind, volume, onChange }) {
   );
 }
 
-function DeskHome() {
+function ChannelToggles({ sound, email, disabled, onToggle }) {
   const { t } = useTranslation();
-  const { lng } = useParams();
-  const live = useSelector((s) => s.desk);
-  const { data } = useDeskQuery(undefined, { pollingInterval: 5000 });
-  const strategies = live.strategies.length ? live.strategies : (data?.strategies || []);
-  const mare = live.mare || data?.mare;
-  const connection = live.connection || data?.connection;
-  const alarms = live.alarms ?? data?.alarms ?? [];
-  const [mode, setMode] = useState('trade');
-  const [exitMode, setExitMode] = useState('history');
-  const [stopPct, setStopPct] = useState('1.2');
-  const [tpPct, setTpPct] = useState('1.8');
-  const [timeExit, setTimeExit] = useState(false);
-  const [timeMode, setTimeMode] = useState('history');
-  const [holdMin, setHoldMin] = useState('60');
-  const [variants, setVariants] = useState(false);
-  const [wallet, setWallet] = useState('1000');
-  const [mareMode, setMareMode] = useState('any');
-  const [channels, setChannels] = useState({ sound: true, email: false, soundKind: 'bell', volume: 0.85 });
-  const [prompt, setPrompt] = useState('');
-  const [compose, setCompose] = useState('guide');
-  const [threadId, setThreadId] = useState(null);
-  const [jobId, setJobId] = useState(null);
-  const [note, setNote] = useState('');
-  const [err, setErr] = useState('');
-  const [steps, setSteps] = useState(null);
-  const dispatch = useDispatch();
-  const [sendPrompt, { isLoading }] = usePromptMutation();
-  const [pause] = usePauseMutation();
-  const [resume] = useResumeMutation();
-  const [reset] = useResetMutation();
-  const [remove] = useRemoveMutation();
-  const [restore] = useRestoreMutation();
-  const [patchStrategy] = usePatchStrategyMutation();
-  const [alarmPause] = useAlarmPauseMutation();
-  const [alarmArm] = useAlarmArmMutation();
-  const [alarmRemove] = useAlarmRemoveMutation();
-  const [alarmChannels] = useAlarmChannelsMutation();
+  const items = [
+    ['sound', 'chSound', sound],
+    ['email', 'chEmail', email],
+  ];
+  return (
+    <div className="switches" role="group" aria-label={t('optCh')}>
+      {items.map(([key, label, on]) => (
+        <button
+          key={key}
+          type="button"
+          role="switch"
+          aria-checked={!!on}
+          className={on ? 'on' : ''}
+          disabled={disabled}
+          onClick={() => onToggle(key)}
+        >
+          <span className="switch-ui" aria-hidden="true"><i /></span>
+          <span>{t(label)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function AlarmWatcher() {
+  const alarms = useSelector((s) => s.desk.alarms) || [];
   const heardRef = useRef(new Set());
   const quietRef = useRef(new Map());
-  const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
-
   useEffect(() => {
     const onGesture = (event) => {
-      if (event.target.closest && event.target.closest('.alarm-sound')) return;
+      if (event.target.closest && event.target.closest('.alarm-sound, .switches, .confirm-card')) return;
       unlockAlarmSound();
     };
     window.addEventListener('pointerdown', onGesture);
     return () => window.removeEventListener('pointerdown', onGesture);
   }, []);
-
   useEffect(() => {
     for (const alarm of alarms) {
       const firing = (alarm.symbols || []).length > 0;
@@ -1801,6 +1792,116 @@ function DeskHome() {
       }
     }
   }, [alarms]);
+  return null;
+}
+
+function AlarmCard({ alarm }) {
+  const { t } = useTranslation();
+  const ask = useConfirm();
+  const [alarmPause] = useAlarmPauseMutation();
+  const [alarmArm] = useAlarmArmMutation();
+  const [alarmRemove] = useAlarmRemoveMutation();
+  const [alarmChannels] = useAlarmChannelsMutation();
+  const [err, setErr] = useState('');
+  const [sound, setSound] = useState(alarm.channels?.sound !== false);
+  const [email, setEmail] = useState(!!alarm.channels?.email);
+  const holdUntil = useRef(0);
+  const kind = alarmKind(alarm.channels?.soundKind);
+  const volume = alarmLevel(alarm.channels?.volume);
+  const live = useRef({ sound, email });
+  live.current = { sound, email };
+  useEffect(() => {
+    if (Date.now() < holdUntil.current) return;
+    setSound(alarm.channels?.sound !== false);
+    setEmail(!!alarm.channels?.email);
+  }, [alarm.id, alarm.channels?.sound, alarm.channels?.email]);
+
+  function persist(next) {
+    const prev = live.current;
+    holdUntil.current = Date.now() + 1500;
+    setSound(next.sound);
+    setEmail(next.email);
+    setErr('');
+    patchAlarmChannels(alarm.id, next);
+    alarmChannels({ id: alarm.id, channels: next }).unwrap().catch((error) => {
+      holdUntil.current = 0;
+      setSound(prev.sound);
+      setEmail(prev.email);
+      setErr(errText(error, t));
+    });
+  }
+
+  function toggle(key) {
+    const next = {
+      sound: key === 'sound' ? !sound : sound,
+      email: key === 'email' ? !email : email,
+      soundKind: kind,
+      volume,
+    };
+    if (key === 'sound' && next.sound) unlockAlarmSound();
+    persist(next);
+  }
+
+  const firing = (alarm.symbols || []).length > 0;
+  const names = (alarm.symbols || []).slice(0, 8).map((item) => String(item.symbol || '').replace(/USDT$/, '')).join(', ');
+  const extra = (alarm.symbols || []).length > 8 ? ` +${alarm.symbols.length - 8}` : '';
+  return (
+    <article className={firing ? 'firing' : ''}>
+      <div className="alarm-head">
+        <div>
+          <strong>{alarm.name}</strong>
+          {firing && <span className="firing-flag">{t('alarmFiring')}</span>}
+          <p>{alarm.thesis}</p>
+          {firing && <p className="firing-names">{names}{extra}</p>}
+        </div>
+      </div>
+      <ChannelToggles sound={sound} email={email} onToggle={toggle} />
+      {!sound && !email && <p className="muted">{t('chNeed')}</p>}
+      {sound && (
+        <SoundPick
+          kind={kind}
+          volume={volume}
+          onChange={(patch) => {
+            const cur = live.current;
+            persist({
+              sound: cur.sound,
+              email: cur.email,
+              soundKind: patch.soundKind || kind,
+              volume: patch.volume ?? volume,
+            });
+          }}
+        />
+      )}
+      {err && <div className="error">{err}</div>}
+      <div className="actions">
+        {alarm.status === 'armed'
+          ? <button className="tiny" type="button" onClick={() => alarmPause(alarm.id)}>{t('alarmPause')}</button>
+          : <button className="tiny" type="button" onClick={() => alarmArm(alarm.id)}>{t('alarmArm')}</button>}
+        <button className="tiny danger" type="button" onClick={async () => {
+          const ok = await ask({ title: t('remove'), body: t('alarmRemoveAsk'), confirmLabel: t('remove'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'trash' });
+          if (ok) alarmRemove(alarm.id);
+        }}>{t('remove')}</button>
+      </div>
+    </article>
+  );
+}
+
+function AlarmsPage() {
+  const { t } = useTranslation();
+  const live = useSelector((s) => s.desk);
+  const { data } = useDeskQuery(undefined, { pollingInterval: 5000 });
+  const alarms = live.alarms ?? data?.alarms ?? [];
+  const [channels, setChannels] = useState({ sound: true, email: false, soundKind: 'bell', volume: 0.85 });
+  const [prompt, setPrompt] = useState('');
+  const [threadId, setThreadId] = useState(null);
+  const [jobId, setJobId] = useState(null);
+  const [note, setNote] = useState('');
+  const [err, setErr] = useState('');
+  const [steps, setSteps] = useState(null);
+  const dispatch = useDispatch();
+  const [sendPrompt, { isLoading }] = usePromptMutation();
+  const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
+  const busy = isLoading || !!jobId;
 
   useEffect(() => {
     const status = job.data?.job?.status;
@@ -1812,9 +1913,138 @@ function DeskHome() {
       setThreadId(job.data.job.thread_id || threadId);
     } else if (status === 'failed') setErr(cleanJobError(job.data.job.error, t));
     else {
-      const made = job.data.job.output?.mode === 'alarm' ? t('modeAlarm') : t('ready', { name: job.data.job.output?.name || '' });
+      setNote(`${job.data.job.output?.name || ''} · ${t('modeAlarm')}`);
+      setSteps(null);
+      setPrompt('');
+      setThreadId(null);
+      dispatch(api.util.invalidateTags(['Desk', 'Strategies']));
+    }
+    setJobId(null);
+  }, [job.data]);
+
+  async function sendText(text) {
+    setErr('');
+    setSteps(null);
+    if (!channels.sound && !channels.email) {
+      setErr(t('chNeed'));
+      return;
+    }
+    try {
+      const res = await sendPrompt({
+        prompt: text,
+        threadId,
+        mode: 'alarm',
+        options: { channels, mareMode: 'any' },
+      }).unwrap();
+      setThreadId(res.threadId);
+      setJobId(res.jobId);
+    } catch (error) { setErr(errText(error, t)); }
+  }
+
+  return (
+    <div className="wrap">
+      <form className="panel composer-top" onSubmit={(e) => { e.preventDefault(); sendText(prompt); }} aria-busy={busy}>
+        <h2>{t('alarmsT')}</h2>
+        <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhAlarm')} disabled={busy} />
+        <fieldset className="choice" disabled={busy}>
+          <legend>{t('optCh')}</legend>
+          <ChannelToggles
+            sound={channels.sound}
+            email={channels.email}
+            disabled={busy}
+            onToggle={(key) => {
+              setErr('');
+              setChannels((prev) => {
+                const next = { ...prev, [key]: !prev[key] };
+                if (key === 'sound' && next.sound) unlockAlarmSound();
+                return next;
+              });
+            }}
+          />
+          {!channels.sound && !channels.email && <p className="muted">{t('chNeed')}</p>}
+          {channels.sound && (
+            <SoundPick
+              kind={channels.soundKind}
+              volume={channels.volume}
+              onChange={(patch) => setChannels((prev) => ({ ...prev, ...patch }))}
+            />
+          )}
+          <p className="muted">{t('chHint')}</p>
+        </fieldset>
+        {steps && (
+          <AskSteps
+            key={steps.id}
+            questions={steps.questions}
+            busy={busy}
+            onDone={(answer) => {
+              setPrompt(answer);
+              setSteps(null);
+              sendText(answer);
+            }}
+          />
+        )}
+        <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} />
+        <button className="solid" disabled={busy || !prompt.trim()} type="submit">{busy ? t('working') : t('send')}</button>
+      </form>
+      <section className="alarm-board">
+        {!alarms.length && <p className="muted">{t('alarmEmpty')}</p>}
+        <div className="alarm-list">
+          {alarms.map((alarm) => <AlarmCard key={alarm.id} alarm={alarm} />)}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DeskHome() {
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  const live = useSelector((s) => s.desk);
+  const { data } = useDeskQuery(undefined, { pollingInterval: 5000 });
+  const strategies = live.strategies.length ? live.strategies : (data?.strategies || []);
+  const mare = live.mare || data?.mare;
+  const connection = live.connection || data?.connection;
+  const [exitMode, setExitMode] = useState('history');
+  const [stopPct, setStopPct] = useState('1.2');
+  const [tpPct, setTpPct] = useState('1.8');
+  const [timeExit, setTimeExit] = useState(false);
+  const [timeMode, setTimeMode] = useState('history');
+  const [holdMin, setHoldMin] = useState('60');
+  const [variants, setVariants] = useState(false);
+  const [wallet, setWallet] = useState('1000');
+  const [mareMode, setMareMode] = useState('any');
+  const [prompt, setPrompt] = useState('');
+  const [compose, setCompose] = useState('guide');
+  const [threadId, setThreadId] = useState(null);
+  const [jobId, setJobId] = useState(null);
+  const [note, setNote] = useState('');
+  const [err, setErr] = useState('');
+  const [steps, setSteps] = useState(null);
+  const dispatch = useDispatch();
+  const [sendPrompt, { isLoading }] = usePromptMutation();
+  const [pause] = usePauseMutation();
+  const [resume] = useResumeMutation();
+  const [reset] = useResetMutation();
+  const [remove] = useRemoveMutation();
+  const [restore, { isLoading: restoring }] = useRestoreMutation();
+  const [patchStrategy] = usePatchStrategyMutation();
+  const [restoreMsg, setRestoreMsg] = useState('');
+  const ask = useConfirm();
+  const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
+
+  useEffect(() => {
+    const status = job.data?.job?.status;
+    if (!status || status === 'queued' || status === 'running') return;
+    if (status === 'needs_user') {
+      const questions = questionsOf(job.data.job.output);
+      setSteps(questions.length ? { id: job.data.job.id, questions } : null);
+      setNote(questions.length ? '' : (job.data.job.output?.ask || ''));
+      setThreadId(job.data.job.thread_id || threadId);
+    } else if (status === 'failed') setErr(cleanJobError(job.data.job.error, t));
+    else {
+      const made = t('ready', { name: job.data.job.output?.name || '' });
       const filled = (job.data.job.output?.defaults || []).map((item) => `${item.label}: ${item.value}`).join(' · ');
-      setNote(job.data.job.output?.mode === 'alarm' ? `${job.data.job.output?.name || ''} · ${made}` : (filled ? `${made} ${filled}` : made));
+      setNote(filled ? `${made} ${filled}` : made);
       setSteps(null);
       setPrompt('');
       setThreadId(null);
@@ -1827,20 +2057,16 @@ function DeskHome() {
     setErr('');
     setSteps(null);
     const walletN = Number(wallet);
-    if (mode === 'trade' && !(walletN >= 100 && walletN <= 999000)) {
+    if (!(walletN >= 100 && walletN <= 999000)) {
       setErr(t('walletBad'));
       return;
     }
-    if (mode === 'alarm' && !channels.sound && !channels.email) {
-      setErr(t('chNeed'));
-      return;
-    }
-    const guided = mode === 'trade' && compose === 'guide';
+    const guided = compose === 'guide';
     try {
       const res = await sendPrompt({
         prompt: text,
         threadId,
-        mode,
+        mode: 'trade',
         options: {
           exit: exitMode,
           stopPct: Number(stopPct),
@@ -1848,10 +2074,9 @@ function DeskHome() {
           timeExit,
           time: timeMode,
           maxHoldMin: Number(holdMin),
-          variants: mode === 'trade' && variants && !guided,
-          mareMode: mode === 'trade' ? mareMode : 'any',
-          channels,
-          wallet: mode === 'trade' ? walletN : undefined,
+          variants: variants && !guided,
+          mareMode,
+          wallet: walletN,
         },
       }).unwrap();
       setThreadId(res.threadId);
@@ -1861,35 +2086,42 @@ function DeskHome() {
 
   function submit(e) {
     e.preventDefault();
-    if (mode === 'trade' && compose === 'guide') return;
+    if (compose === 'guide') return;
     sendText(prompt);
+  }
+
+  async function onRestore() {
+    setRestoreMsg('');
+    setErr('');
+    try {
+      await restore().unwrap();
+      try {
+        const state = await dispatch(api.endpoints.desk.initiate(undefined, { subscribe: false, forceRefetch: true })).unwrap();
+        dispatch(ingest({ type: 'snapshot', ...state }));
+      } catch { /* a invalidação da query ainda atualiza a lista */ }
+      setRestoreMsg(t('restoreDone'));
+    } catch (error) {
+      setErr(errText(error, t));
+    }
   }
 
   return (
     <div className="wrap">
       <form className="panel composer-top" onSubmit={submit} aria-busy={isLoading || !!jobId}>
         <div className="modes">
-          <button type="button" className={mode === 'trade' ? 'on' : ''} onClick={() => setMode('trade')}>{t('modeTrade')}</button>
-          <button type="button" className={mode === 'alarm' ? 'on' : ''} onClick={() => setMode('alarm')}>{t('modeAlarm')}</button>
+          <button type="button" className={compose === 'guide' ? 'on' : ''} onClick={() => setCompose('guide')}>{t('guideSteps')}</button>
+          <button type="button" className={compose === 'paste' ? 'on' : ''} onClick={() => setCompose('paste')}>{t('guidePaste')}</button>
         </div>
-        {mode === 'trade' && (
-          <div className="modes">
-            <button type="button" className={compose === 'guide' ? 'on' : ''} onClick={() => setCompose('guide')}>{t('guideSteps')}</button>
-            <button type="button" className={compose === 'paste' ? 'on' : ''} onClick={() => setCompose('paste')}>{t('guidePaste')}</button>
-          </div>
-        )}
-        {mode === 'trade' && compose === 'guide'
+        {compose === 'guide'
           ? <Guide busy={isLoading || !!jobId} onCreate={sendText} />
-          : <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={mode === 'trade' ? t('promptPhTrade') : t('promptPhAlarm')} disabled={isLoading || !!jobId} />}
-        {mode === 'trade' && (
-          <div className="wallet-row">
+          : <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={isLoading || !!jobId} />}
+        <div className="wallet-row">
             <label>{t('wallet')}
               <input inputMode="decimal" min="100" max="999000" value={wallet} onChange={(e) => setWallet(e.target.value)} disabled={isLoading || !!jobId} />
             </label>
             <small>{t('walletHint')}</small>
           </div>
-        )}
-        {mode === 'trade' && compose !== 'guide' && <>
+        {compose !== 'guide' && <>
         <fieldset className="choice" disabled={isLoading || !!jobId}>
           <legend>{t('optExit')}</legend>
           <label className={exitMode === 'history' ? 'on' : ''}>
@@ -1932,8 +2164,7 @@ function DeskHome() {
           )}
         </fieldset>
         </>}
-        {mode === 'trade' && (
-          <div className="segment" role="radiogroup" aria-label={t('marePick')}>
+        <div className="segment" role="radiogroup" aria-label={t('marePick')}>
             <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
             <div className="segment-track">
               {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
@@ -1951,35 +2182,13 @@ function DeskHome() {
               ))}
             </div>
           </div>
-        )}
-        {mode === 'trade' && compose === 'paste' && (
+        {compose === 'paste' && (
           <fieldset className="choice" disabled={isLoading || !!jobId}>
             <legend>{t('optVar')} <Tip text={t('varTip')} /></legend>
             <label className={variants ? 'on' : ''}>
               <input type="checkbox" checked={variants} onChange={(e) => setVariants(e.target.checked)} />
               <span>{t('variants')}</span>
             </label>
-          </fieldset>
-        )}
-        {mode === 'alarm' && (
-          <fieldset className="choice" disabled={isLoading || !!jobId}>
-            <legend>{t('optCh')}</legend>
-            <label className={channels.sound ? 'on' : ''}>
-              <input type="checkbox" checked={channels.sound} onChange={(e) => { if (!e.target.checked && !channels.email) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, sound: e.target.checked }); if (e.target.checked) unlockAlarmSound(); }} />
-              <span>{t('chSound')}</span>
-            </label>
-            <label className={channels.email ? 'on' : ''}>
-              <input type="checkbox" checked={channels.email} onChange={(e) => { if (!e.target.checked && !channels.sound) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, email: e.target.checked }); }} />
-              <span>{t('chEmail')}</span>
-            </label>
-            {channels.sound && (
-              <SoundPick
-                kind={channels.soundKind}
-                volume={channels.volume}
-                onChange={(patch) => setChannels({ ...channels, ...patch })}
-              />
-            )}
-            <p className="muted">{t('chHint')}</p>
           </fieldset>
         )}
         {steps && (
@@ -1991,14 +2200,10 @@ function DeskHome() {
               setPrompt(answer);
               setSteps(null);
               setErr('');
-              if (mode === 'alarm' && !channels.sound && !channels.email) {
-                setErr(t('chNeed'));
-                return;
-              }
               sendPrompt({
                 prompt: answer,
                 threadId,
-                mode,
+                mode: 'trade',
                 options: {
                   exit: exitMode,
                   stopPct: Number(stopPct),
@@ -2006,10 +2211,9 @@ function DeskHome() {
                   timeExit,
                   time: timeMode,
                   maxHoldMin: Number(holdMin),
-                  variants: mode === 'trade' && variants,
-                  mareMode: mode === 'trade' ? mareMode : 'any',
-                  channels,
-                  wallet: mode === 'trade' ? Number(wallet) : undefined,
+                  variants,
+                  mareMode,
+                  wallet: Number(wallet),
                 },
               }).unwrap().then((res) => {
                 setThreadId(res.threadId);
@@ -2019,68 +2223,14 @@ function DeskHome() {
             }}
           />
         )}
-        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail={mode === 'trade' && compose !== 'guide' && (exitMode === 'history' || (timeExit && timeMode === 'history')) ? t('workingHist') : ''} />
-        {!(mode === 'trade' && compose === 'guide') && <button className="solid" disabled={isLoading || !!jobId || !prompt.trim()} type="submit">{(isLoading || jobId) ? t('working') : t('send')}</button>}
+        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail={compose !== 'guide' && (exitMode === 'history' || (timeExit && timeMode === 'history')) ? t('workingHist') : ''} />
+        {compose !== 'guide' && <button className="solid" disabled={isLoading || !!jobId || !prompt.trim()} type="submit">{(isLoading || jobId) ? t('working') : t('send')}</button>}
       </form>
       <div className="mare">
         <span className={`pill ${mare?.label || ''}`}>{mare ? `${mare.label} · ${mare.upPct}% · ${mare.windowMin} min` : '…'} <Tip text={t('mareTip')} /></span>
         <span className={`conn ${connection === 'live' ? 'live' : 'down'}`}><i />{t('connection')}: {connection || 'connecting'}</span>
         <span className="muted">{(live.prices.length ? live.prices : data?.prices || []).slice(0, 4).map((p) => `${p.symbol.replace('USDT', '')} ${p.price}`).join(' · ')}</span>
       </div>
-      <section className="alarm-board">
-        <header>
-          <h2>{t('alarmsT')}</h2>
-        </header>
-        {!alarms.length && <p className="muted">{t('alarmEmpty')}</p>}
-        <div className="alarm-list">
-          {alarms.map((alarm) => {
-            const firing = (alarm.symbols || []).length > 0;
-            const names = (alarm.symbols || []).slice(0, 8).map((item) => String(item.symbol || '').replace(/USDT$/, '')).join(', ');
-            const extra = (alarm.symbols || []).length > 8 ? ` +${alarm.symbols.length - 8}` : '';
-            const kind = alarmKind(alarm.channels?.soundKind);
-            const volume = alarmLevel(alarm.channels?.volume);
-            const saveChannels = (patch) => {
-              const next = {
-                sound: alarm.channels?.sound !== false,
-                email: !!alarm.channels?.email,
-                soundKind: kind,
-                volume,
-                ...patch,
-              };
-              if (!next.sound && !next.email) return;
-              patchAlarmChannels(alarm.id, next);
-              alarmChannels({ id: alarm.id, channels: next });
-            };
-            return (
-              <article key={alarm.id} className={firing ? 'firing' : ''}>
-                <div className="alarm-head">
-                  <div>
-                    <strong>{alarm.name}</strong>
-                    {firing && <span className="firing-flag">{t('alarmFiring')}</span>}
-                    <p>{alarm.thesis}</p>
-                    {firing && <p className="firing-names">{names}{extra}</p>}
-                  </div>
-                </div>
-                {alarm.channels?.sound !== false && (
-                  <SoundPick
-                    kind={kind}
-                    volume={volume}
-                    onChange={(patch) => saveChannels(patch)}
-                  />
-                )}
-                <div className="actions">
-                  <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { const email = !!alarm.channels?.email; if (!e.target.checked && !email) return; saveChannels({ sound: e.target.checked }); if (e.target.checked) unlockAlarmSound(); }} /> {t('chSound')}</label>
-                  <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => { const sound = alarm.channels?.sound !== false; if (!e.target.checked && !sound) return; saveChannels({ email: e.target.checked }); }} /> {t('chEmail')}</label>
-                  {alarm.status === 'armed'
-                    ? <button className="tiny" type="button" onClick={() => alarmPause(alarm.id)}>{t('alarmPause')}</button>
-                    : <button className="tiny" type="button" onClick={() => alarmArm(alarm.id)}>{t('alarmArm')}</button>}
-                  <button className="tiny danger" type="button" onClick={() => alarmRemove(alarm.id)}>{t('remove')}</button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
       <div className="strategies" style={{ marginTop: 14 }}>
         {strategies.map((s) => (
           <article className="strategy" key={s.id}>
@@ -2110,18 +2260,25 @@ function DeskHome() {
               </select>
             </label>
             <div className="actions">
-              <Link className="tiny" to={`/${lng}/app/strategies/${s.id}/producao`}><IconPlay />{t('toProd')}</Link>
+              <Link className="tiny prod" to={`/${lng}/app/strategies/${s.id}/producao`}><IconPlay />{t('toProd')}</Link>
               {s.paused
                 ? <button className="tiny" type="button" onClick={() => resume(s.id)}><IconPlay />{t('resume')}</button>
                 : <button className="tiny" type="button" onClick={() => pause(s.id)}><IconPause />{t('pause')}</button>}
-              <button className="tiny" type="button" onClick={() => { if (confirm(t('reset'))) reset(s.id); }}><IconTrash />{t('reset')}</button>
-              <button className="tiny danger" type="button" onClick={() => { if (confirm(t('remove'))) remove(s.id); }}><IconX />{t('remove')}</button>
+              <button className="tiny" type="button" onClick={async () => {
+                const ok = await ask({ title: t('reset'), body: t('resetAsk'), confirmLabel: t('reset'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'reset' });
+                if (ok) reset(s.id);
+              }}><IconTrash />{t('reset')}</button>
+              <button className="tiny danger" type="button" onClick={async () => {
+                const ok = await ask({ title: t('remove'), body: t('removeAsk'), confirmLabel: t('remove'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'trash' });
+                if (ok) remove(s.id);
+              }}><IconX />{t('remove')}</button>
             </div>
           </article>
         ))}
       </div>
-      <div className="row" style={{ marginTop: 16 }}>
-        <button className="tiny" type="button" onClick={() => restore()}>{t('restore')}</button>
+      <div className="restore-row">
+        <button className="ghost" type="button" disabled={restoring} onClick={onRestore}>{restoring ? '…' : t('restore')}</button>
+        {restoreMsg && <span className="restore-note">{restoreMsg}</span>}
       </div>
     </div>
   );
@@ -2300,6 +2457,7 @@ function PlanPicker({ showBody = true }) {
 function Account() {
   useLang();
   const { t } = useTranslation();
+  const ask = useConfirm();
   const { data } = useMeQuery();
   const user = data?.user;
   const [patch, { isLoading }] = usePatchMeMutation();
@@ -2328,7 +2486,8 @@ function Account() {
   const cancelPending = user?.refundStatus === 'pending';
   const paidOpen = user?.planStatus === 'active' && (user?.desk === 'paper' || user?.desk === 'pro');
   async function requestCancel() {
-    if (!confirm(t('cancelConfirm'))) return;
+    const ok = await ask({ title: t('cancelTitle'), body: t('cancelConfirm'), confirmLabel: t('cancelCta'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'alert' });
+    if (!ok) return;
     setCancelErr('');
     try {
       const res = await cancelPlan().unwrap();
@@ -2339,7 +2498,7 @@ function Account() {
   }
   return (
     <div className="wrap account-page">
-      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('account')}</h2>
+      <h2>{t('account')}</h2>
       <p>{user?.email}</p>
       <p className="plan-chip">{statusLabel(user, t)} · {t('accessUntil')} {ends ? new Date(ends).toLocaleString() : '—'} · {user?.daysLeft === 1 ? t('dayLeft') : t('daysLeft', { n: user?.daysLeft || 0 })}</p>
       {user?.expiring && <div className="warn">{t('expiring', { n: user.daysLeft })}</div>}
@@ -2370,7 +2529,8 @@ function Account() {
       </article>
       <div className="row">
         <button className="danger" type="button" onClick={async () => {
-          if (!confirm(t('delete'))) return;
+          const ok = await ask({ title: t('delete'), body: t('deleteAsk'), confirmLabel: t('delete'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'trash' });
+          if (!ok) return;
           await remove();
           dispatch(clearSession());
           nav(`/${lng}`);
@@ -2622,25 +2782,13 @@ function Info() {
   );
 }
 
-function Prices() {
-  useLang();
+function PricesBody({ showCta = false }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const plans = [
     { key: 'paper', amount: 93.33, title: t('planPaper') },
   ];
   return (
-    <div className="landing">
-      <header className="topbar">
-        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
-        <div className="spacer" />
-        <Flags />
-        <nav className="menu">
-          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-          <Link to={`/${lng}/login`}>{t('enter')}</Link>
-          <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
-        </nav>
-      </header>
       <section className="band prices">
         <p className="kicker">{t('pricesNav')}</p>
         <h1>{t('pricesT')}</h1>
@@ -2662,10 +2810,65 @@ function Prices() {
         </div>
         <PlanPicker showBody={false} />
         <p className="mono dim">{t('planFx')}</p>
-        <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
+        {showCta && <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>}
         <Faq />
         <TestimonialCard />
       </section>
+  );
+}
+
+function Prices() {
+  useLang();
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  return (
+    <div className="landing">
+      <header className="topbar">
+        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
+        <div className="spacer" />
+        <Flags />
+        <nav className="menu">
+          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
+          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
+          <Link to={`/${lng}/login`}>{t('enter')}</Link>
+          <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
+        </nav>
+      </header>
+      <PricesBody showCta />
+      <SiteFooter />
+    </div>
+  );
+}
+
+function DeskPrices() {
+  useLang();
+  return (
+    <div className="landing desk-prices">
+      <PricesBody />
+    </div>
+  );
+}
+
+function PublicInfo() {
+  useLang();
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  return (
+    <div className="landing">
+      <header className="topbar">
+        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
+        <div className="spacer" />
+        <Flags />
+        <nav className="menu">
+          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
+          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
+          <Link to={`/${lng}/login`}>{t('enter')}</Link>
+          <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
+        </nav>
+      </header>
+      <div className="desk public-info">
+        <Info />
+      </div>
       <SiteFooter />
     </div>
   );
@@ -2688,6 +2891,7 @@ function App() {
         <Route path="/" element={<LangRedirect />} />
         <Route path="/:lng" element={<Guard><Landing /></Guard>} />
         <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
+        <Route path="/:lng/info" element={<Guard><PublicInfo /></Guard>} />
         <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
         <Route path="/:lng/terms" element={<Guard><Legal page="terms" /></Guard>} />
         <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
@@ -2697,6 +2901,8 @@ function App() {
         <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
         <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
         <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
+        <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
+        <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
         <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
         <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
         <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
@@ -2714,7 +2920,9 @@ function App() {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
-      <App />
+      <ConfirmProvider>
+        <App />
+      </ConfirmProvider>
     </Provider>
   </StrictMode>,
 );

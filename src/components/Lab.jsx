@@ -5,6 +5,7 @@ import {
   useArtifactsQuery, useJobQuery, useKlinesQuery, useLabQueryMutation, useManifestQuery, useMeQuery, useSymbolsQuery,
 } from '../store';
 import css from './Lab.module.css';
+import { useConfirm } from '../confirm';
 
 const LabCtx = createContext(null);
 
@@ -193,7 +194,7 @@ function Candle({ symbol }) {
       timeScale: { timeVisible: true },
     });
     const series = chart.addCandlestickSeries({
-      upColor: '#3ecf8e', downColor: '#ff6d5a', borderVisible: false, wickUpColor: '#3ecf8e', wickDownColor: '#ff6d5a',
+      upColor: '#06b6d4', downColor: '#ff6d5a', borderVisible: false, wickUpColor: '#06b6d4', wickDownColor: '#ff6d5a',
     });
     series.setData(data.bars);
     chart.timeScale().fitContent();
@@ -209,6 +210,7 @@ function Candle({ symbol }) {
 
 function LabScreen() {
   const { t, i18n } = useTranslation();
+  const confirmAsk = useConfirm();
   const lab = useLabThreads();
   const manifest = useManifestQuery();
   const symbols = useSymbolsQuery();
@@ -341,7 +343,10 @@ function LabScreen() {
                 <button className={css.iconBtn} type="button" aria-label={t('labRename')} onClick={() => { setEditing(thread.id); setDraft(thread.title); }}>
                   <Icon d={icon.pencil} />
                 </button>
-                <button className={css.iconBtn} type="button" aria-label={t('labDelete')} onClick={() => { if (window.confirm(t('labDeleteAsk'))) lab.remove(thread.id); }}>
+                <button className={css.iconBtn} type="button" aria-label={t('labDelete')} onClick={async () => {
+                  const ok = await confirmAsk({ title: t('labDelete'), body: t('labDeleteAsk'), confirmLabel: t('labDelete'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'trash' });
+                  if (ok) lab.remove(thread.id);
+                }}>
                   <Icon d={icon.trash} />
                 </button>
               </div>
