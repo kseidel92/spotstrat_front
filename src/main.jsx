@@ -11,7 +11,7 @@ import {
   useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
-  useStrategiesQuery, useStrategyQuery, usePromptMutation, useEditPromptMutation,
+  useStrategiesQuery, useStrategyQuery, usePromptMutation, useSuggestGuideMutation, useEditPromptMutation,
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery,
@@ -1088,7 +1088,7 @@ function DeskBar() {
         <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
       </nav>
-      {user?.expiring && <span className="expiring">{user.daysLeft === 1 ? t('expiringOne') : t('expiring', { n: user.daysLeft })}</span>}
+      {user?.expiring && <span className="expiring" role="status">{user.daysLeft === 1 ? t('expiringOne') : t('expiring', { n: user.daysLeft })}</span>}
       <div className="spacer" />
       <Flags />
       <button className="tiny" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
@@ -1129,6 +1129,122 @@ function questionsOf(output) {
     : item));
 }
 
+const GUIDE_SPEC = {
+  touches: { entryType: 'pattern', sources: ['candles'], stop: '1.6', target: '2.2' },
+  swings: { entryType: 'momentum', sources: ['candles'], stop: '4', target: '6' },
+  dump: { entryType: 'momentum', sources: ['candles', 'trades', 'book'], stop: '1.3', target: '2.5' },
+  lead: { entryType: 'momentum', sources: ['candles', 'book'], stop: '2.8', target: '6.5' },
+  spike: { entryType: 'momentum', sources: ['candles', 'trades', 'book'], stop: '1.8', target: '3.2' },
+  laggard: { entryType: 'momentum', sources: ['candles'], stop: '2.2', target: '4.2' },
+  range: { entryType: 'breakout', sources: ['candles'], stop: '1.6', target: '2.4' },
+  pattern: { entryType: 'pattern', sources: ['candles'], stop: '0.8', target: '1.2' },
+  cross: { entryType: 'cross', sources: ['candles', 'ema'], stop: '0.8', target: '1.6' },
+  breakout: { entryType: 'breakout', sources: ['candles'], stop: '1.2', target: '2.2' },
+  momentum: { entryType: 'momentum', sources: ['candles', 'trades'], stop: '1', target: '1.8' },
+};
+
+function detectGuideKind(guide) {
+  const text = String(guide?.entry || '').toLowerCase();
+  if (/toque|caixa|piso/.test(text)) return 'touches';
+  if (/serra|zigzag|oscil/.test(text)) return 'swings';
+  if (/queda|dump|rebote|despenc/.test(text)) return 'dump';
+  if (/lider|força|forca|rank/.test(text)) return 'lead';
+  if (/spike|anomalia|explos/.test(text)) return 'spike';
+  if (/maré|mare|caíd|caid|atrasad|fund[oa]/.test(text)) return 'laggard';
+  if (/faixa|range/.test(text)) return 'range';
+  if (/engulf|engolfo|engolfe|padrão de vela|padrao de vela/.test(text)) return 'pattern';
+  if (/\bema\b|cruzamento|cruzar|cruza/.test(text)) return 'cross';
+  if (/romp|breakout/.test(text)) return 'breakout';
+  if (/sobe|subir|impulso|momentum/.test(text)) return 'momentum';
+  if (GUIDE_SPEC[guide?.entryType]) return guide.entryType;
+  return 'touches';
+}
+
+function fieldsFor(step, spec, t, kind) {
+  if (step === 'entry') return { entry: t(`aiEntry_${kind}`) };
+  if (step === 'entryType') return { entryType: spec.entryType, entryTypeText: '' };
+  if (step === 'sources') return { sources: spec.sources.slice(), sourcesOther: '' };
+  if (step === 'list') return { list: 'no', listText: '' };
+  if (step === 'exit') return { exitKind: 'numbers', stop: String(spec.stop), target: String(spec.target), exitText: '' };
+  if (step === 'review') return { name: t(`aiName_${kind}`) };
+  return {};
+}
+
+function IconPlay() {
+  return (
+    <svg className="ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <polygon points="8,5 19,12 8,19" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconPause() {
+  return (
+    <svg className="ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" />
+      <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg className="ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h16" />
+      <path d="M9 7V5h6v2" />
+      <path d="M8 7l1 12h6l1-12" />
+    </svg>
+  );
+}
+
+function IconX() {
+  return (
+    <svg className="ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M7 7l10 10M17 7L7 17" />
+    </svg>
+  );
+}
+
+function Stepper({ count, index }) {
+  return (
+    <ol className="stepper" aria-hidden="true">
+      {Array.from({ length: count }, (_, i) => (
+        <li key={i} className={i < index ? 'done' : i === index ? 'current' : ''}>
+          <span>{i < index ? '✔' : i + 1}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function DeskArea({ value, onChange, placeholder, disabled }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const text = String(value || '');
+  const long = text.length > 160 || text.split('\n').length > 4;
+  return (
+    <div className={`field-box${open ? ' expanded' : ''}${long ? ' has-expand' : ''}`}>
+      <textarea value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} />
+      {long && (
+        <button className="expand" type="button" onClick={() => setOpen((v) => !v)}>
+          {open ? t('collapseField') : t('expandField')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function reasonBits(reason) {
+  return String(reason || '').split(/\s+·\s+|\s+-\s+|\s+–\s+/).map((part) => part.trim()).filter(Boolean);
+}
+
+function whyTone(text) {
+  const s = String(text || '').toLowerCase();
+  if (/stop|preju|negativ|ruim|halt|sl\b/.test(s)) return 'down';
+  if (/excesso|lead|obi|ob\d|tape|verde|alta|compra/.test(s)) return 'up';
+  return 'warn';
+}
+
 function AskSteps({ questions, busy, onDone }) {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
@@ -1147,9 +1263,7 @@ function AskSteps({ questions, busy, onDone }) {
   return (
     <div className="steps">
       <p className="steps-kicker">{t('needMore')}</p>
-      <div className="step-dots" aria-hidden="true">
-        {questions.map((question, i) => <i key={question} className={i <= index ? 'on' : ''} />)}
-      </div>
+      <Stepper count={questions.length} index={index} />
       <p className="steps-count">{t('stepOf', { n: index + 1, total: questions.length })}</p>
       <h3>{questions[index]}</h3>
       <input
@@ -1158,8 +1272,16 @@ function AskSteps({ questions, busy, onDone }) {
         onKeyDown={(e) => { if (e.key === 'Enter') submit(e); }}
         autoFocus
       />
-      <div className="row">
+      <div className="row step-actions">
         {index > 0 && <button className="tiny" type="button" onClick={() => setIndex(index - 1)}>{t('backStep')}</button>}
+        <button
+          className="ghost"
+          type="button"
+          disabled={busy}
+          onClick={() => setAnswers(answers.map((item, i) => (i === index ? t('aiAnswer') : item)))}
+        >
+          {t('aiDecide')}
+        </button>
         <button className="solid" type="button" onClick={submit} disabled={busy || !answers[index].trim()}>{last ? t('createNow') : t('nextStep')}</button>
       </div>
     </div>
@@ -1235,8 +1357,8 @@ function TradeBook({ trades, position }) {
     <div className="book">
       <div className="book-meta">
         <span>{t('nTrades', { n: shown.length })}</span>
-        <label>
-          {t('thResult')}
+        <label className="result-filter">
+          <span>{t('thResult')}</span>
           <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={t('thResult')}>
             <option value="">{t('allResults')}</option>
             <option value="tp">{t('resTarget')}</option>
@@ -1271,6 +1393,7 @@ function TradeBook({ trades, position }) {
               const base = Number(tr.quote) || (Number(tr.entry) * Number(tr.qty)) || 0;
               const pct = pnl != null && base > 0 ? (pnl / base) * 100 : null;
               const oco = raw.stop && raw.tp ? `${px(raw.stop)} / ${px(raw.tp)}` : '—';
+              const bits = reasonBits(raw.reason);
               return (
                 <tr key={tr.id}>
                   <td className="when">{whenBrt(tr.opened_at)}</td>
@@ -1280,11 +1403,15 @@ function TradeBook({ trades, position }) {
                   <td className="num">{px(tr.entry)}</td>
                   <td className="num">{oco}</td>
                   <td className="num">{tr.exit ? px(tr.exit) : '—'}</td>
-                  <td><span className={`badge ${key}`}>{resultLabel(key, t)}</span></td>
+                  <td className={`res ${key}`}><span className={`badge ${key}`}>{resultLabel(key, t)}</span></td>
                   <td className={pnl == null ? 'num' : pnl >= 0 ? 'num up' : 'num down'}>
                     {pnl == null ? '—' : `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}${pct == null ? '' : ` (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`}`}
                   </td>
-                  <td className="why">{raw.reason || ''}</td>
+                  <td className="why">
+                    {bits.length
+                      ? <span className="why-pills">{bits.map((bit) => <span key={bit} className={`why-pill ${whyTone(bit)}`}>{bit}</span>)}</span>
+                      : ''}
+                  </td>
                 </tr>
               );
             })}
@@ -1342,7 +1469,9 @@ function briefOf(guide, t) {
 
 function Guide({ busy, onCreate }) {
   const { t } = useTranslation();
+  const [suggestGuide] = useSuggestGuideMutation();
   const [step, setStep] = useState(0);
+  const [aiBusy, setAiBusy] = useState(false);
   const [guide, setGuide] = useState({
     sources: ['candles'],
     sourcesOther: '',
@@ -1372,17 +1501,36 @@ function Guide({ busy, onCreate }) {
     || (current === 'exit' && guide.exitKind === 'describe' && !guide.exitText.trim());
   const last = step === ids.length - 1;
   const brief = briefOf(guide, t);
+  async function decide() {
+    if (aiBusy || busy) return;
+    setAiBusy(true);
+    let kind = detectGuideKind(guide);
+    let spec = { ...GUIDE_SPEC[kind] };
+    try {
+      const remote = await suggestGuide({ step: current, guide }).unwrap();
+      if (remote?.kind && GUIDE_SPEC[remote.kind]) {
+        kind = remote.kind;
+        spec = {
+          ...GUIDE_SPEC[kind],
+          entryType: remote.entryType || GUIDE_SPEC[kind].entryType,
+          sources: Array.isArray(remote.sources) && remote.sources.length ? remote.sources : GUIDE_SPEC[kind].sources,
+          stop: remote.stop || GUIDE_SPEC[kind].stop,
+          target: remote.target || GUIDE_SPEC[kind].target,
+        };
+      }
+    } catch { /* o catálogo local cobre o desk sem sessão */ }
+    patch(fieldsFor(current, spec, t, kind));
+    setAiBusy(false);
+  }
   return (
     <div className="steps">
       <p className="steps-kicker">{t('guideSteps')}</p>
-      <div className="step-dots" aria-hidden="true">
-        {ids.map((id, index) => <i key={id} className={index <= step ? 'on' : ''} />)}
-      </div>
+      <Stepper count={ids.length} index={step} />
       <p className="steps-count">{t('stepOf', { n: step + 1, total: ids.length })}</p>
       {current === 'entry' && (
         <>
           <h3>{t('guideEntry')}</h3>
-          <textarea value={guide.entry} onChange={(e) => patch({ entry: e.target.value })} placeholder={t('guideEntryPh')} />
+          <DeskArea value={guide.entry} onChange={(e) => patch({ entry: e.target.value })} placeholder={t('guideEntryPh')} />
           <p className="muted">{t('guideEntryHint')}</p>
         </>
       )}
@@ -1395,6 +1543,7 @@ function Guide({ busy, onCreate }) {
                 key={id}
                 type="button"
                 className={guide.entryType === id ? 'on' : ''}
+                aria-pressed={guide.entryType === id}
                 onClick={() => patch({ entryType: id })}
               >
                 {t(id === 'pattern' ? 'typePattern' : id === 'cross' ? 'typeCross' : id === 'breakout' ? 'typeBreakout' : id === 'momentum' ? 'typeMomentum' : 'typeOther')}
@@ -1402,7 +1551,7 @@ function Guide({ busy, onCreate }) {
             ))}
           </div>
           {guide.entryType === 'other' && (
-            <textarea
+            <DeskArea
               value={guide.entryTypeText}
               onChange={(e) => patch({ entryTypeText: e.target.value })}
               placeholder={t('guideEntryTypeOtherPh')}
@@ -1415,11 +1564,11 @@ function Guide({ busy, onCreate }) {
           <h3>{t('guideSources')}</h3>
           <div className="chips">
             {[['candles', 'srcCandles'], ['trades', 'srcTrades'], ['book', 'srcBook'], ['ema', 'srcEma'], ['other', 'srcOther']].map(([id, key]) => (
-              <button key={id} type="button" className={guide.sources.includes(id) ? 'on' : ''} onClick={() => toggleSource(id)}>{t(key)}</button>
+              <button key={id} type="button" className={guide.sources.includes(id) ? 'on' : ''} aria-pressed={guide.sources.includes(id)} onClick={() => toggleSource(id)}>{t(key)}</button>
             ))}
           </div>
           {guide.sources.includes('other') && (
-            <textarea
+            <DeskArea
               value={guide.sourcesOther}
               onChange={(e) => patch({ sourcesOther: e.target.value })}
               placeholder={t('guideSourcesOtherPh')}
@@ -1430,24 +1579,26 @@ function Guide({ busy, onCreate }) {
       {current === 'list' && (
         <>
           <h3>{t('guideList')}</h3>
-          <button type="button" className={`guide-choice ${guide.list === 'no' ? 'on' : ''}`} onClick={() => patch({ list: 'no' })}>{t('guideListNo')}</button>
-          <button type="button" className={`guide-choice ${guide.list === 'yes' ? 'on' : ''}`} onClick={() => patch({ list: 'yes' })}>{t('guideListYes')}</button>
-          {guide.list === 'yes' && <textarea value={guide.listText} onChange={(e) => patch({ listText: e.target.value })} placeholder={t('guideListPh')} />}
+          <div className="segment-track block">
+            <button type="button" className={guide.list === 'no' ? 'on' : ''} aria-pressed={guide.list === 'no'} onClick={() => patch({ list: 'no' })}>{t('guideListNo')}</button>
+            <button type="button" className={guide.list === 'yes' ? 'on' : ''} aria-pressed={guide.list === 'yes'} onClick={() => patch({ list: 'yes' })}>{t('guideListYes')}</button>
+          </div>
+          {guide.list === 'yes' && <DeskArea value={guide.listText} onChange={(e) => patch({ listText: e.target.value })} placeholder={t('guideListPh')} />}
         </>
       )}
       {current === 'exit' && (
         <>
           <h3>{t('guideExit')}</h3>
-          <button type="button" className={`guide-choice ${guide.exitKind === 'numbers' ? 'on' : ''}`} onClick={() => patch({ exitKind: 'numbers' })}>{t('guideExitNumbers')}</button>
+          <button type="button" className={`guide-choice ${guide.exitKind === 'numbers' ? 'on' : ''}`} aria-pressed={guide.exitKind === 'numbers'} onClick={() => patch({ exitKind: 'numbers' })}>{t('guideExitNumbers')}</button>
           {guide.exitKind === 'numbers' && (
             <div className="choice-fields">
               <label>{t('stopPct')}<input inputMode="decimal" value={guide.stop} onChange={(e) => patch({ stop: e.target.value })} /></label>
               <label>{t('tpPct')}<input inputMode="decimal" value={guide.target} onChange={(e) => patch({ target: e.target.value })} /></label>
             </div>
           )}
-          <button type="button" className={`guide-choice ${guide.exitKind === 'describe' ? 'on' : ''}`} onClick={() => patch({ exitKind: 'describe' })}>{t('guideExitDescribe')}</button>
-          {guide.exitKind === 'describe' && <textarea value={guide.exitText} onChange={(e) => patch({ exitText: e.target.value })} placeholder={t('guideExitPh')} />}
-          <button type="button" className={`guide-choice ${guide.exitKind === 'standard' ? 'on' : ''}`} onClick={() => patch({ exitKind: 'standard' })}>{t('guideExitStandard')}</button>
+          <button type="button" className={`guide-choice ${guide.exitKind === 'describe' ? 'on' : ''}`} aria-pressed={guide.exitKind === 'describe'} onClick={() => patch({ exitKind: 'describe' })}>{t('guideExitDescribe')}</button>
+          {guide.exitKind === 'describe' && <DeskArea value={guide.exitText} onChange={(e) => patch({ exitText: e.target.value })} placeholder={t('guideExitPh')} />}
+          <button type="button" className={`guide-choice ${guide.exitKind === 'standard' ? 'on' : ''}`} aria-pressed={guide.exitKind === 'standard'} onClick={() => patch({ exitKind: 'standard' })}>{t('guideExitStandard')}</button>
           <p className="muted">{t('guideExitNote')}</p>
         </>
       )}
@@ -1458,8 +1609,9 @@ function Guide({ busy, onCreate }) {
           <pre className="strategy-code guide-brief">{brief}</pre>
         </>
       )}
-      <div className="row">
+      <div className="row step-actions">
         {step > 0 && <button className="tiny" type="button" onClick={() => setStep(step - 1)}>{t('backStep')}</button>}
+        <button className="ghost" type="button" disabled={aiBusy || busy} onClick={decide}>{aiBusy ? t('aiDecideBusy') : t('aiDecide')}</button>
         {last
           ? <button className="solid" type="button" disabled={busy} onClick={() => onCreate(brief)}>{t('guideCreate')}</button>
           : <button className="solid" type="button" disabled={blocked} onClick={() => setStep(step + 1)}>{t('nextStep')}</button>}
@@ -1728,7 +1880,7 @@ function DeskHome() {
         )}
         {mode === 'trade' && compose === 'guide'
           ? <Guide busy={isLoading || !!jobId} onCreate={sendText} />
-          : <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={mode === 'trade' ? t('promptPhTrade') : t('promptPhAlarm')} disabled={isLoading || !!jobId} />}
+          : <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={mode === 'trade' ? t('promptPhTrade') : t('promptPhAlarm')} disabled={isLoading || !!jobId} />}
         {mode === 'trade' && (
           <div className="wallet-row">
             <label>{t('wallet')}
@@ -1781,21 +1933,24 @@ function DeskHome() {
         </fieldset>
         </>}
         {mode === 'trade' && (
-          <fieldset className="choice" disabled={isLoading || !!jobId}>
-            <legend>{t('marePick')} <Tip text={t('mareTip')} /></legend>
-            <label className={mareMode === 'any' ? 'on' : ''}>
-              <input type="radio" name="marePick" checked={mareMode === 'any'} onChange={() => setMareMode('any')} />
-              <span>{t('mareAny')}</span>
-            </label>
-            <label className={mareMode === 'good' ? 'on' : ''}>
-              <input type="radio" name="marePick" checked={mareMode === 'good'} onChange={() => setMareMode('good')} />
-              <span>{t('mareGood')}</span>
-            </label>
-            <label className={mareMode === 'not_bad' ? 'on' : ''}>
-              <input type="radio" name="marePick" checked={mareMode === 'not_bad'} onChange={() => setMareMode('not_bad')} />
-              <span>{t('mareNotBad')}</span>
-            </label>
-          </fieldset>
+          <div className="segment" role="radiogroup" aria-label={t('marePick')}>
+            <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
+            <div className="segment-track">
+              {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={mareMode === id}
+                  className={mareMode === id ? 'on' : ''}
+                  disabled={isLoading || !!jobId}
+                  onClick={() => setMareMode(id)}
+                >
+                  {t(key)}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {mode === 'trade' && compose === 'paste' && (
           <fieldset className="choice" disabled={isLoading || !!jobId}>
@@ -1869,7 +2024,7 @@ function DeskHome() {
       </form>
       <div className="mare">
         <span className={`pill ${mare?.label || ''}`}>{mare ? `${mare.label} · ${mare.upPct}% · ${mare.windowMin} min` : '…'} <Tip text={t('mareTip')} /></span>
-        <span className="muted">{t('connection')}: {connection}</span>
+        <span className={`conn ${connection === 'live' ? 'live' : 'down'}`}><i />{t('connection')}: {connection || 'connecting'}</span>
         <span className="muted">{(live.prices.length ? live.prices : data?.prices || []).slice(0, 4).map((p) => `${p.symbol.replace('USDT', '')} ${p.price}`).join(' · ')}</span>
       </div>
       <section className="alarm-board">
@@ -1938,7 +2093,7 @@ function DeskHome() {
             </header>
             <div className="kpi">
               <span>{t('equity')} <b>{money(s.equity)}</b></span>
-              <span className={s.pnl >= 0 ? 'up' : 'down'}>{t('pnl')} <b>{money(s.pnl)}</b></span>
+              <span className={s.pnl > 0 ? 'up' : s.pnl < 0 ? 'down' : ''}>{t('pnl')} <b>{money(s.pnl)}</b></span>
               <span>{t('trades')} <b>{s.nTrades}</b></span>
               <span>{t('wr')} <b>{Math.round((s.winRate || 0) * 100)}%</b></span>
             </div>
@@ -1955,12 +2110,12 @@ function DeskHome() {
               </select>
             </label>
             <div className="actions">
-              <Link className="tiny" to={`/${lng}/app/strategies/${s.id}/producao`}>{t('toProd')}</Link>
+              <Link className="tiny" to={`/${lng}/app/strategies/${s.id}/producao`}><IconPlay />{t('toProd')}</Link>
               {s.paused
-                ? <button className="tiny" type="button" onClick={() => resume(s.id)}>{t('resume')}</button>
-                : <button className="tiny" type="button" onClick={() => pause(s.id)}>{t('pause')}</button>}
-              <button className="tiny" type="button" onClick={() => { if (confirm(t('reset'))) reset(s.id); }}>{t('reset')}</button>
-              <button className="tiny danger" type="button" onClick={() => { if (confirm(t('remove'))) remove(s.id); }}>{t('remove')}</button>
+                ? <button className="tiny" type="button" onClick={() => resume(s.id)}><IconPlay />{t('resume')}</button>
+                : <button className="tiny" type="button" onClick={() => pause(s.id)}><IconPause />{t('pause')}</button>}
+              <button className="tiny" type="button" onClick={() => { if (confirm(t('reset'))) reset(s.id); }}><IconTrash />{t('reset')}</button>
+              <button className="tiny danger" type="button" onClick={() => { if (confirm(t('remove'))) remove(s.id); }}><IconX />{t('remove')}</button>
             </div>
           </article>
         ))}
@@ -2011,7 +2166,7 @@ function StrategyPage() {
     <div className="wrap">
       <Link to={`/${lng}/app`}>{t('back')}</Link>
       <div className="row">
-        <h2 style={{ fontFamily: 'Fraunces, serif' }}>{data?.strategy?.name}</h2>
+        <h2>{data?.strategy?.name}</h2>
         <Link className="solid" to={`/${lng}/app/strategies/${id}/producao`}>{t('toProd')}</Link>
       </div>
       <article className="panel composer-top" style={{ marginTop: 12 }}>
@@ -2020,7 +2175,7 @@ function StrategyPage() {
           {(data?.messages || []).map((m) => <div key={m.id} className={`bubble ${m.role}`}>{m.content}</div>)}
         </div>
         <form onSubmit={submit} aria-busy={!!jobId}>
-          <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('replyPh')} disabled={!!jobId} />
+          <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('replyPh')} disabled={!!jobId} />
           {steps && (
             <AskSteps
               key={steps.id}
@@ -2050,13 +2205,13 @@ function StrategyPage() {
         </article>
       )}
       {ex && (
-        <div className="split">
-          <article className="panel">
+        <div className="split explain-grid">
+          <article className="panel explain">
             <h3>{t('thesis')}</h3><p>{ex.thesis}</p>
             <h3>{t('entry')}</h3><p>{ex.entry}</p>
             <h3>{t('exit')}</h3><p>{ex.exit}</p>
           </article>
-          <article className="panel">
+          <article className="panel explain">
             <h3>{t('filters')}</h3><p>{ex.filters}</p>
             <h3>{t('risks')}</h3><p>{ex.risks}</p>
           </article>
@@ -2064,17 +2219,27 @@ function StrategyPage() {
       )}
       <article className="panel" style={{ marginTop: 12 }}>
         <h3>{t('scan')}</h3>
-        <table className="scan">
-          <tbody>
-            {(scan?.rows || []).map((row) => (
-              <tr key={row.symbol}>
-                <td>{row.symbol}</td>
-                <td>{row.passed}/{row.total}</td>
-                <td className="muted">{(row.checks || []).map((c) => c.detail).join(' · ')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {(scan?.rows || []).length ? (
+          <table className="scan">
+            <tbody>
+              {scan.rows.map((row) => (
+                <tr key={row.symbol}>
+                  <td>{row.symbol}</td>
+                  <td>{row.passed}/{row.total}</td>
+                  <td className="muted">{(row.checks || []).map((c) => c.detail).join(' · ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="empty-state">
+            <svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true">
+              <circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M24 15v10l6 3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p>{t('scanEmpty')}</p>
+          </div>
+        )}
       </article>
       <article className="panel" style={{ marginTop: 12 }}>
         <h3>{t('trades')}</h3>
