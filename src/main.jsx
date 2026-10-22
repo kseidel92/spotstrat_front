@@ -2077,6 +2077,7 @@ function DeskHome() {
           variants: variants && !guided,
           mareMode,
           wallet: walletN,
+          guided,
         },
       }).unwrap();
       setThreadId(res.threadId);
