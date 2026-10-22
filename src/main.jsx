@@ -107,7 +107,7 @@ function SessionBoot({ children }) {
       return res.json();
     }).then((data) => {
       if (!cancel && data?.accessToken) dispatch(setSession({ token: data.accessToken, user: data.user, remember: rememberOn() }));
-    }).catch(() => {}).finally(() => {
+    }).catch(() => { }).finally(() => {
       clearTimeout(timer);
       if (!cancel) setReady(true);
     });
@@ -167,7 +167,7 @@ function SiteFooter() {
     <footer className="site">
       <div className="foot-brand">
         <Link className="brand" to={home} onClick={open(home)}>
-          <i aria-hidden="true" />SpotStrat
+          SpotStrat
         </Link>
         <p className="tag">{t('footerTag')}</p>
         <p className="copy">{t('footerCopy')}</p>
@@ -204,27 +204,7 @@ function ShieldNote() {
   );
 }
 
-function PaperShell({ children }) {
-  const { t } = useTranslation();
-  const { lng } = useParams();
-  return (
-    <>
-      <header className="topbar">
-        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
-        <div className="spacer" />
-        <Flags />
-        <nav className="menu">
-          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
-          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-          <Link to={`/${lng}/login`}>{t('enter')}</Link>
-          <Link className="solid" to={`/${lng}/register`}>{t('cta')}</Link>
-        </nav>
-      </header>
-      {children}
-      <SiteFooter />
-    </>
-  );
-}
+
 
 const ENGULF_BARS = [
   [102.4, 103.1, 101.6, 101.9],
@@ -390,7 +370,7 @@ function Landing() {
   return (
     <div className="landing">
       <header className="topbar">
-        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
+        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
@@ -433,7 +413,7 @@ function AuthFrame({ children }) {
   return (
     <div className="landing auth-page">
       <header className="topbar">
-        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
+        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
@@ -735,7 +715,7 @@ function GoogleEntry() {
   const { lng } = useParams();
   const nav = useNavigate();
   const dispatch = useDispatch();
-  const onToken = useRef(() => {});
+  const onToken = useRef(() => { });
   const [err, setErr] = useState('');
   const [google] = useGoogleMutation();
   const config = useConfigQuery(undefined, { refetchOnMountOrArgChange: true });
@@ -1084,7 +1064,7 @@ function DeskBar() {
   const user = me.data?.user;
   return (
     <header className="deskbar">
-      <Link className="brand" to={`/${lng}/app`}><i />SpotStrat</Link>
+      <Link className="brand" to={`/${lng}/app`}>SpotStrat</Link>
       <nav className="menu">
         <Link to={`/${lng}/app`}>{t('strategiesNav')}</Link>
         <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
@@ -2213,72 +2193,72 @@ function DeskHome() {
           ? <Guide busy={isLoading || !!jobId} onCreate={sendText} />
           : <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={isLoading || !!jobId} />}
         <div className="wallet-row">
-            <label>{t('wallet')}
-              <input inputMode="decimal" min="100" max="999000" value={wallet} onChange={(e) => setWallet(e.target.value)} disabled={isLoading || !!jobId} />
-            </label>
-            <small>{t('walletHint')}</small>
-          </div>
+          <label>{t('wallet')}
+            <input inputMode="decimal" min="100" max="999000" value={wallet} onChange={(e) => setWallet(e.target.value)} disabled={isLoading || !!jobId} />
+          </label>
+          <small>{t('walletHint')}</small>
+        </div>
         {compose !== 'guide' && <>
-        <fieldset className="choice" disabled={isLoading || !!jobId}>
-          <legend>{t('optExit')}</legend>
-          <label className={exitMode === 'history' ? 'on' : ''}>
-            <input type="radio" name="exitPick" checked={exitMode === 'history'} onChange={() => setExitMode('history')} />
-            <span>{t('exitHist')}</span>
-          </label>
-          <label className={exitMode === 'manual' ? 'on' : ''}>
-            <input type="radio" name="exitPick" checked={exitMode === 'manual'} onChange={() => setExitMode('manual')} />
-            <span>{t('exitManual')}</span>
-          </label>
-          {exitMode === 'manual' && (
-            <div className="choice-fields">
-              <label>{t('stopPct')}<input inputMode="decimal" value={stopPct} onChange={(e) => setStopPct(e.target.value)} /></label>
-              <label>{t('tpPct')}<input inputMode="decimal" value={tpPct} onChange={(e) => setTpPct(e.target.value)} /></label>
-            </div>
-          )}
-        </fieldset>
-        <fieldset className="choice" disabled={isLoading || !!jobId}>
-          <legend>{t('optTime')}</legend>
-          <label className={timeExit ? 'on' : ''}>
-            <input type="checkbox" checked={timeExit} onChange={(e) => setTimeExit(e.target.checked)} />
-            <span>{t('timeExit')}</span>
-          </label>
-          {timeExit && (
-            <>
-              <label className={timeMode === 'history' ? 'on' : ''}>
-                <input type="radio" name="timePick" checked={timeMode === 'history'} onChange={() => setTimeMode('history')} />
-                <span>{t('timeHist')}</span>
-              </label>
-              <label className={timeMode === 'manual' ? 'on' : ''}>
-                <input type="radio" name="timePick" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} />
-                <span>{t('timeManual')}</span>
-              </label>
-              {timeMode === 'manual' && (
-                <div className="choice-fields">
-                  <label>{t('holdMin')}<input inputMode="numeric" value={holdMin} onChange={(e) => setHoldMin(e.target.value)} /></label>
-                </div>
-              )}
-            </>
-          )}
-        </fieldset>
+          <fieldset className="choice" disabled={isLoading || !!jobId}>
+            <legend>{t('optExit')}</legend>
+            <label className={exitMode === 'history' ? 'on' : ''}>
+              <input type="radio" name="exitPick" checked={exitMode === 'history'} onChange={() => setExitMode('history')} />
+              <span>{t('exitHist')}</span>
+            </label>
+            <label className={exitMode === 'manual' ? 'on' : ''}>
+              <input type="radio" name="exitPick" checked={exitMode === 'manual'} onChange={() => setExitMode('manual')} />
+              <span>{t('exitManual')}</span>
+            </label>
+            {exitMode === 'manual' && (
+              <div className="choice-fields">
+                <label>{t('stopPct')}<input inputMode="decimal" value={stopPct} onChange={(e) => setStopPct(e.target.value)} /></label>
+                <label>{t('tpPct')}<input inputMode="decimal" value={tpPct} onChange={(e) => setTpPct(e.target.value)} /></label>
+              </div>
+            )}
+          </fieldset>
+          <fieldset className="choice" disabled={isLoading || !!jobId}>
+            <legend>{t('optTime')}</legend>
+            <label className={timeExit ? 'on' : ''}>
+              <input type="checkbox" checked={timeExit} onChange={(e) => setTimeExit(e.target.checked)} />
+              <span>{t('timeExit')}</span>
+            </label>
+            {timeExit && (
+              <>
+                <label className={timeMode === 'history' ? 'on' : ''}>
+                  <input type="radio" name="timePick" checked={timeMode === 'history'} onChange={() => setTimeMode('history')} />
+                  <span>{t('timeHist')}</span>
+                </label>
+                <label className={timeMode === 'manual' ? 'on' : ''}>
+                  <input type="radio" name="timePick" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} />
+                  <span>{t('timeManual')}</span>
+                </label>
+                {timeMode === 'manual' && (
+                  <div className="choice-fields">
+                    <label>{t('holdMin')}<input inputMode="numeric" value={holdMin} onChange={(e) => setHoldMin(e.target.value)} /></label>
+                  </div>
+                )}
+              </>
+            )}
+          </fieldset>
         </>}
         <div className="segment" role="radiogroup" aria-label={t('marePick')}>
-            <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
-            <div className="segment-track">
-              {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={mareMode === id}
-                  className={mareMode === id ? 'on' : ''}
-                  disabled={isLoading || !!jobId}
-                  onClick={() => setMareMode(id)}
-                >
-                  {t(key)}
-                </button>
-              ))}
-            </div>
+          <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
+          <div className="segment-track">
+            {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={mareMode === id}
+                className={mareMode === id ? 'on' : ''}
+                disabled={isLoading || !!jobId}
+                onClick={() => setMareMode(id)}
+              >
+                {t(key)}
+              </button>
+            ))}
           </div>
+        </div>
         {compose === 'paste' && (
           <fieldset className="choice" disabled={isLoading || !!jobId}>
             <legend>{t('optVar')} <Tip text={t('varTip')} /></legend>
@@ -3028,31 +3008,31 @@ function PricesBody({ showCta = false }) {
     { key: 'paper', amount: 93.33, title: t('planPaper') },
   ];
   return (
-      <section className="band prices">
-        <p className="kicker">{t('pricesNav')}</p>
-        <h1>{t('pricesT')}</h1>
-        <div className="price-split">
-          <p><strong>{t('planIncludedLead')}</strong> {t('planIncludedBody')}</p>
-          <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
-          <p><strong>{t('cancelTitle')}</strong> {t('cancelPolicy')}</p>
-        </div>
-        <div className="price-grid">
-          {plans.map((plan) => (
-            <article key={plan.key} className={plan.key}>
-              <h2>{plan.title}</h2>
-              <LaunchPrice />
-              <p className="price-num">{localMoney(lng, plan.amount)}</p>
-              <p className="plan-anchor">{t('planAnchor')}</p>
-              {lng !== 'pt-BR' && <p className="mono dim">{t('planTable')} · {brlMoney(plan.amount)}</p>}
-            </article>
-          ))}
-        </div>
-        <PlanPicker showBody={false} />
-        <p className="mono dim">{t('planFx')}</p>
-        {showCta && <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>}
-        <Faq />
-        <TestimonialCard />
-      </section>
+    <section className="band prices">
+      <p className="kicker">{t('pricesNav')}</p>
+      <h1>{t('pricesT')}</h1>
+      <div className="price-split">
+        <p><strong>{t('planIncludedLead')}</strong> {t('planIncludedBody')}</p>
+        <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
+        <p><strong>{t('cancelTitle')}</strong> {t('cancelPolicy')}</p>
+      </div>
+      <div className="price-grid">
+        {plans.map((plan) => (
+          <article key={plan.key} className={plan.key}>
+            <h2>{plan.title}</h2>
+            <LaunchPrice />
+            <p className="price-num">{localMoney(lng, plan.amount)}</p>
+            <p className="plan-anchor">{t('planAnchor')}</p>
+            {lng !== 'pt-BR' && <p className="mono dim">{t('planTable')} · {brlMoney(plan.amount)}</p>}
+          </article>
+        ))}
+      </div>
+      <PlanPicker showBody={false} />
+      <p className="mono dim">{t('planFx')}</p>
+      {showCta && <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>}
+      <Faq />
+      <TestimonialCard />
+    </section>
   );
 }
 
@@ -3063,7 +3043,7 @@ function Prices() {
   return (
     <div className="landing">
       <header className="topbar">
-        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
+        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
@@ -3095,7 +3075,7 @@ function PublicInfo() {
   return (
     <div className="landing">
       <header className="topbar">
-        <Link className="brand" to={`/${lng}`}><i />SpotStrat</Link>
+        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
@@ -3126,31 +3106,31 @@ function App() {
     <BrowserRouter>
       <ScrollToTop />
       <SessionBoot>
-      <Routes>
-        <Route path="/" element={<LangRedirect />} />
-        <Route path="/:lng" element={<Guard><Landing /></Guard>} />
-        <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
-        <Route path="/:lng/info" element={<Guard><PublicInfo /></Guard>} />
-        <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
-        <Route path="/:lng/terms" element={<Guard><Legal page="terms" /></Guard>} />
-        <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
-        <Route path="/:lng/cookies" element={<Guard><Legal page="cookies" /></Guard>} />
-        <Route path="/:lng/login" element={<Guard><Login /></Guard>} />
-        <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
-        <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
-        <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
-        <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
-        <Route path="*" element={<LangRedirect />} />
-      </Routes>
+        <Routes>
+          <Route path="/" element={<LangRedirect />} />
+          <Route path="/:lng" element={<Guard><Landing /></Guard>} />
+          <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
+          <Route path="/:lng/info" element={<Guard><PublicInfo /></Guard>} />
+          <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
+          <Route path="/:lng/terms" element={<Guard><Legal page="terms" /></Guard>} />
+          <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
+          <Route path="/:lng/cookies" element={<Guard><Legal page="cookies" /></Guard>} />
+          <Route path="/:lng/login" element={<Guard><Login /></Guard>} />
+          <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
+          <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
+          <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
+          <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
+          <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
+          <Route path="*" element={<LangRedirect />} />
+        </Routes>
       </SessionBoot>
     </BrowserRouter>
   );
