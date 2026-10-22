@@ -11,7 +11,7 @@ import {
   useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
-  useStrategiesQuery, useStrategyQuery, usePromptMutation, useSuggestGuideMutation, useEditPromptMutation,
+  useStrategiesQuery, useStrategyQuery, usePromptMutation, useStrategyHelpMutation, useSuggestGuideMutation, useEditPromptMutation,
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery,
@@ -1165,11 +1165,19 @@ function detectGuideKind(guide) {
   return 'touches';
 }
 
-function fieldsFor(step, spec, t, kind) {
+function fieldsFor(step, spec, t, kind, remote = {}) {
   if (step === 'entry') return { entry: t(`aiEntry_${kind}`) };
   if (step === 'entryType') return { entryType: spec.entryType, entryTypeText: '' };
-  if (step === 'sources') return { sources: spec.sources.slice(), sourcesOther: '' };
-  if (step === 'list') return { list: 'no', listText: '' };
+  if (step === 'sources') {
+    const sources = Array.isArray(remote.sources) && remote.sources.length
+      ? remote.sources.slice()
+      : spec.sources.slice();
+    return { sources, sourcesOther: '' };
+  }
+  if (step === 'list') {
+    const list = remote.list === 'yes' ? 'yes' : 'no';
+    return { list, listText: list === 'yes' ? String(remote.listText || '') : '' };
+  }
   if (step === 'exit') return { exitKind: 'numbers', stop: String(spec.stop), target: String(spec.target), exitText: '' };
   if (step === 'review') return { name: t(`aiName_${kind}`) };
   return {};
@@ -1464,7 +1472,7 @@ function briefOf(guide, t) {
     entryTypeBrief(guide, t),
     `Entrada: ${guide.entry.trim()}`,
     'Tempos de candle: conforme descrito no gatilho (pode ser mais de um).',
-    `Fontes: ${guide.sources.map((id) => sourceText[id]).join('; ')}.`,
+    `Fontes disponíveis no ctx (só entram na compra ou saída se Entrada ou Saída descreverem a condição): ${guide.sources.map((id) => sourceText[id]).join('; ')}.`,
     guide.list === 'yes'
       ? `Lista: ${guide.listText.trim()} Grave o preço em ctx.memory.`
       : 'Lista: não grava preço. A compra acontece no próprio gatilho.',
@@ -1511,8 +1519,9 @@ function Guide({ busy, onCreate }) {
     setAiBusy(true);
     let kind = detectGuideKind(guide);
     let spec = { ...GUIDE_SPEC[kind] };
+    let remote = null;
     try {
-      const remote = await suggestGuide({ step: current, guide }).unwrap();
+      remote = await suggestGuide({ step: current, guide }).unwrap();
       if (remote?.kind && GUIDE_SPEC[remote.kind]) {
         kind = remote.kind;
         spec = {
@@ -1524,7 +1533,7 @@ function Guide({ busy, onCreate }) {
         };
       }
     } catch { /* o catálogo local cobre o desk sem sessão */ }
-    patch(fieldsFor(current, spec, t, kind));
+    patch(fieldsFor(current, spec, t, kind, remote || {}));
     setAiBusy(false);
   }
   return (
@@ -1996,6 +2005,93 @@ function AlarmsPage() {
   );
 }
 
+function StrategyHelpBalloon({ strategies }) {
+  const { t, i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [strategyId, setStrategyId] = useState('');
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState('');
+  const [sendHelp, { isLoading }] = useStrategyHelpMutation();
+
+  async function submit(e) {
+    e.preventDefault();
+    setErr('');
+    const text = message.trim();
+    if (text.length < 8) {
+      setErr(t('helpShort'));
+      return;
+    }
+    try {
+      await sendHelp({
+        message: text,
+        strategyId: strategyId || undefined,
+        locale: i18n.language,
+      }).unwrap();
+      setSent(true);
+      setMessage('');
+      setStrategyId('');
+    } catch (error) {
+      setErr(errText(error, t));
+    }
+  }
+
+  return (
+    <div className={`help-balloon ${open ? 'open' : ''}`}>
+      {!open && (
+        <button type="button" className="help-balloon-tab" onClick={() => { setOpen(true); setSent(false); setErr(''); }}>
+          <span className="help-balloon-dot" aria-hidden="true" />
+          <span>{t('helpTeaser')}</span>
+        </button>
+      )}
+      {open && (
+        <form className="help-balloon-panel" onSubmit={submit}>
+          <header>
+            <div>
+              <p className="help-balloon-kicker">{t('helpTitle')}</p>
+              <p className="help-balloon-lede">{t('helpLede')}</p>
+            </div>
+            <button type="button" className="help-balloon-close" aria-label={t('dialogBack')} onClick={() => setOpen(false)}>×</button>
+          </header>
+          {sent ? (
+            <p className="help-balloon-ok" role="status">{t('helpSent')}</p>
+          ) : (
+            <>
+              {strategies?.length > 0 && (
+                <label className="help-balloon-label">
+                  {t('helpStrategy')}
+                  <select value={strategyId} onChange={(e) => setStrategyId(e.target.value)} disabled={isLoading}>
+                    <option value="">{t('helpStrategyAny')}</option>
+                    {strategies.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label className="help-balloon-label">
+                {t('helpMessage')}
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={t('helpPh')}
+                  rows={10}
+                  maxLength={20000}
+                  disabled={isLoading}
+                  required
+                />
+              </label>
+              {err && <p className="help-balloon-err" role="alert">{err}</p>}
+              <button className="solid" type="submit" disabled={isLoading || message.trim().length < 8}>
+                {isLoading ? t('working') : t('helpSend')}
+              </button>
+            </>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
+
 function DeskHome() {
   const { t } = useTranslation();
   const { lng } = useParams();
@@ -2281,6 +2377,7 @@ function DeskHome() {
         <button className="ghost" type="button" disabled={restoring} onClick={onRestore}>{restoring ? '…' : t('restore')}</button>
         {restoreMsg && <span className="restore-note">{restoreMsg}</span>}
       </div>
+      <StrategyHelpBalloon strategies={strategies} />
     </div>
   );
 }
