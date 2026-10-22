@@ -2713,71 +2713,212 @@ function brlMoney(brl) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(brl);
 }
 
+function foldText(value) {
+  return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function InfoIcon({ d }) {
+  return (
+    <svg className="info-ico" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
+const INFO_PATH = {
+  pen: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z',
+  brain: 'M12 3l1.6 4.2L18 9l-4.4 1.8L12 15l-1.6-4.2L6 9l4.4-1.8L12 3ZM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z',
+  chart: 'M4 19V5M4 19h16M8 16l3-4 3 2 4-6',
+  wallet: 'M3 8h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Zm0 0V6a2 2 0 0 1 2-2h12M16 14h.01',
+  wave: 'M2 14c2 0 2-4 4-4s2 4 4 4 2-4 4-4 2 4 4 4 2-4 4-4M2 18c2 0 2-3 4-3s2 3 4 3 2-3 4-3 2 3 4 3',
+  scale: 'M12 3v18M8 21h8M12 6l-6 7h6l-6 0M12 6l6 7h-6M6 13a3 3 0 0 0 6 0M12 13a3 3 0 0 0 6 0',
+  tape: 'M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3ZM9 8h6M9 12h6M9 16h4',
+  link: 'M8 12a4 4 0 0 1 4-4h2M16 12a4 4 0 0 1-4 4h-2M9 12h6',
+  list: 'M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01',
+  risk: 'M12 3 4 7v6c0 5 3.4 7.6 8 9 4.6-1.4 8-4 8-9V7l-8-4Z',
+  fee: 'M12 3v18M16 7H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H8',
+  halt: 'M12 8v5M12 17h.01M10.3 4.8 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.8a2 2 0 0 0-3.4 0Z',
+  bell: 'M6 9a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9M10 20a2 2 0 0 0 4 0',
+  chip: 'M7 7h10v10H7V7ZM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4',
+};
+
 function Info() {
   useLang();
   const { t } = useTranslation();
   const { data } = useDeskQuery(undefined, { pollingInterval: 15000 });
   const n = (data?.prices || []).length;
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState('como');
+  const [opened, setOpened] = useState({});
+  const needle = foldText(query.trim());
   const steps = [
-    ['01', 'infoS1t', 'infoS1'],
-    ['02', 'infoS2t', 'infoS2'],
-    ['03', 'infoS3t', 'infoS3'],
-    ['04', 'infoS4t', 'infoS4'],
+    ['pen', 'infoS1t', 'infoS1'],
+    ['brain', 'infoS2t', 'infoS2'],
+    ['chart', 'infoS3t', 'infoS3'],
+    ['wallet', 'infoS4t', 'infoS4'],
   ];
-  const meters = ['infoMare', 'infoBook', 'infoTape', 'infoEquity', 'infoPnl', 'infoTrades', 'infoConn', 'infoRisk', 'infoFee', 'infoHalt', 'infoAlarm', 'infoPro'];
+  const openCards = [
+    ['mare', 'wave', 'infoMare'],
+    ['livro', 'scale', 'infoBook'],
+    ['tape', 'tape', 'infoTape'],
+    ['conexao', 'link', 'infoConn'],
+  ];
+  const drawers = [
+    ['carteira', 'wallet', 'infoEquity'],
+    ['pnl', 'chart', 'infoPnl'],
+    ['trades', 'list', 'infoTrades'],
+    ['risco', 'risk', 'infoRisk'],
+    ['taxa', 'fee', 'infoFee'],
+    ['trava', 'halt', 'infoHalt'],
+    ['alarme', 'bell', 'infoAlarm'],
+    ['pro', 'chip', 'infoPro'],
+  ];
+  const toc = [
+    ['como', 'infoTocHow'],
+    ['pares', 'infoTocPairs'],
+    ...openCards.map(([id, , key]) => [id, `${key}T`]),
+    ...drawers.map(([id, , key]) => [id, `${key}T`]),
+  ];
+  const blobs = useMemo(() => {
+    const bag = {
+      como: ['infoT', 'infoL', 'infoHowT', 'infoHow', ...steps.flatMap(([, title, body]) => [title, body])],
+      pares: ['infoUniT', 'infoUni', 'infoInT', 'infoOutT', 'infoIn1', 'infoIn2', 'infoIn3', 'infoIn4', 'infoOut1', 'infoOut2', 'infoOut3', 'infoOut4', 'infoOut5', 'infoOut6'],
+    };
+    [...openCards, ...drawers].forEach(([id, , key]) => { bag[id] = [`${key}T`, key]; });
+    return Object.fromEntries(Object.entries(bag).map(([id, keys]) => [id, foldText(keys.map((key) => t(key)).join(' '))]));
+  }, [t]);
+  const show = (id) => !needle || (blobs[id] || '').includes(needle);
+  const any = toc.some(([id]) => show(id));
+
+  useEffect(() => {
+    const mark = () => {
+      const line = 120;
+      let current = '';
+      for (const [id] of toc) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= line) current = id;
+      }
+      if (current) setActive(current);
+    };
+    mark();
+    window.addEventListener('scroll', mark, { passive: true });
+    return () => window.removeEventListener('scroll', mark);
+  }, [needle]);
+
+  useEffect(() => {
+    if (needle.length < 2) return undefined;
+    const hit = toc.find(([id]) => show(id));
+    if (!hit) return undefined;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timer = window.setTimeout(() => {
+      document.getElementById(hit[0])?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [needle]);
+
+  function jump(id) {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    setActive(id);
+  }
+
+  function Top() {
+    return <button className="info-top" type="button" onClick={scrollPageTop}>{t('infoTop')}</button>;
+  }
+
   return (
-    <div className="wrap info-page">
-      <section className="info-hero">
-        <div>
-          <p className="kicker">{t('infoNav')}</p>
-          <h2>{t('infoT')}</h2>
-          <p>{t('infoL')}</p>
-        </div>
-        <img src="/robot-desk.png" alt="" />
-      </section>
-      <section className="info-steps">
-        {steps.map(([num, title, body]) => (
-          <article key={num}>
-            <span>{num}</span>
-            <h3>{t(title)}</h3>
-            <p>{t(body)}</p>
-          </article>
+    <div className="wrap info-wiki">
+      <nav className="info-toc" aria-label={t('infoNav')}>
+        {toc.map(([id, key]) => (
+          <a key={id} href={`#${id}`} className={!show(id) ? 'off' : active === id ? 'on' : ''} onClick={(event) => { event.preventDefault(); if (show(id)) jump(id); }}>{t(key)}</a>
         ))}
-      </section>
-      <section className="info-split">
-        <CandleChart title={t('chartEma')} bars={EMA_BARS} mark={8} />
-        <article className="panel">
-          <h3>{t('infoHowT')}</h3>
-          <p>{t('infoHow')}</p>
-        </article>
-      </section>
-      <section className="info-uni">
-        <h2>{t('infoUniT')}</h2>
-        <p>{t('infoUni')}</p>
-        {n > 0 && <p className="info-now">{t('infoUniNow', { n })}</p>}
-        <div className="info-cols">
-          <article>
-            <h3>{t('infoInT')}</h3>
-            <ul>
-              {['infoIn1', 'infoIn2', 'infoIn3', 'infoIn4'].map((key) => <li key={key}>{t(key)}</li>)}
-            </ul>
-          </article>
-          <article>
-            <h3>{t('infoOutT')}</h3>
-            <ul>
-              {['infoOut1', 'infoOut2', 'infoOut3', 'infoOut4', 'infoOut5', 'infoOut6'].map((key) => <li key={key}>{t(key)}</li>)}
-            </ul>
-          </article>
-        </div>
-      </section>
-      <section className="info-grid">
-        {meters.map((key) => (
-          <article className="panel" key={key}>
-            <h3>{t(`${key}T`)}</h3>
-            <p>{t(key)}</p>
-          </article>
+      </nav>
+      <div className="info-doc">
+        <label className="info-search">
+          <span>{t('infoSearch')}</span>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('infoSearchPh')} />
+        </label>
+        {!any && <p className="info-empty">{t('infoSearchEmpty')}</p>}
+        {show('como') && (
+          <section id="como">
+            <p className="kicker">{t('infoNav')}</p>
+            <h2>{t('infoT')}</h2>
+            <p className="info-lead">{t('infoL')}</p>
+            <div className="info-flow">
+              {steps.map(([icon, title, body], index) => (
+                <article key={title}>
+                  <InfoIcon d={INFO_PATH[icon]} />
+                  <span>0{index + 1}</span>
+                  <h3>{t(title)}</h3>
+                  <p>{t(body)}</p>
+                </article>
+              ))}
+            </div>
+            <div className="info-chart">
+              <CandleChart title={t('chartEma')} bars={EMA_BARS} mark={8} />
+              <article className="info-card">
+                <h3>{t('infoHowT')}</h3>
+                <p>{t('infoHow')}</p>
+              </article>
+            </div>
+            <Top />
+          </section>
+        )}
+        {show('pares') && (
+          <section id="pares">
+            <h2>{t('infoUniT')}</h2>
+            <p>{t('infoUni')}</p>
+            {n > 0 && <p className="info-now">{t('infoUniNow', { n })}</p>}
+            <div className="info-cols">
+              <article className="info-card">
+                <h3><InfoIcon d="M5 12.5 9.2 17 19 7" />{t('infoInT')}</h3>
+                <ul className="info-list in">
+                  {['infoIn1', 'infoIn2', 'infoIn3', 'infoIn4'].map((key) => <li key={key}>{t(key)}</li>)}
+                </ul>
+              </article>
+              <article className="info-card">
+                <h3><InfoIcon d="M6 6l12 12M18 6 6 18" />{t('infoOutT')}</h3>
+                <ul className="info-list out">
+                  {['infoOut1', 'infoOut2', 'infoOut3', 'infoOut4', 'infoOut5', 'infoOut6'].map((key) => <li key={key}>{t(key)}</li>)}
+                </ul>
+              </article>
+            </div>
+            <Top />
+          </section>
+        )}
+        {openCards.map(([id, icon, key]) => show(id) && (
+          <section id={id} key={id}>
+            <article className="info-card info-meter">
+              <div className={`info-mock ${id}`} aria-hidden="true"><InfoIcon d={INFO_PATH[icon]} /></div>
+              <div>
+                <h2>{t(`${key}T`)}</h2>
+                <p>{t(key)}</p>
+                <Top />
+              </div>
+            </article>
+          </section>
         ))}
-      </section>
+        {drawers.map(([id, icon, key]) => {
+          if (!show(id)) return null;
+          const expanded = !!needle || !!opened[id];
+          return (
+            <section id={id} key={id} className="info-fold">
+              <button type="button" aria-expanded={expanded} onClick={() => setOpened((prev) => ({ ...prev, [id]: !prev[id] }))}>
+                <InfoIcon d={INFO_PATH[icon]} />
+                <span>{t(`${key}T`)}</span>
+                <i className={expanded ? 'open' : ''} />
+              </button>
+              {expanded && (
+                <>
+                  <p>{t(key)}</p>
+                  <Top />
+                </>
+              )}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

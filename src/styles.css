@@ -282,64 +282,172 @@ textarea { min-height: 90px; resize: vertical; }
   font-size: 13px;
 }
 .desk .mare-pick select { width: auto; max-width: 100%; padding: 6px 8px; }
-.desk .info-page { max-width: 1080px; }
-.desk .info-page h2 {
-  font-family: Inter, Roboto, sans-serif;
-  font-size: 40px;
-  letter-spacing: -0.03em;
-  margin: 0 0 10px;
-}
-.desk .info-page h3 { margin: 0 0 8px; font-size: 18px; }
-.desk .info-page p, .desk .info-page li { color: #d5e0ea; line-height: 1.55; }
-.desk .info-hero {
+.desk .info-wiki {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
-  gap: 22px;
+  grid-template-columns: 196px minmax(0, 780px);
+  gap: 32px;
+  align-items: start;
+  max-width: 1040px;
+}
+.desk .info-toc {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding-right: 4px;
+}
+.desk .info-toc a {
+  color: #8B949E;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.3;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border-left: 2px solid transparent;
+}
+.desk .info-toc a.on {
+  color: #fff;
+  background: rgba(6, 182, 212, 0.12);
+  border-left-color: #06b6d4;
+}
+.desk .info-toc a.off { display: none; }
+.desk .info-doc { max-width: 780px; }
+.desk .info-doc section { scroll-margin-top: 84px; }
+.desk .info-doc h2 {
+  font-family: Inter, Roboto, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 48px 0 12px;
+}
+.desk .info-doc #como h2 { margin-top: 8px; }
+.desk .info-doc h3 {
+  display: flex;
   align-items: center;
-  margin-bottom: 22px;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #06b6d4;
 }
-.desk .info-hero img {
-  width: 100%;
+.desk .info-doc p,
+.desk .info-doc li {
+  color: #B0B8C4;
+  font-size: 15px;
+  line-height: 1.65;
+  font-weight: 400;
+}
+.desk .info-lead { font-size: 16px; max-width: 62ch; }
+.desk .info-search { display: grid; gap: 6px; margin: 0 0 8px; color: #8B949E; font-size: 12px; }
+.desk .info-search input { margin: 0; }
+.desk .info-empty { margin: 18px 0; }
+.desk .info-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.desk .info-flow article,
+.desk .info-card,
+.desk .info-fold {
+  background: #151A23;
+  border: 1px solid #2A303C;
   border-radius: 16px;
-  border: 1px solid rgba(122, 215, 255, 0.22);
-  display: block;
 }
-.desk .info-steps, .desk .info-grid {
+.desk .info-flow article { padding: 14px 12px 8px; }
+.desk .info-flow span {
+  display: block;
+  margin: 8px 0 4px;
+  color: #06b6d4;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.desk .info-ico { color: #06b6d4; flex: 0 0 auto; }
+.desk .info-chart {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.desk .info-card { padding: 16px 16px 8px; }
+.desk .info-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  margin-top: 16px;
 }
-.desk .info-steps article, .desk .info-cols article {
-  border: 1px solid var(--desk-line);
+.desk .info-now { color: #06b6d4; font-size: 14px; }
+.desk .info-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.desk .info-list li {
+  position: relative;
+  margin: 0 0 12px;
+  padding-left: 26px;
+}
+.desk .info-list li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+}
+.desk .info-list.in li::before { content: "✔"; color: #3ecf8e; }
+.desk .info-list.out li::before { content: "✖"; color: #ff6d5a; }
+.desk .info-meter {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-top: 28px;
+  padding: 18px;
+}
+.desk .info-meter h2 { margin: 0 0 8px; }
+.desk .info-mock {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
   border-radius: 16px;
-  padding: 16px 16px 8px;
-  background: var(--desk-2);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.28);
 }
-.desk .info-steps span {
-  font-family: Inter, Roboto, sans-serif;
+.desk .info-mock .info-ico { width: 32px; height: 32px; }
+.desk .info-fold { margin-top: 10px; padding: 4px 14px 8px; }
+.desk .info-fold button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: left;
+}
+.desk .info-fold button i {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #8B949E;
+  border-bottom: 2px solid #8B949E;
+  transform: rotate(45deg);
+}
+.desk .info-fold button i.open { transform: rotate(225deg); margin-top: 4px; }
+.desk .info-top {
+  display: inline-flex;
+  margin: 8px 0 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #06b6d4;
   font-size: 12px;
-  letter-spacing: 0.12em;
+  font-weight: 600;
 }
-.desk .info-split, .desk .info-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 18px;
-  align-items: start;
-}
-.desk .info-uni { margin-top: 28px; }
-.desk .info-uni h2 { font-size: 32px; }
-.desk .info-now {
-  font-family: Inter, Roboto, sans-serif;
-  color: #06b6d4;
-  letter-spacing: 0.04em;
-}
-.desk .info-cols ul { margin: 0; padding-left: 18px; }
-.desk .info-cols li { margin: 0 0 10px; }
-.desk .info-grid { margin-top: 18px; }
-.desk .info-grid .panel { margin: 0; }
-.desk .info .panel { margin-top: 12px; }
+.desk .info-top:hover { color: #fff; }
+.public-info .info-toc { top: 76px; }
 .auth-page .remember {
   display: flex;
   align-items: center;
@@ -1277,8 +1385,19 @@ body:has(.landing) { background: #07090d; }
 
 @media (max-width: 900px) {
   .landing .hero, .landing .preset-grid, .landing .does, .landing .stage, .landing .path, .landing .ideal, .trial-band, .chart-grid, .landing .price-grid,
-  .desk .info-hero, .desk .info-steps, .desk .info-split, .desk .info-cols, .desk .info-grid { grid-template-columns: 1fr; }
-  .desk .info-page h2 { font-size: 32px; }
+  .desk .info-wiki, .desk .info-flow, .desk .info-cols, .desk .info-meter { grid-template-columns: 1fr; }
+  .desk .info-toc {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    flex-direction: row;
+    max-height: none;
+    gap: 6px;
+    padding: 8px 0;
+    background: #0B0E14;
+  }
+  .desk .info-toc a { white-space: nowrap; border-left: 0; }
+  .public-info .info-toc { top: 64px; }
   .landing .rail { display: none; }
   .landing .stage { min-height: auto; padding-top: 28px; }
   .landing .stage h1, .landing .hero h1 { font-size: 40px; max-width: 12ch; }
