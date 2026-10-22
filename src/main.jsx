@@ -1060,8 +1060,6 @@ function DeskBar() {
   const { lng } = useParams();
   const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
-  const me = useMeQuery();
-  const user = me.data?.user;
   return (
     <header className="deskbar">
       <Link className="brand" to={`/${lng}/app`}>SpotStrat</Link>
@@ -1073,7 +1071,6 @@ function DeskBar() {
         <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
       </nav>
-      {user?.expiring && <span className="expiring" role="status">{user.daysLeft === 1 ? t('expiringOne') : t('expiring', { n: user.daysLeft })}</span>}
       <div className="spacer" />
       <Flags />
       <button className="tiny" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>

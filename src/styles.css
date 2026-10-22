@@ -1471,17 +1471,6 @@ body:has(.landing) { background: #07090d; }
   box-sizing: content-box;
   color-scheme: light;
 }
-.expiring {
-  background: #3d2a08;
-  color: #FFD36A;
-  border: 1px solid rgba(255, 179, 0, 0.45);
-  border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 8px;
-  white-space: nowrap;
-}
 .plan-chip { color: var(--cream); }
 .account-page, .production { max-width: 880px; }
 .warn, .warn-panel { color: #f0e2b8; }
