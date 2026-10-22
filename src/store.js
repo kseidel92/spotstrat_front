@@ -160,7 +160,11 @@ const deskSlice = createSlice({
       } else if (msg.type === 'scan') {
         state.scan[msg.strategyId] = msg;
       } else if (msg.type === 'alarm') {
-        state.hits = [msg.hit, ...(state.hits || []).filter((hit) => hit.id !== msg.hit.id)].slice(0, 12);
+        const row = (state.alarms || []).find((item) => item.id === msg.alarmId);
+        if (row) row.symbols = msg.symbols || [];
+      } else if (msg.type === 'alarmChannels') {
+        const row = (state.alarms || []).find((item) => item.id === msg.alarmId);
+        if (row) row.channels = { ...(row.channels || {}), ...(msg.channels || {}) };
       } else if (msg.type === 'job') {
         state.lastJob = msg.job;
       } else if (msg.type === 'position' || msg.type === 'trade') {
@@ -176,6 +180,10 @@ const deskSlice = createSlice({
 
 export const { ingest } = deskSlice.actions;
 
+export function patchAlarmChannels(alarmId, channels) {
+  store.dispatch(ingest({ type: 'alarmChannels', alarmId, channels }));
+}
+
 export const store = configureStore({
   reducer: {
     auth: authSlice.reducer,
@@ -188,8 +196,9 @@ export const store = configureStore({
 let socket;
 let streamGen = 0;
 export function connectStream() {
-  const token = store.getState().auth.token;
-  if (!token) return;
+  const token = store.getState().auth.token || '';
+  // TRAVA DE AUTENTICAÇÃO COMENTADA — o stream liga mesmo sem sessão.
+  // if (!token) return;
   const mine = ++streamGen;
   if (socket) {
     socket.onclose = null;
@@ -206,7 +215,8 @@ export function connectStream() {
   socket.onclose = () => {
     if (mine !== streamGen) return;
     setTimeout(() => {
-      if (store.getState().auth.token && mine === streamGen) connectStream();
+      // if (store.getState().auth.token && mine === streamGen) connectStream();
+      if (mine === streamGen) connectStream();
     }, 2000);
   };
 }

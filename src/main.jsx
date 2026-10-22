@@ -7,15 +7,15 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
-  store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn,
+  store, api, connectStream, focusStrategy, setSession, clearSession, rememberOn, patchAlarmChannels,
   useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
   useStrategiesQuery, useStrategyQuery, usePromptMutation, useEditPromptMutation,
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
-  useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmSeenMutation, useAlarmChannelsMutation,
-  useDeskQuery, useJobQuery, useManifestQuery, useSymbolsQuery, useKlinesQuery,
-  useArtifactsQuery, useLabQueryMutation, useCheckoutMutation, useCancelPlanMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
+  useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmChannelsMutation,
+  useDeskQuery, useJobQuery,
+  useCheckoutMutation, useCancelPlanMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
   useConfigQuery,
 } from './store';
 import './styles/variables.css';
@@ -23,6 +23,7 @@ import './styles.css';
 import auth from './components/AuthScreen.module.css';
 import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
+import LabPage from './components/Lab';
 import StatsBar from './components/StatsBar';
 import OpportunityCard from './components/OpportunityCard';
 import TestimonialCard from './components/TestimonialCard';
@@ -1098,17 +1099,19 @@ function DeskBar() {
 function RequireDesk({ children, allowExpired = false }) {
   const lng = useLang();
   const token = useSelector((s) => s.auth.token);
-  const { data, isLoading, isFetching, error } = useMeQuery(undefined, { skip: !token });
-  useEffect(() => { if (token) connectStream(); }, [token]);
-  if (!token) return <Navigate to={`/${lng}/login`} replace />;
+  const { data, isLoading, isFetching, error } = useMeQuery();
+  useEffect(() => { connectStream(); }, []);
   const known = ['trial', 'paper', 'pro', 'active', 'expired'].includes(data?.user?.desk);
-  if ((isLoading || isFetching) && !known) {
+  if ((isLoading || isFetching) && !known && !data?.user) {
     return <div className="desk"><DeskBar /><p className="wrap">…</p></div>;
   }
-  if (error?.status === 401) return <Navigate to={`/${lng}/login`} replace />;
-  const desk = data?.user?.desk;
-  if (desk === 'unverified' || desk === 'locked') return <Navigate to={`/${lng}/verify`} replace />;
-  if (desk === 'expired' && !allowExpired) return <Navigate to={`/${lng}/app/account`} replace />;
+  // TRAVA DE AUTENTICAÇÃO COMENTADA — o desk abre sem login. Voltar estes retornos.
+  // if (!token) return <Navigate to={`/${lng}/login`} replace />;
+  // if (error?.status === 401) return <Navigate to={`/${lng}/login`} replace />;
+  // const desk = data?.user?.desk;
+  // if (desk === 'unverified' || desk === 'locked') return <Navigate to={`/${lng}/verify`} replace />;
+  // if (desk === 'expired' && !allowExpired) return <Navigate to={`/${lng}/app/account`} replace />;
+  void token; void error; void allowExpired; void lng;
   return <div className="desk"><DeskBar />{children}</div>;
 }
 
@@ -1470,6 +1473,107 @@ function money(n) {
   return `${v >= 0 ? '' : '−'}${Math.abs(v).toFixed(2)}`;
 }
 
+const ALARM_SOUNDS = ['bell', 'harsh', 'vintage', 'digital', 'gentle', 'burst', 'beep', 'distant'];
+const ALARM_SOUND_LEGACY = { pulse: 'burst', chime: 'gentle', siren: 'harsh' };
+let currentAlarm = null;
+let pendingAlarm = null;
+
+function alarmKind(kind) {
+  const id = ALARM_SOUND_LEGACY[kind] || kind;
+  return ALARM_SOUNDS.includes(id) ? id : 'bell';
+}
+
+function alarmLevel(volume) {
+  const level = Number(volume);
+  if (!Number.isFinite(level)) return 0.85;
+  return Math.min(1, Math.max(0.05, level));
+}
+
+function playAlarmSound(kind, volume) {
+  const id = alarmKind(kind);
+  if (currentAlarm) {
+    currentAlarm.pause();
+    currentAlarm.currentTime = 0;
+  }
+  const audio = new Audio(`/alarms/${id}.mp3`);
+  audio.volume = alarmLevel(volume);
+  currentAlarm = audio;
+  pendingAlarm = null;
+  const run = audio.play();
+  if (run && run.catch) run.catch(() => { if (currentAlarm === audio) pendingAlarm = audio; });
+}
+
+function unlockAlarmSound() {
+  const audio = pendingAlarm;
+  if (!audio) return;
+  pendingAlarm = null;
+  audio.play().catch(() => { pendingAlarm = audio; });
+}
+
+function SoundPick({ kind, volume, onChange }) {
+  const { t } = useTranslation();
+  const safeKind = alarmKind(kind);
+  const [picked, setPicked] = useState(safeKind);
+  const [level, setLevel] = useState(alarmLevel(volume));
+  const holdUntil = useRef(0);
+  useEffect(() => {
+    if (Date.now() < holdUntil.current) return;
+    setPicked(alarmKind(kind));
+  }, [kind]);
+  useEffect(() => {
+    if (Date.now() < holdUntil.current) return;
+    setLevel(alarmLevel(volume));
+  }, [volume]);
+  function choose(id) {
+    pendingAlarm = null;
+    holdUntil.current = Date.now() + 1500;
+    setPicked(id);
+    playAlarmSound(id, level);
+    onChange({ soundKind: id, volume: level });
+  }
+  function commitVolume(next) {
+    const value = alarmLevel(next);
+    holdUntil.current = Date.now() + 1500;
+    setLevel(value);
+    onChange({ soundKind: picked, volume: value });
+  }
+  return (
+    <div className="alarm-sound">
+      <p className="sound-label">{t('soundKind')}</p>
+      <div className="sound-grid" role="listbox" aria-label={t('soundKind')}>
+        {ALARM_SOUNDS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="option"
+            aria-selected={picked === id}
+            className={picked === id ? 'on' : ''}
+            onClick={() => choose(id)}
+          >
+            {t(`sound_${id}`)}
+          </button>
+        ))}
+      </div>
+      <div className="alarm-volume">
+        <span>{t('soundVol')}</span>
+        <input
+          type="range"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value={level}
+          aria-label={t('soundVol')}
+          onChange={(e) => setLevel(alarmLevel(e.target.value))}
+          onPointerUp={(e) => commitVolume(e.target.value)}
+          onKeyUp={(e) => commitVolume(e.target.value)}
+        />
+        <b>{Math.round(level * 100)}%</b>
+      </div>
+      <button className="sound-test" type="button" onClick={() => { pendingAlarm = null; playAlarmSound(picked, level); }}>{t('soundTest')}</button>
+    </div>
+  );
+}
+
 function DeskHome() {
   const { t } = useTranslation();
   const { lng } = useParams();
@@ -1479,7 +1583,6 @@ function DeskHome() {
   const mare = live.mare || data?.mare;
   const connection = live.connection || data?.connection;
   const alarms = live.alarms ?? data?.alarms ?? [];
-  const hits = live.hits ?? data?.hits ?? [];
   const [mode, setMode] = useState('trade');
   const [exitMode, setExitMode] = useState('history');
   const [stopPct, setStopPct] = useState('1.2');
@@ -1490,7 +1593,7 @@ function DeskHome() {
   const [variants, setVariants] = useState(false);
   const [wallet, setWallet] = useState('1000');
   const [mareMode, setMareMode] = useState('any');
-  const [channels, setChannels] = useState({ sound: true, email: false });
+  const [channels, setChannels] = useState({ sound: true, email: false, soundKind: 'bell', volume: 0.85 });
   const [prompt, setPrompt] = useState('');
   const [compose, setCompose] = useState('guide');
   const [threadId, setThreadId] = useState(null);
@@ -1509,52 +1612,43 @@ function DeskHome() {
   const [alarmPause] = useAlarmPauseMutation();
   const [alarmArm] = useAlarmArmMutation();
   const [alarmRemove] = useAlarmRemoveMutation();
-  const [alarmSeen] = useAlarmSeenMutation();
   const [alarmChannels] = useAlarmChannelsMutation();
-  const audioRef = useRef(null);
-  const playedRef = useRef(new Set());
+  const heardRef = useRef(new Set());
+  const quietRef = useRef(new Map());
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
 
-  function armAudio() {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    if (!audioRef.current) audioRef.current = new Ctx();
-    if (audioRef.current.state === 'suspended') audioRef.current.resume();
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
-  }
-
-  function beep() {
-    const ctx = audioRef.current;
-    if (!ctx) return;
-    const tone = (freq, at) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
-      gain.gain.exponentialRampToValueAtTime(0.07, ctx.currentTime + at + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + 0.42);
-      osc.start(ctx.currentTime + at);
-      osc.stop(ctx.currentTime + at + 0.45);
+  useEffect(() => {
+    const onGesture = (event) => {
+      if (event.target.closest && event.target.closest('.alarm-sound')) return;
+      unlockAlarmSound();
     };
-    tone(880, 0);
-    tone(1175, 0.16);
-  }
+    window.addEventListener('pointerdown', onGesture);
+    return () => window.removeEventListener('pointerdown', onGesture);
+  }, []);
 
   useEffect(() => {
-    for (const hit of hits) {
-      if (!hit || hit.seen || playedRef.current.has(hit.id)) continue;
-      playedRef.current.add(hit.id);
-      const sound = !hit.channels || hit.channels.sound !== false;
-      if (!sound) continue;
-      beep();
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        const note = `${hit.name || ''} · ${t('resStop')} ${Number(hit.stop).toFixed(4)} · ${t('resTarget')} ${Number(hit.tp).toFixed(4)}`;
-        new Notification(hit.symbol || 'SpotStrat', { body: note });
+    for (const alarm of alarms) {
+      const firing = (alarm.symbols || []).length > 0;
+      if (firing && alarm.channels?.sound !== false && !heardRef.current.has(alarm.id)) {
+        heardRef.current.add(alarm.id);
+        quietRef.current.delete(alarm.id);
+        playAlarmSound(alarm.channels?.soundKind, alarm.channels?.volume);
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const names = (alarm.symbols || []).map((item) => String(item.symbol || '').replace(/USDT$/, '')).join(', ');
+          new Notification(alarm.name || 'SpotStrat', { body: names });
+        }
+      }
+      if (firing) quietRef.current.delete(alarm.id);
+      else if (heardRef.current.has(alarm.id)) {
+        const since = quietRef.current.get(alarm.id) || Date.now();
+        quietRef.current.set(alarm.id, since);
+        if (Date.now() - since > 30000) {
+          heardRef.current.delete(alarm.id);
+          quietRef.current.delete(alarm.id);
+        }
       }
     }
-  }, [hits]);
+  }, [alarms]);
 
   useEffect(() => {
     const status = job.data?.job?.status;
@@ -1716,13 +1810,20 @@ function DeskHome() {
           <fieldset className="choice" disabled={isLoading || !!jobId}>
             <legend>{t('optCh')}</legend>
             <label className={channels.sound ? 'on' : ''}>
-              <input type="checkbox" checked={channels.sound} onChange={(e) => { if (!e.target.checked && !channels.email) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, sound: e.target.checked }); if (e.target.checked) armAudio(); }} />
+              <input type="checkbox" checked={channels.sound} onChange={(e) => { if (!e.target.checked && !channels.email) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, sound: e.target.checked }); if (e.target.checked) unlockAlarmSound(); }} />
               <span>{t('chSound')}</span>
             </label>
             <label className={channels.email ? 'on' : ''}>
               <input type="checkbox" checked={channels.email} onChange={(e) => { if (!e.target.checked && !channels.sound) { setErr(t('chNeed')); return; } setErr(''); setChannels({ ...channels, email: e.target.checked }); }} />
               <span>{t('chEmail')}</span>
             </label>
+            {channels.sound && (
+              <SoundPick
+                kind={channels.soundKind}
+                volume={channels.volume}
+                onChange={(patch) => setChannels({ ...channels, ...patch })}
+              />
+            )}
             <p className="muted">{t('chHint')}</p>
           </fieldset>
         )}
@@ -1775,38 +1876,54 @@ function DeskHome() {
         <header>
           <h2>{t('alarmsT')}</h2>
         </header>
-        {hits.filter((hit) => !hit.seen).map((hit) => (
-          <article className="alarm-hit" key={hit.id}>
-            <div>
-              <strong>{hit.symbol}</strong>
-              <span className="muted"> · {hit.name}</span>
-              <p>{t('thEntry')} {px(hit.price)} · {t('resStop')} {px(hit.stop)} ({Number(hit.stopPct).toFixed(2)}%) · {t('resTarget')} {px(hit.tp)} ({Number(hit.tpPct).toFixed(2)}%)</p>
-              {(hit.deliveries || []).filter((item) => item.channel === 'email').map((item) => (
-                <p className="muted" key={item.channel}>{t('chEmail')} · {item.to || '—'} · {item.status === 'sent' ? 'ok' : item.status === 'capped' ? t('alarmMailCap') : t('chHint')}</p>
-              ))}
-            </div>
-            <button className="tiny" type="button" onClick={() => alarmSeen(hit.id)}>{t('alarmSeen')}</button>
-          </article>
-        ))}
         {!alarms.length && <p className="muted">{t('alarmEmpty')}</p>}
         <div className="alarm-list">
-          {alarms.map((alarm) => (
-            <article key={alarm.id}>
-              <div>
-                <strong>{alarm.name}</strong>
-                <p>{alarm.thesis}</p>
-                <span className="muted">{t('resStop')} {alarm.stopPct}% · {t('resTarget')} {alarm.tpPct}%</span>
-              </div>
-              <div className="actions">
-                <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { const email = !!alarm.channels?.email; if (!e.target.checked && !email) return; alarmChannels({ id: alarm.id, channels: { sound: e.target.checked, email } }); if (e.target.checked) armAudio(); }} /> {t('chSound')}</label>
-                <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => { const sound = alarm.channels?.sound !== false; if (!e.target.checked && !sound) return; alarmChannels({ id: alarm.id, channels: { sound, email: e.target.checked } }); }} /> {t('chEmail')}</label>
-                {alarm.status === 'armed'
-                  ? <button className="tiny" type="button" onClick={() => alarmPause(alarm.id)}>{t('alarmPause')}</button>
-                  : <button className="tiny" type="button" onClick={() => alarmArm(alarm.id)}>{t('alarmArm')}</button>}
-                <button className="tiny danger" type="button" onClick={() => alarmRemove(alarm.id)}>{t('remove')}</button>
-              </div>
-            </article>
-          ))}
+          {alarms.map((alarm) => {
+            const firing = (alarm.symbols || []).length > 0;
+            const names = (alarm.symbols || []).slice(0, 8).map((item) => String(item.symbol || '').replace(/USDT$/, '')).join(', ');
+            const extra = (alarm.symbols || []).length > 8 ? ` +${alarm.symbols.length - 8}` : '';
+            const kind = alarmKind(alarm.channels?.soundKind);
+            const volume = alarmLevel(alarm.channels?.volume);
+            const saveChannels = (patch) => {
+              const next = {
+                sound: alarm.channels?.sound !== false,
+                email: !!alarm.channels?.email,
+                soundKind: kind,
+                volume,
+                ...patch,
+              };
+              if (!next.sound && !next.email) return;
+              patchAlarmChannels(alarm.id, next);
+              alarmChannels({ id: alarm.id, channels: next });
+            };
+            return (
+              <article key={alarm.id} className={firing ? 'firing' : ''}>
+                <div className="alarm-head">
+                  <div>
+                    <strong>{alarm.name}</strong>
+                    {firing && <span className="firing-flag">{t('alarmFiring')}</span>}
+                    <p>{alarm.thesis}</p>
+                    {firing && <p className="firing-names">{names}{extra}</p>}
+                  </div>
+                </div>
+                {alarm.channels?.sound !== false && (
+                  <SoundPick
+                    kind={kind}
+                    volume={volume}
+                    onChange={(patch) => saveChannels(patch)}
+                  />
+                )}
+                <div className="actions">
+                  <label className="check"><input type="checkbox" checked={alarm.channels?.sound !== false} onChange={(e) => { const email = !!alarm.channels?.email; if (!e.target.checked && !email) return; saveChannels({ sound: e.target.checked }); if (e.target.checked) unlockAlarmSound(); }} /> {t('chSound')}</label>
+                  <label className="check"><input type="checkbox" checked={!!alarm.channels?.email} onChange={(e) => { const sound = alarm.channels?.sound !== false; if (!e.target.checked && !sound) return; saveChannels({ email: e.target.checked }); }} /> {t('chEmail')}</label>
+                  {alarm.status === 'armed'
+                    ? <button className="tiny" type="button" onClick={() => alarmPause(alarm.id)}>{t('alarmPause')}</button>
+                    : <button className="tiny" type="button" onClick={() => alarmArm(alarm.id)}>{t('alarmArm')}</button>}
+                  <button className="tiny danger" type="button" onClick={() => alarmRemove(alarm.id)}>{t('remove')}</button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
       <div className="strategies" style={{ marginTop: 14 }}>
@@ -1967,188 +2084,9 @@ function StrategyPage() {
   );
 }
 
-function Candle({ symbol }) {
-  const ref = useRef(null);
-  const { data, isFetching } = useKlinesQuery({ symbol, interval: '1h', limit: 500 }, { skip: !symbol });
-  const { t } = useTranslation();
-  useEffect(() => {
-    if (!ref.current || !data?.bars?.length) return undefined;
-    const chart = createChart(ref.current, {
-      height: 380,
-      layout: { background: { color: '#181e25' }, textColor: '#ebe4d6' },
-      grid: { vertLines: { color: '#313a45' }, horzLines: { color: '#313a45' } },
-      timeScale: { timeVisible: true },
-    });
-    const series = chart.addCandlestickSeries({
-      upColor: '#3ecf8e', downColor: '#ff6d5a', borderVisible: false, wickUpColor: '#3ecf8e', wickDownColor: '#ff6d5a',
-    });
-    series.setData(data.bars);
-    chart.timeScale().fitContent();
-    const ro = new ResizeObserver(() => {
-      if (ref.current) chart.applyOptions({ width: ref.current.clientWidth });
-    });
-    ro.observe(ref.current);
-    return () => { ro.disconnect(); chart.remove(); };
-  }, [data]);
-  if (!symbol) return null;
-  return <div>{isFetching && <p>{t('loading')}</p>}<div className="chart" ref={ref} /></div>;
-}
-
 function LabLegacyRedirect() {
   const { lng } = useParams();
   return <Navigate to={`/${lng}/app/laboratorio`} replace />;
-}
-
-function LabMessage({ role, content }) {
-  const blocks = String(content || '').split('\n');
-  return (
-    <div className={`bubble ${role}`}>
-      {blocks.map((line, i) => {
-        const bold = /^\*\*(.+)\*\*$/.exec(line.trim());
-        if (bold) return <strong key={i}>{bold[1]}</strong>;
-        if (!line.trim()) return <br key={i} />;
-        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-        return (
-          <p key={i}>
-            {parts.map((part, j) => {
-              const m = /^\*\*(.+)\*\*$/.exec(part);
-              return m ? <strong key={j}>{m[1]}</strong> : part;
-            })}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
-
-function History() {
-  const { t, i18n } = useTranslation();
-  const manifest = useManifestQuery();
-  const symbols = useSymbolsQuery();
-  const artifacts = useArtifactsQuery();
-  const [q, setQ] = useState('');
-  const [symbol, setSymbol] = useState('BTCUSDT');
-  const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [err, setErr] = useState('');
-  const [jobId, setJobId] = useState(null);
-  const [ask] = useLabQueryMutation();
-  const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
-  const chatEndRef = useRef(null);
-  const busy = !!jobId || job.data?.job?.status === 'running' || job.data?.job?.status === 'queued';
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, busy]);
-
-  useEffect(() => {
-    const st = job.data?.job?.status;
-    if (!st || st === 'queued' || st === 'running') return;
-    setJobId(null);
-    if (st === 'done') {
-      const pay = job.data.job.output?.payload || {};
-      const reply = job.data.job.output?.reply || pay.reply || '';
-      setMessages((prev) => [...prev, { role: 'assistant', content: reply, refs: pay.refs }]);
-      setErr('');
-    } else {
-      setMessages((prev) => [...prev, { role: 'assistant', content: job.data.job.error || t('labError') }]);
-    }
-  }, [job.data, t]);
-
-  const list = useMemo(() => {
-    const all = symbols.data?.symbols || [];
-    const query = q.trim().toUpperCase();
-    return all.filter((s) => !query || s.symbol.includes(query)).slice(0, 24);
-  }, [symbols.data, q]);
-
-  async function submit(e) {
-    e.preventDefault();
-    const text = prompt.trim();
-    if (!text || busy) return;
-    setErr('');
-    const history = messages.map(({ role, content }) => ({ role, content }));
-    setMessages((prev) => [...prev, { role: 'user', content: text }]);
-    setPrompt('');
-    try {
-      const res = await ask({ prompt: text, history, locale: i18n.language }).unwrap();
-      setJobId(res.jobId);
-    } catch (error) {
-      setErr(errText(error, t));
-    }
-  }
-
-  return (
-    <div className="wrap lab-page">
-      <header className="lab-head">
-        <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('labNav')}</h2>
-        <p className="muted">{manifest.data ? `${manifest.data.start || ''} → ${manifest.data.end || ''} · ${manifest.data.symbols} pares · ${t('labNote')}` : t('labNote')}</p>
-      </header>
-      <section className="panel lab-chat" aria-busy={busy}>
-        <div className="lab-chat-head">
-          <h3>{t('askLab')}</h3>
-          <p className="muted">{t('labChatHint')}</p>
-        </div>
-        <div className="thread lab-thread">
-          {!messages.length && (
-            <p className="muted lab-empty">{t('labChatHint')}</p>
-          )}
-          {messages.map((m, i) => (
-            <div key={`${m.role}-${i}`} className="lab-turn">
-              <LabMessage role={m.role} content={m.content} />
-              {m.refs?.length > 0 && (
-                <details className="lab-refs muted">
-                  <summary>{t('labRefs')}</summary>
-                  <ul>
-                    {m.refs.map((r) => <li key={r.id || r.name}><strong>{r.name}</strong> — {r.summary}</li>)}
-                  </ul>
-                </details>
-              )}
-            </div>
-          ))}
-          {busy && (
-            <div className="bubble assistant lab-typing">
-              <span>{t('labThinking')}</span>
-              <div className="composer-bar" aria-hidden="true"><i /></div>
-            </div>
-          )}
-          <div ref={chatEndRef} />
-        </div>
-        <form className="lab-composer" onSubmit={submit}>
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={t('labPlaceholder')}
-            disabled={busy}
-            rows={3}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e); }
-            }}
-          />
-          <div className="row">
-            <button className="solid" type="submit" disabled={busy || !prompt.trim()}>{busy ? t('labThinking') : t('send')}</button>
-          </div>
-          {err && <p className="err">{err}</p>}
-        </form>
-      </section>
-      <details className="panel lab-data">
-        <summary><strong>{t('labDataTitle')}</strong></summary>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} />
-        <div className="symbols" style={{ margin: '12px 0' }}>
-          {list.map((s) => (
-            <button type="button" key={s.symbol} className={symbol === s.symbol ? 'on' : ''} onClick={() => setSymbol(s.symbol)}>
-              <strong>{s.symbol}</strong>
-              <div className={s.changePct >= 0 ? 'up' : 'down'}>{Number(s.changePct).toFixed(1)}%</div>
-            </button>
-          ))}
-        </div>
-        <Candle symbol={symbol} />
-        <h3>{t('sweeps')}</h3>
-        {(artifacts.data?.artifacts || []).slice(0, 12).map((a) => (
-          <p key={a.id}><strong>{a.name}</strong><br /><span className="muted">{a.summary}</span></p>
-        ))}
-      </details>
-    </div>
-  );
 }
 
 function statusLabel(user, t) {
@@ -2596,7 +2534,7 @@ function App() {
         <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
         <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
         <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
-        <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><History /></RequireDesk></Guard>} />
+        <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
         <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
         <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
         <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />

@@ -1010,16 +1010,100 @@ body:has(.landing) { background: #07090d; }
 .alarm-board h2 { font-size: 22px; margin: 0 0 4px; }
 .alarm-hit, .alarm-list article {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  border: 1px solid var(--desk-line);
+  background: rgba(8, 18, 28, 0.72);
+  padding: 16px;
+  margin-top: 10px;
+  border-radius: 14px;
+}
+.alarm-list .alarm-head strong { font-size: 18px; letter-spacing: -0.02em; }
+.alarm-list article.firing {
+  border-color: #ffb020;
+  background: rgba(255, 160, 40, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 176, 32, 0.55);
+}
+.alarm-list .firing-flag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #ffb020;
+  color: #1a1204;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.alarm-list .firing-names { color: #ffd48a; font-weight: 600; }
+.alarm-sound {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(235, 228, 214, 0.16);
+  border-radius: 12px;
+  background: rgba(12, 16, 22, 0.72);
+}
+.alarm-sound .sound-label,
+.alarm-volume,
+.alarm-volume span,
+.alarm-volume b {
+  color: #f4efe4;
+}
+.alarm-sound .sound-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+.sound-grid button {
+  border: 1px solid #46515e;
+  background: #1a222c;
+  color: #f7f2e8;
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sound-grid button.on {
+  border-color: #ffb020;
+  background: rgba(255, 176, 32, 0.22);
+  color: #fff8ea;
+  box-shadow: inset 0 0 0 1px #ffb020;
+}
+.alarm-volume {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 1fr) 48px;
   gap: 12px;
   align-items: center;
-  border: 1px solid rgba(122, 215, 255, 0.35);
-  background: rgba(8, 18, 28, 0.72);
-  padding: 12px 14px;
-  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 650;
 }
-.alarm-list article { border-color: var(--desk-line); }
-.alarm-list .actions, .alarm-hit .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.alarm-volume b { text-align: right; font-variant-numeric: tabular-nums; }
+.alarm-volume input[type="range"] {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: #ffb020;
+  height: 28px;
+}
+.alarm-sound .sound-test {
+  justify-self: start;
+  border: 0;
+  border-radius: 999px;
+  background: #f4efe4;
+  color: #14181c;
+  padding: 8px 16px;
+  font-weight: 700;
+}
+.alarm-list .actions, .alarm-hit .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; align-items: center; }
 .alarm-hit p, .alarm-list p { margin: 4px 0; }
 .landing .fine p { max-width: 78ch; }
 .auth-page .auth-wrap { padding-bottom: 48px; }
