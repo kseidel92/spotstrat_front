@@ -5,12 +5,15 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
       ]
     }
   ],
   "env": {
-    "VITE_WS_ORIGIN": "wss://filling-sailing-eye-ownership.trycloudflare.com",
+    "VITE_WS_ORIGIN": "wss://identifies-columns-led-cheers.trycloudflare.com",
     "VITE_GOOGLE_CLIENT_ID": "98371392821-ca4oqqttpoje9uc952it3arfd47f2a2s.apps.googleusercontent.com"
   },
   "rewrites": [
@@ -18,6 +21,13 @@
       "source": "/v1/:path*",
       "destination": "https://spotstratcloud.vercel.app/v1/:path*"
     },
-    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
+    {
+      "source": "/relay/:path*",
+      "destination": "https://spotstratcloud.vercel.app/:path*"
+    },
+    {
+      "source": "/((?!.*\\.).*)",
+      "destination": "/index.html"
+    }
   ]
 }
