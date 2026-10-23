@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useMemo, useState } from 'react';
+import { Component, StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
-  store, api, ingest, connectStream, focusStrategy, setSession, clearSession, rememberOn, patchAlarmChannels,
+  store, api, ingest, connectStream, focusStrategy, setSession, clearSession, setApiOnline, rememberOn, patchAlarmChannels,
   useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
@@ -96,25 +96,89 @@ function SessionBoot({ children }) {
   useEffect(() => {
     if (token) return undefined;
     let cancel = false;
-    const timer = setTimeout(() => { if (!cancel) setReady(true); }, 4000);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      ctrl.abort();
+      if (!cancel) setReady(true);
+    }, 2500);
     fetch('/v1/auth/refresh', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ remember: rememberOn() }),
+      signal: ctrl.signal,
     }).then(async (res) => {
+      if (cancel) return null;
+      if (res.status >= 500 || res.status === 502 || res.status === 503 || res.status === 504) {
+        dispatch(setApiOnline(false));
+        return null;
+      }
+      dispatch(setApiOnline(true));
       if (!res.ok) return null;
       return res.json();
     }).then((data) => {
-      if (!cancel && data?.accessToken) dispatch(setSession({ token: data.accessToken, user: data.user, remember: rememberOn() }));
-    }).catch(() => { }).finally(() => {
+      if (!cancel && data?.accessToken) {
+        dispatch(setSession({ token: data.accessToken, user: data.user, remember: rememberOn() }));
+      }
+    }).catch(() => {
+      if (!cancel) dispatch(setApiOnline(false));
+    }).finally(() => {
       clearTimeout(timer);
       if (!cancel) setReady(true);
     });
-    return () => { cancel = true; clearTimeout(timer); };
+    return () => { cancel = true; clearTimeout(timer); ctrl.abort(); };
   }, [dispatch, token]);
-  if (!ready) return <p className="wrap">…</p>;
-  return children;
+  if (!ready) {
+    return (
+      <div className="boot-shell">
+        <p className="wrap boot-wait">{i18n.t('loadingApp')}</p>
+      </div>
+    );
+  }
+  return (
+    <>
+      <ApiOfflineBanner />
+      {children}
+    </>
+  );
+}
+
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="boot-shell">
+          <div className="wrap offline-panel" role="alert">
+            <h1>{i18n.t('appCrashT')}</h1>
+            <p>{i18n.t('appCrashB')}</p>
+            <button className="solid" type="button" onClick={() => window.location.reload()}>{i18n.t('apiRetry')}</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function ApiOfflineBanner() {
+  const { t } = useTranslation();
+  const online = useSelector((s) => s.desk.apiOnline);
+  if (online) return null;
+  return (
+    <div className="api-offline" role="status">
+      <span>{t('apiOffline')}</span>
+      <button type="button" className="tiny" onClick={() => window.location.reload()}>{t('apiRetry')}</button>
+    </div>
+  );
 }
 
 function Guard({ children }) {
@@ -1081,11 +1145,22 @@ function DeskBar() {
 function RequireDesk({ children, allowExpired = false }) {
   const lng = useLang();
   const token = useSelector((s) => s.auth.token);
-  const { data, isLoading, isFetching, error } = useMeQuery();
+  const { data, isLoading, isFetching, error, isError, refetch } = useMeQuery();
+  const [waited, setWaited] = useState(false);
   useEffect(() => { connectStream(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setWaited(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
   const known = ['trial', 'paper', 'pro', 'active', 'expired'].includes(data?.user?.desk);
-  if ((isLoading || isFetching) && !known && !data?.user) {
-    return <div className="desk"><DeskBar /><p className="wrap">…</p></div>;
+  const stillBooting = (isLoading || isFetching) && !known && !data?.user && !isError && !waited;
+  if (stillBooting) {
+    return (
+      <div className="desk">
+        <DeskBar />
+        <p className="wrap boot-wait">{i18n.t('loadingApp')}</p>
+      </div>
+    );
   }
   // TRAVA DE AUTENTICAÇÃO COMENTADA — o desk abre sem login. Voltar estes retornos.
   // if (!token) return <Navigate to={`/${lng}/login`} replace />;
@@ -1093,8 +1168,14 @@ function RequireDesk({ children, allowExpired = false }) {
   // const desk = data?.user?.desk;
   // if (desk === 'unverified' || desk === 'locked') return <Navigate to={`/${lng}/verify`} replace />;
   // if (desk === 'expired' && !allowExpired) return <Navigate to={`/${lng}/app/account`} replace />;
-  void token; void error; void allowExpired; void lng;
-  return <div className="desk"><DeskBar /><AlarmWatcher />{children}</div>;
+  void token; void error; void allowExpired; void lng; void refetch;
+  return (
+    <div className="desk">
+      <DeskBar />
+      <AlarmWatcher />
+      {children}
+    </div>
+  );
 }
 
 function cleanJobError(text, t) {
@@ -3102,33 +3183,35 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <SessionBoot>
-        <Routes>
-          <Route path="/" element={<LangRedirect />} />
-          <Route path="/:lng" element={<Guard><Landing /></Guard>} />
-          <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
-          <Route path="/:lng/info" element={<Guard><PublicInfo /></Guard>} />
-          <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
-          <Route path="/:lng/terms" element={<Guard><Legal page="terms" /></Guard>} />
-          <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
-          <Route path="/:lng/cookies" element={<Guard><Legal page="cookies" /></Guard>} />
-          <Route path="/:lng/login" element={<Guard><Login /></Guard>} />
-          <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
-          <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
-          <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
-          <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
-          <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
-          <Route path="*" element={<LangRedirect />} />
-        </Routes>
-      </SessionBoot>
+      <AppErrorBoundary>
+        <SessionBoot>
+          <Routes>
+            <Route path="/" element={<LangRedirect />} />
+            <Route path="/:lng" element={<Guard><Landing /></Guard>} />
+            <Route path="/:lng/precos" element={<Guard><Prices /></Guard>} />
+            <Route path="/:lng/info" element={<Guard><PublicInfo /></Guard>} />
+            <Route path="/:lng/privacy" element={<Guard><Legal page="privacy" /></Guard>} />
+            <Route path="/:lng/terms" element={<Guard><Legal page="terms" /></Guard>} />
+            <Route path="/:lng/termos" element={<Guard><Legal page="terms" /></Guard>} />
+            <Route path="/:lng/cookies" element={<Guard><Legal page="cookies" /></Guard>} />
+            <Route path="/:lng/login" element={<Guard><Login /></Guard>} />
+            <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
+            <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
+            <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
+            <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
+            <Route path="*" element={<LangRedirect />} />
+          </Routes>
+        </SessionBoot>
+      </AppErrorBoundary>
     </BrowserRouter>
   );
 }

@@ -1472,6 +1472,50 @@ body:has(.landing) { background: #07090d; }
   color-scheme: light;
 }
 .plan-chip { color: var(--cream); }
+.boot-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg, #0b1014);
+  color: var(--cream, #f3efe6);
+}
+.boot-wait {
+  margin: 0;
+  color: var(--muted, #9aa7b5);
+  text-align: center;
+}
+.offline-panel {
+  max-width: 420px;
+  text-align: center;
+}
+.offline-panel h1 {
+  font-size: 1.35rem;
+  margin: 0 0 10px;
+}
+.offline-panel p {
+  margin: 0 0 16px;
+  color: var(--muted, #9aa7b5);
+}
+.api-offline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: #3a2a12;
+  color: #ffd89a;
+  border-bottom: 1px solid rgba(255, 179, 0, 0.35);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+.api-offline .tiny {
+  background: transparent;
+  border: 1px solid rgba(255, 216, 154, 0.55);
+  color: #ffd89a;
+}
 .account-page, .production { max-width: 880px; }
 .warn, .warn-panel { color: #f0e2b8; }
 .ok { color: #b7e3c4; }

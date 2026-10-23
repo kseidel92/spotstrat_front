@@ -48,6 +48,22 @@ const authSlice = createSlice({
 export const { setSession, clearSession } = authSlice.actions;
 
 const apiRoot = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const FETCH_MS = 8000;
+
+function withTimeoutSignal(extra) {
+  const outer = extra?.signal;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_MS);
+  if (outer) {
+    if (outer.aborted) ctrl.abort();
+    else outer.addEventListener('abort', () => ctrl.abort(), { once: true });
+  }
+  return {
+    signal: ctrl.signal,
+    clear: () => clearTimeout(timer),
+  };
+}
+
 const rawBase = fetchBaseQuery({
   baseUrl: apiRoot ? `${apiRoot}/v1` : '/v1',
   credentials: 'include',
@@ -56,17 +72,41 @@ const rawBase = fetchBaseQuery({
     if (token) headers.set('Authorization', `Bearer ${token}`);
     return headers;
   },
+  fetchFn: async (input, init) => {
+    const timed = withTimeoutSignal({ signal: init?.signal });
+    try {
+      return await fetch(input, { ...init, signal: timed.signal });
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        const timeout = new Error('timeout');
+        timeout.name = 'TimeoutError';
+        timeout.status = 'TIMEOUT_ERROR';
+        throw timeout;
+      }
+      throw err;
+    } finally {
+      timed.clear();
+    }
+  },
 });
 
-const baseQuery = async (args, api, extra) => {
-  let result = await rawBase(args, api, extra);
+const baseQuery = async (args, apiApi, extra) => {
+  let result = await rawBase(args, apiApi, extra);
+  if (result.error) {
+    const status = result.error.status;
+    if (status === 'FETCH_ERROR' || status === 'TIMEOUT_ERROR' || status === 502 || status === 503 || status === 504) {
+      apiApi.dispatch({ type: 'desk/setApiOnline', payload: false });
+    }
+  } else {
+    apiApi.dispatch({ type: 'desk/setApiOnline', payload: true });
+  }
   if (result.error?.status === 401 && !(typeof args === 'object' && args.url?.includes('/auth/'))) {
-    const refresh = await rawBase({ url: '/auth/refresh', method: 'POST', body: { remember: rememberOn() } }, api, extra);
+    const refresh = await rawBase({ url: '/auth/refresh', method: 'POST', body: { remember: rememberOn() } }, apiApi, extra);
     if (refresh.data?.accessToken) {
-      api.dispatch(setSession({ token: refresh.data.accessToken, user: refresh.data.user }));
-      result = await rawBase(args, api, extra);
+      apiApi.dispatch(setSession({ token: refresh.data.accessToken, user: refresh.data.user }));
+      result = await rawBase(args, apiApi, extra);
     } else {
-      api.dispatch(clearSession());
+      apiApi.dispatch(clearSession());
     }
   }
   return result;
@@ -143,8 +183,21 @@ export const {
 
 const deskSlice = createSlice({
   name: 'desk',
-  initialState: { mare: null, connection: 'connecting', prices: [], strategies: [], alarms: null, hits: null, scan: {}, lastJob: null },
+  initialState: {
+    mare: null,
+    connection: 'connecting',
+    prices: [],
+    strategies: [],
+    alarms: null,
+    hits: null,
+    scan: {},
+    lastJob: null,
+    apiOnline: true,
+  },
   reducers: {
+    setApiOnline(state, action) {
+      state.apiOnline = !!action.payload;
+    },
     ingest(state, action) {
       const msg = action.payload;
       if (msg.type === 'snapshot') {
@@ -154,6 +207,7 @@ const deskSlice = createSlice({
         state.strategies = msg.strategies || [];
         state.alarms = msg.alarms || [];
         state.hits = msg.hits || [];
+        state.apiOnline = true;
       } else if (msg.type === 'prices') {
         state.prices = msg.prices || state.prices;
         state.connection = msg.connection || state.connection;
@@ -180,7 +234,7 @@ const deskSlice = createSlice({
   },
 });
 
-export const { ingest } = deskSlice.actions;
+export const { ingest, setApiOnline } = deskSlice.actions;
 
 export function patchAlarmChannels(alarmId, channels) {
   store.dispatch(ingest({ type: 'alarmChannels', alarmId, channels }));
@@ -197,30 +251,74 @@ export const store = configureStore({
 
 let socket;
 let streamGen = 0;
-export function connectStream() {
+let streamBackoffMs = 2000;
+let cachedWsOrigin = (import.meta.env.VITE_WS_ORIGIN || '').replace(/\/$/, '');
+let wsOriginPromise;
+
+async function resolveWsOrigin({ force = false } = {}) {
+  if (!force && wsOriginPromise) return wsOriginPromise;
+  wsOriginPromise = fetch('/relay/meta', { credentials: 'omit' })
+    .then(async (res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      const origin = String(data?.wsOrigin || '').replace(/\/$/, '');
+      if (origin) cachedWsOrigin = origin;
+      return cachedWsOrigin || (import.meta.env.VITE_WS_ORIGIN || '').replace(/\/$/, '');
+    })
+    .catch(() => cachedWsOrigin || (import.meta.env.VITE_WS_ORIGIN || '').replace(/\/$/, ''))
+    .finally(() => { wsOriginPromise = null; });
+  return wsOriginPromise;
+}
+
+export function refreshWsOrigin(origin) {
+  const next = String(origin || '').replace(/\/$/, '');
+  if (next) cachedWsOrigin = next;
+}
+
+export async function connectStream() {
   const token = store.getState().auth.token || '';
   // TRAVA DE AUTENTICAÇÃO COMENTADA — o stream liga mesmo sem sessão.
   // if (!token) return;
   const mine = ++streamGen;
   if (socket) {
     socket.onclose = null;
+    socket.onerror = null;
     socket.close();
   }
-  const wsBase = (import.meta.env.VITE_WS_ORIGIN || '').replace(/\/$/, '');
+  const wsBase = (await resolveWsOrigin({ force: streamBackoffMs > 2000 })) || cachedWsOrigin;
+  if (mine !== streamGen) return;
   const streamUrl = wsBase
     ? `${wsBase}/v1/stream?token=${encodeURIComponent(token)}`
     : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/v1/stream?token=${encodeURIComponent(token)}`;
-  socket = new WebSocket(streamUrl);
+  try {
+    socket = new WebSocket(streamUrl);
+  } catch {
+    store.dispatch({ type: 'desk/setApiOnline', payload: false });
+    scheduleReconnect(mine);
+    return;
+  }
+  socket.onopen = () => {
+    streamBackoffMs = 2000;
+    store.dispatch({ type: 'desk/setApiOnline', payload: true });
+  };
   socket.onmessage = (ev) => {
     try { store.dispatch(ingest(JSON.parse(ev.data))); } catch { /* ignore */ }
   };
-  socket.onclose = () => {
-    if (mine !== streamGen) return;
-    setTimeout(() => {
-      // if (store.getState().auth.token && mine === streamGen) connectStream();
-      if (mine === streamGen) connectStream();
-    }, 2000);
+  socket.onerror = () => {
+    store.dispatch({ type: 'desk/setApiOnline', payload: false });
   };
+  socket.onclose = () => {
+    store.dispatch({ type: 'desk/setApiOnline', payload: false });
+    scheduleReconnect(mine);
+  };
+}
+
+function scheduleReconnect(mine) {
+  if (mine !== streamGen) return;
+  const wait = streamBackoffMs;
+  streamBackoffMs = Math.min(streamBackoffMs * 1.6, 30000);
+  setTimeout(() => {
+    if (mine === streamGen) connectStream();
+  }, wait);
 }
 
 export function focusStrategy(strategyId) {
