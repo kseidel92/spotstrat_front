@@ -2798,7 +2798,7 @@ function StrategyProduction() {
       ) : (
         <form className="panel" onSubmit={submit}>
           <p className="price-num">{shown}</p>
-          {lng !== 'pt-BR' && <p className="muted">{t('prodEq', { brl: brlMoney(633.3) })}</p>}
+          {lng !== 'pt-BR' && quote && <p className="muted">{t('prodEq', { brl: brlMoney(quote.amountBrl) })}</p>}
           <p className="muted">{t('prodPay')}</p>
           {err && <div className="error">{err}</div>}
           <label>{t('cardName')}</label>
