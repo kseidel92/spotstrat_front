@@ -1517,6 +1517,43 @@ body:has(.landing) { background: #07090d; }
   color: #ffd89a;
 }
 .account-page, .production { max-width: 880px; }
+.stripe-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.stripe-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(8, 14, 22, 0.72);
+  cursor: pointer;
+}
+.stripe-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  max-height: min(92vh, 820px);
+  overflow: auto;
+  background: #0f1720;
+  border: 1px solid rgba(160, 196, 220, 0.28);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.stripe-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 8px;
+}
+.stripe-modal-body {
+  padding: 0 8px 12px;
+  min-height: 320px;
+}
 .warn, .warn-panel { color: #f0e2b8; }
 .ok { color: #b7e3c4; }
 .plan-board {

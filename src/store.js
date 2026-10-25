@@ -158,7 +158,11 @@ export const api = createApi({
     config: build.query({ query: () => '/config' }),
     billing: build.query({ query: () => '/billing/status' }),
     plans: build.query({ query: () => '/billing/plans', providesTags: ['Plans'] }),
-    checkout: build.mutation({ query: (body) => ({ url: '/billing/simulate', method: 'POST', body }), invalidatesTags: ['Me', 'Desk'] }),
+    checkout: build.mutation({ query: (body) => ({ url: '/billing/checkout', method: 'POST', body }), invalidatesTags: ['Me', 'Desk'] }),
+    confirmSession: build.mutation({
+      query: (sessionId) => ({ url: `/billing/session/${sessionId}`, method: 'GET' }),
+      invalidatesTags: ['Me', 'Desk', 'Production'],
+    }),
     cancelPlan: build.mutation({ query: () => ({ url: '/billing/cancel', method: 'POST' }), invalidatesTags: ['Me', 'Desk'] }),
     strategyProduction: build.query({
       query: ({ id, locale }) => `/strategies/${id}/production?locale=${locale}`,
@@ -178,7 +182,7 @@ export const {
   usePromptMutation, useStrategyHelpMutation, useSuggestGuideMutation, useEditPromptMutation, useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmSeenMutation, useAlarmChannelsMutation, usePauseMutation, useResumeMutation, useResetMutation,
   useRemoveMutation, useRestoreMutation, usePatchStrategyMutation, useJobQuery, useDeskQuery,
   useManifestQuery, useSymbolsQuery, useKlinesQuery, useArtifactsQuery, useLabQueryMutation,
-  useConfigQuery, useBillingQuery, usePlansQuery, useCheckoutMutation, useCancelPlanMutation, useStrategyProductionQuery, useBuyProductionMutation,
+  useConfigQuery, useBillingQuery, usePlansQuery, useCheckoutMutation, useConfirmSessionMutation, useCancelPlanMutation, useStrategyProductionQuery, useBuyProductionMutation,
 } = api;
 
 const deskSlice = createSlice({

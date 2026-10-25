@@ -13,7 +13,7 @@
     }
   ],
   "env": {
-    "VITE_WS_ORIGIN": "wss://starter-ongoing-approaches-circus.trycloudflare.com",
+    "VITE_WS_ORIGIN": "wss://warcraft-gcc-registry-carries.trycloudflare.com",
     "VITE_GOOGLE_CLIENT_ID": "98371392821-ca4oqqttpoje9uc952it3arfd47f2a2s.apps.googleusercontent.com"
   },
   "rewrites": [

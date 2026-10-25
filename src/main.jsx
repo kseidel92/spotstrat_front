@@ -15,9 +15,10 @@ import {
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery,
-  useCheckoutMutation, useCancelPlanMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
+  useCheckoutMutation, useConfirmSessionMutation, useCancelPlanMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
   useConfigQuery,
 } from './store';
+import StripeCheckout from './components/StripeCheckout';
 import './styles/variables.css';
 import './styles.css';
 import auth from './components/AuthScreen.module.css';
@@ -2701,51 +2702,82 @@ function Checkout() {
   const { t } = useTranslation();
   const { lng } = useParams();
   const [params] = useSearchParams();
-  const nav = useNavigate();
-  const dispatch = useDispatch();
-  const tier = 'paper';
+  const tier = params.get('tier') === 'pro' ? 'pro' : 'paper';
   const months = [1, 3, 6, 12].includes(Number(params.get('months'))) ? Number(params.get('months')) : 1;
   const { data } = usePlansQuery();
-  const [pay, { isLoading }] = useCheckoutMutation();
-  const [card, setCard] = useState({ name: '', number: '', exp: '', cvc: '' });
+  const [startCheckout, { isLoading }] = useCheckoutMutation();
   const [err, setErr] = useState('');
+  const [session, setSessionCheckout] = useState(null);
   const quote = data?.terms?.find((term) => term.months === months)?.[tier];
-  const set = (key) => (e) => setCard({ ...card, [key]: e.target.value });
-  async function submit(e) {
-    e.preventDefault();
+  async function openPay() {
     setErr('');
-    const digits = card.number.replace(/\D/g, '');
-    if (card.name.trim().length < 2 || digits.length < 13 || !/^\d{2}\/\d{2}$/.test(card.exp) || card.cvc.replace(/\D/g, '').length < 3) {
-      setErr(t('cardHint'));
-      return;
-    }
     try {
-      const res = await pay({ tier, months }).unwrap();
-      dispatch(setSession({ token: store.getState().auth.token, user: res.user }));
-      nav(`/${lng}/app/account`, { state: { paid: true } });
+      const res = await startCheckout({ tier, months, locale: lng, kind: 'plan' }).unwrap();
+      setSessionCheckout(res);
     } catch (error) { setErr(errText(error, t)); }
   }
   const label = months === 12 ? t('termYear') : months === 1 ? t('termMonth') : t('termMonths', { n: months });
   return (
     <div className="wrap" style={{ maxWidth: 560 }}>
       <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('checkoutT')}</h2>
-      <p className="warn">{t('paySim')}</p>
       <p>{t('cancelPolicy')}</p>
       <p>{tier === 'pro' ? t('planPro') : t('planPaper')} · {label}</p>
       {quote && <p className="price-num">{localMoney(lng, quote.total)}</p>}
-      <form className="panel" onSubmit={submit}>
+      <div className="panel">
         {err && <div className="error">{err}</div>}
-        <label>{t('cardName')}</label>
-        <input required autoComplete="cc-name" value={card.name} onChange={set('name')} />
-        <label>{t('cardNumber')}</label>
-        <input required inputMode="numeric" autoComplete="cc-number" placeholder="4242 4242 4242 4242" value={card.number} onChange={set('number')} />
-        <div className="row">
-          <label>{t('cardExp')}<input required autoComplete="cc-exp" placeholder="12/28" value={card.exp} onChange={set('exp')} /></label>
-          <label>{t('cardCvc')}<input required inputMode="numeric" autoComplete="cc-csc" placeholder="123" value={card.cvc} onChange={set('cvc')} /></label>
-        </div>
-        <p className="muted">{t('cardHint')}</p>
-        <button className="solid" disabled={isLoading} type="submit">{t('payActivate')}</button>
-      </form>
+        <p className="muted">{t('payStripeHint')}</p>
+        <button className="solid" disabled={isLoading} type="button" onClick={openPay}>
+          {isLoading ? t('payConfirming') : t('payActivate')}
+        </button>
+      </div>
+      {session?.clientSecret ? (
+        <StripeCheckout
+          clientSecret={session.clientSecret}
+          publishableKey={session.publishableKey}
+          title={t('checkoutT')}
+          onClose={() => setSessionCheckout(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CheckoutReturn() {
+  useLang();
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  const [params] = useSearchParams();
+  const nav = useNavigate();
+  const dispatch = useDispatch();
+  const [confirmSession] = useConfirmSessionMutation();
+  const [err, setErr] = useState('');
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const sessionId = params.get('session_id');
+    if (!sessionId) {
+      setErr(t('payMissingSession'));
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await confirmSession(sessionId).unwrap();
+        if (cancelled) return;
+        if (res.user) dispatch(setSession({ token: store.getState().auth.token, user: res.user }));
+        setDone(true);
+        setTimeout(() => nav(`/${lng}/app/account`, { state: { paid: true }, replace: true }), 900);
+      } catch (error) {
+        if (!cancelled) setErr(errText(error, t));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [params, confirmSession, dispatch, lng, nav, t]);
+  return (
+    <div className="wrap" style={{ maxWidth: 560 }}>
+      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('checkoutT')}</h2>
+      {err ? <div className="error">{err}</div> : (
+        <p className="ok">{done ? t('payDone') : t('payConfirming')}</p>
+      )}
     </div>
   );
 }
@@ -2756,8 +2788,10 @@ function StrategyProduction() {
   const { lng, id } = useParams();
   const prod = useStrategyProductionQuery({ id, locale: lng });
   const [buy, { isLoading }] = useBuyProductionMutation();
-  const [card, setCard] = useState({ name: '', number: '', exp: '', cvc: '' });
+  const [confirmSession] = useConfirmSessionMutation();
+  const [params] = useSearchParams();
   const [err, setErr] = useState('');
+  const [session, setSessionCheckout] = useState(null);
   const [ip, setIp] = useState('');
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
@@ -2765,22 +2799,33 @@ function StrategyProduction() {
       .then((body) => setIp(body.ip || ''))
       .catch(() => setIp(''));
   }, []);
+  useEffect(() => {
+    const sessionId = params.get('session_id');
+    if (!sessionId || params.get('paid') !== '1') return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        await confirmSession(sessionId).unwrap();
+        if (!cancelled) prod.refetch();
+      } catch (error) {
+        if (!cancelled) setErr(errText(error, t));
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch once per return URL
+  }, [params, confirmSession, t]);
   const quote = prod.data?.quote;
   const order = prod.data?.order;
   const shown = quote
     ? new Intl.NumberFormat(PRICE_FX[lng]?.locale || 'en-US', { style: 'currency', currency: quote.currency }).format(quote.localAmount)
     : '';
-  const set = (key) => (e) => setCard({ ...card, [key]: e.target.value });
-  async function submit(e) {
-    e.preventDefault();
+  async function openPay() {
     setErr('');
-    const digits = card.number.replace(/\D/g, '');
-    if (card.name.trim().length < 2 || digits.length < 13 || !/^\d{2}\/\d{2}$/.test(card.exp) || card.cvc.replace(/\D/g, '').length < 3) {
-      setErr(t('cardHint'));
-      return;
-    }
-    try { await buy({ id, locale: lng }).unwrap(); }
-    catch (error) { setErr(errText(error, t)); }
+    try {
+      const res = await buy({ id, locale: lng }).unwrap();
+      if (res.checkout) setSessionCheckout(res.checkout);
+      else if (res.order) prod.refetch();
+    } catch (error) { setErr(errText(error, t)); }
   }
   return (
     <div className="wrap production">
@@ -2796,22 +2841,24 @@ function StrategyProduction() {
       {order ? (
         <p className="ok">{t('prodPaid')} · {new Date(order.readyBy).toLocaleDateString()}</p>
       ) : (
-        <form className="panel" onSubmit={submit}>
+        <div className="panel">
           <p className="price-num">{shown}</p>
           {lng !== 'pt-BR' && quote && <p className="muted">{t('prodEq', { brl: brlMoney(quote.amountBrl) })}</p>}
-          <p className="muted">{t('prodPay')}</p>
+          <p className="muted">{t('payStripeHint')}</p>
           {err && <div className="error">{err}</div>}
-          <label>{t('cardName')}</label>
-          <input required autoComplete="cc-name" value={card.name} onChange={set('name')} />
-          <label>{t('cardNumber')}</label>
-          <input required inputMode="numeric" autoComplete="cc-number" placeholder="4242 4242 4242 4242" value={card.number} onChange={set('number')} />
-          <div className="row">
-            <label>{t('cardExp')}<input required autoComplete="cc-exp" placeholder="12/28" value={card.exp} onChange={set('exp')} /></label>
-            <label>{t('cardCvc')}<input required inputMode="numeric" autoComplete="cc-csc" placeholder="123" value={card.cvc} onChange={set('cvc')} /></label>
-          </div>
-          <button className="solid" disabled={isLoading || !quote} type="submit">{t('buyProd')} · {shown}</button>
-        </form>
+          <button className="solid" disabled={isLoading || !quote} type="button" onClick={openPay}>
+            {isLoading ? t('payConfirming') : `${t('buyProd')} · ${shown}`}
+          </button>
+        </div>
       )}
+      {session?.clientSecret ? (
+        <StripeCheckout
+          clientSecret={session.clientSecret}
+          publishableKey={session.publishableKey}
+          title={t('prodPageT')}
+          onClose={() => setSessionCheckout(null)}
+        />
+      ) : null}
       <section className="prep">
         <h2>{t('prodPrepare')}</h2>
         <article className="panel">
@@ -3207,6 +3254,7 @@ function App() {
             <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
             <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
             <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/checkout/return" element={<Guard><RequireDesk allowExpired><CheckoutReturn /></RequireDesk></Guard>} />
             <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
             <Route path="*" element={<LangRedirect />} />
           </Routes>
