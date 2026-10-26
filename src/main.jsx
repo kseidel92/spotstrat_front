@@ -2713,6 +2713,10 @@ function Checkout() {
     setErr('');
     try {
       const res = await startCheckout({ tier, months, locale: lng, kind: 'plan' }).unwrap();
+      if (res.url) {
+        window.location.assign(res.url);
+        return;
+      }
       setSessionCheckout(res);
     } catch (error) { setErr(errText(error, t)); }
   }
@@ -2823,6 +2827,10 @@ function StrategyProduction() {
     setErr('');
     try {
       const res = await buy({ id, locale: lng }).unwrap();
+      if (res.checkout?.url) {
+        window.location.assign(res.checkout.url);
+        return;
+      }
       if (res.checkout) setSessionCheckout(res.checkout);
       else if (res.order) prod.refetch();
     } catch (error) { setErr(errText(error, t)); }
