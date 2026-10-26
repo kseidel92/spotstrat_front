@@ -19,11 +19,11 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "https://spotstratcloud.vercel.app/v1/:path*"
+      "destination": "https://cloud-nine-gilt.vercel.app/v1/:path*"
     },
     {
       "source": "/relay/:path*",
-      "destination": "https://spotstratcloud.vercel.app/:path*"
+      "destination": "https://cloud-nine-gilt.vercel.app/:path*"
     },
     {
       "source": "/((?!.*\\.).*)",
