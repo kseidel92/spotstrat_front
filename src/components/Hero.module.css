@@ -44,6 +44,16 @@
   max-width: 38rem;
 }
 
+.kicker {
+  margin: 0 0 14px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+
 .title {
   margin: 0 0 18px;
   font-family: Outfit, sans-serif;
@@ -61,9 +71,16 @@
 .subtitle {
   margin: 0 0 28px;
   max-width: 38rem;
-  color: #a0aab2;
+  color: #c5d2df;
   font-size: 1.125rem;
   line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .cta {
@@ -93,10 +110,10 @@
 }
 
 .note {
-  margin: 14px 0 0;
+  margin: 0;
   max-width: 32rem;
-  color: #6e7882;
-  font-size: 0.84rem;
+  color: #8ea0b3;
+  font-size: 0.9rem;
   line-height: 1.45;
 }
 

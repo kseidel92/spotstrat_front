@@ -29,12 +29,15 @@ export default function Hero() {
       <div className={styles.overlay} />
       <div className={styles.grid}>
         <div className={styles.copy}>
+          <p className={styles.kicker}>{t('heroKicker')}</p>
           <h1 className={styles.title}>
             <Title text={title} accent={t('heroAccent')} />
           </h1>
           <p className={styles.subtitle}>{t('lede')}</p>
-          <Link className={styles.cta} to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
-          <p className={styles.note}>{t('freeNote')}</p>
+          <div className={styles.actions}>
+            <Link className={styles.cta} to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
+            <p className={styles.note}>{t('freeNote')}</p>
+          </div>
         </div>
         <div className={styles.visual}>
           <img className={styles.glow} src={img1} alt="" />
