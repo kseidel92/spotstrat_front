@@ -30,7 +30,7 @@
 
 .grid {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   width: 100%;
   margin: 0;
   padding: 72px max(var(--gutter, 28px), calc((100% - var(--page, 1120px)) / 2)) 64px;
