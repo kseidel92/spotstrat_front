@@ -111,12 +111,46 @@ function reducer(state, action) {
   return state;
 }
 
+function seedFlag(userId) {
+  return userId ? `spotstrat.lab.seeded.${userId}` : 'spotstrat.lab.seeded';
+}
+
 function LabThreads({ userId, children }) {
   const [state, dispatch] = useReducer(reducer, userId, readStore);
+  const seeding = useRef(false);
   useEffect(() => {
     dispatch({ type: 'hydrate', state: readStore(userId) });
   }, [userId]);
   useEffect(() => {
+    if (!userId) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const current = readStore(userId);
+        if (current.threads.length > 0) {
+          localStorage.setItem(seedFlag(userId), '1');
+          return;
+        }
+        seeding.current = true;
+        const res = await fetch(`/lab-seed.json?t=${Date.now()}`);
+        if (!res.ok) return;
+        const seed = await res.json();
+        const incoming = Array.isArray(seed?.threads) ? seed.threads : [];
+        if (!incoming.length || cancelled) return;
+        const next = {
+          threads: incoming,
+          activeId: incoming[0].id,
+        };
+        localStorage.setItem(storageKey(userId), JSON.stringify(next));
+        localStorage.setItem(seedFlag(userId), '1');
+        if (!cancelled) dispatch({ type: 'hydrate', state: next });
+      } catch { /* ignore */ }
+      finally { seeding.current = false; }
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+  useEffect(() => {
+    if (seeding.current && state.threads.length === 0) return;
     try { localStorage.setItem(storageKey(userId), JSON.stringify(state)); } catch { /* private mode */ }
   }, [state, userId]);
   const api = useMemo(() => ({
