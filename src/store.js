@@ -156,6 +156,7 @@ export const api = createApi({
     artifacts: build.query({ query: () => '/lab/artifacts' }),
     labQuery: build.mutation({ query: (body) => ({ url: '/lab/query', method: 'POST', body }) }),
     config: build.query({ query: () => '/config' }),
+    site: build.query({ query: () => '/site' }),
     billing: build.query({ query: () => '/billing/status' }),
     plans: build.query({ query: () => '/billing/plans', providesTags: ['Plans'] }),
     checkout: build.mutation({ query: (body) => ({ url: '/billing/checkout', method: 'POST', body }), invalidatesTags: ['Me', 'Desk'] }),
@@ -182,7 +183,7 @@ export const {
   usePromptMutation, useStrategyHelpMutation, useSuggestGuideMutation, useEditPromptMutation, useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmSeenMutation, useAlarmChannelsMutation, usePauseMutation, useResumeMutation, useResetMutation,
   useRemoveMutation, useRestoreMutation, usePatchStrategyMutation, useJobQuery, useDeskQuery,
   useManifestQuery, useSymbolsQuery, useKlinesQuery, useArtifactsQuery, useLabQueryMutation,
-  useConfigQuery, useBillingQuery, usePlansQuery, useCheckoutMutation, useConfirmSessionMutation, useCancelPlanMutation, useStrategyProductionQuery, useBuyProductionMutation,
+  useConfigQuery, useSiteQuery, useBillingQuery, usePlansQuery, useCheckoutMutation, useConfirmSessionMutation, useCancelPlanMutation, useStrategyProductionQuery, useBuyProductionMutation,
 } = api;
 
 const deskSlice = createSlice({

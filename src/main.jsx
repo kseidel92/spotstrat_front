@@ -25,9 +25,7 @@ import auth from './components/AuthScreen.module.css';
 import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
 import LabPage from './components/Lab';
-import StatsBar from './components/StatsBar';
-import OpportunityCard from './components/OpportunityCard';
-import TestimonialCard from './components/TestimonialCard';
+import LaunchCountdown from './components/LaunchCountdown';
 import Faq from './components/Faq';
 import { ConfirmProvider, useConfirm } from './confirm';
 import LaunchPrice from './components/LaunchPrice';
@@ -205,7 +203,12 @@ function errText(error, t) {
     google_off: t('errGoogleOff'),
     upstream_fail: t('errUpstream'),
   };
-  return map[code] || error?.data?.message || t('errGeneric');
+  if (map[code]) return map[code];
+  if (error?.data?.message) return error.data.message;
+  if (error?.status === 'FETCH_ERROR' || error?.status === 'PARSING_ERROR' || error?.status >= 500) {
+    return t('errUpstream');
+  }
+  return t('errGeneric');
 }
 
 function scrollPageTop() {
@@ -446,8 +449,7 @@ function Landing() {
         </nav>
       </header>
       <Hero />
-      <StatsBar />
-      <OpportunityCard />
+      <LaunchCountdown />
       <ShieldNote />
       <PathShow />
       <section className="band">
@@ -455,7 +457,6 @@ function Landing() {
         <p className="lede">{t('sayL')}</p>
         <Badge>{t('presetsBadge')}</Badge>
         <p className="lede">{t('presetsL')}</p>
-        <TestimonialCard />
       </section>
       <section className="trial-band">
         <img src="/robot-desk.png" alt="" />
@@ -3162,10 +3163,9 @@ function PricesBody({ showCta = false }) {
       </div>
       <PlanPicker showBody={false} />
       <p className="mono dim">{t('planFx')}</p>
-      {showCta && <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>}
-      <Faq />
-      <TestimonialCard />
-    </section>
+        {showCta && <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>}
+        <Faq />
+      </section>
   );
 }
 
