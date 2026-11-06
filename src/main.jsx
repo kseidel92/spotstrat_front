@@ -34,6 +34,9 @@ import { ConfirmProvider, useConfirm } from './confirm';
 import LaunchPrice from './components/LaunchPrice';
 import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
 import Badge from './components/Badge';
+import ScratchWizard from './components/ScratchWizard';
+import ReportsPage from './components/ReportsPage';
+import hubCss from './components/CreateHub.module.css';
 import { legalFor } from './legal';
 import { initTheme } from './theme';
 import alertShot from './components/img_5.jpg';
@@ -41,13 +44,6 @@ import deskShot from './components/img_6.jpg';
 import tradesShot from './components/img_trades.png';
 
 initTheme();
-
-const PROMPT_CHIPS = [
-  { key: 'chipRise', prompt: 'Quero comprar quando uma moeda subir 1% em 3 minutos.' },
-  { key: 'chipCross', prompt: 'Compra quando a média rápida cruzar a lenta para cima.' },
-  { key: 'chipReversal', prompt: 'Detecta um candle de virada no gráfico de 15 minutos e compra.' },
-  { key: 'chipAlert', prompt: 'Me avisa quando uma moeda subir 1% em 3 minutos.', alarm: true },
-];
 
 function lngOf(pathname) {
   const part = pathname.split('/')[1];
@@ -1156,6 +1152,7 @@ function DeskBar() {
       <Link className="brand" to={`/${lng}/app`}>SpotStrat</Link>
       <nav className="menu">
         <Link to={`/${lng}/app`}>{t('strategiesNav')}</Link>
+        <Link to={`/${lng}/app/relatorios`}>{t('reportsNav')}</Link>
         <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
         <details className="more-nav">
@@ -2210,14 +2207,34 @@ function tradeOptions({ exitMode, stopPct, tpPct, timeExit, timeMode, holdMin, v
   };
 }
 
+function PathIcon({ kind }) {
+  if (kind === 'scratch') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <circle cx="12" cy="12" r="8" /><path d="M12 8v4l2.5 1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (kind === 'steps') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path d="M4 17h6M4 12h10M4 7h14" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M5 19l4-10 4 6 3-4 3 8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function DeskHome() {
   const { t } = useTranslation();
   const { lng } = useParams();
-  const live = useSelector((s) => s.desk);
-  const { data } = useDeskQuery(undefined, { pollingInterval: 5000 });
-  const strategies = live.strategies.length ? live.strategies : (data?.strategies || []);
-  const mare = live.mare || data?.mare;
-  const connection = live.connection || data?.connection;
+  const nav = useNavigate();
+  const [path, setPath] = useState('scratch');
+  const [phase, setPhase] = useState('hub');
   const [exitMode, setExitMode] = useState('history');
   const [stopPct, setStopPct] = useState('0.8');
   const [tpPct, setTpPct] = useState('1.2');
@@ -2226,27 +2243,29 @@ function DeskHome() {
   const [holdMin, setHoldMin] = useState('60');
   const [variants, setVariants] = useState(false);
   const [wallet, setWallet] = useState('1000');
-  const [mareMode, setMareMode] = useState('any');
+  const [mareMode, setMareMode] = useState('good');
   const [prompt, setPrompt] = useState('');
-  const [compose, setCompose] = useState('paste');
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [threadId, setThreadId] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
-  const [steps, setSteps] = useState(null);
+  const [askSteps, setAskSteps] = useState(null);
   const dispatch = useDispatch();
   const [sendPrompt, { isLoading }] = usePromptMutation();
-  const [pause] = usePauseMutation();
-  const [resume] = useResumeMutation();
-  const [reset] = useResetMutation();
-  const [remove] = useRemoveMutation();
-  const [restore, { isLoading: restoring }] = useRestoreMutation();
-  const [restoreMsg, setRestoreMsg] = useState('');
-  const ask = useConfirm();
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
-  const opts = () => tradeOptions({
-    exitMode, stopPct, tpPct, timeExit, timeMode, holdMin, variants, mareMode, wallet, guided: compose === 'guide',
+  const busy = isLoading || !!jobId;
+
+  const opts = (extra = {}) => tradeOptions({
+    exitMode: extra.exitMode || exitMode,
+    stopPct: extra.stopPct || stopPct,
+    tpPct: extra.tpPct || tpPct,
+    timeExit,
+    timeMode,
+    holdMin,
+    variants,
+    mareMode: extra.mareMode || mareMode,
+    wallet,
+    guided: extra.guided ?? (phase === 'scratch' || phase === 'steps'),
   });
 
   useEffect(() => {
@@ -2254,7 +2273,7 @@ function DeskHome() {
     if (!status || status === 'queued' || status === 'running') return;
     if (status === 'needs_user') {
       const questions = questionsOf(job.data.job.output);
-      setSteps(questions.length ? {
+      setAskSteps(questions.length ? {
         id: job.data.job.id,
         questions,
         suggestions: job.data.job.output?.suggestions || [],
@@ -2263,21 +2282,24 @@ function DeskHome() {
       setThreadId(job.data.job.thread_id || threadId);
     } else if (status === 'failed') setErr(cleanJobError(job.data.job.error, t));
     else {
-      const made = t('ready', { name: job.data.job.output?.name || '' });
-      const assumptions = job.data.job.output?.assumptions || job.data.job.output?.defaults || [];
-      const filled = assumptions.map((item) => `${item.label}: ${item.value}`).join(' · ');
-      setNote(filled ? `${made} ${t('assumptionsNote')} ${filled}` : made);
-      setSteps(null);
+      setAskSteps(null);
       setPrompt('');
       setThreadId(null);
       dispatch(api.util.invalidateTags(['Desk', 'Strategies']));
+      nav(`/${lng}/app/relatorios`);
     }
     setJobId(null);
   }, [job.data]);
 
-  async function sendText(text, mode = 'trade') {
+  async function sendText(text, modeOrOpts = 'trade', maybeOpts) {
     setErr('');
-    setSteps(null);
+    setAskSteps(null);
+    const mode = typeof modeOrOpts === 'string' ? modeOrOpts : 'trade';
+    const extra = typeof modeOrOpts === 'object' ? modeOrOpts : (maybeOpts || {});
+    if (extra.mareMode) setMareMode(extra.mareMode);
+    if (extra.exitMode) setExitMode(extra.exitMode);
+    if (extra.stopPct) setStopPct(String(extra.stopPct));
+    if (extra.tpPct) setTpPct(String(extra.tpPct));
     const walletN = Number(wallet);
     if (!(walletN >= 100 && walletN <= 999000)) {
       setErr(t('walletBad'));
@@ -2288,168 +2310,127 @@ function DeskHome() {
         prompt: text,
         threadId,
         mode,
-        options: opts(),
+        options: opts(extra),
       }).unwrap();
       setThreadId(res.threadId);
       setJobId(res.jobId);
     } catch (error) { setErr(errText(error, t)); }
   }
 
-  function submit(e) {
+  function startPath() {
+    setErr('');
+    setNote('');
+    setAskSteps(null);
+    setPhase(path);
+  }
+
+  function backHub() {
+    setPhase('hub');
+    setErr('');
+    setNote('');
+    setAskSteps(null);
+  }
+
+  function submitPrompt(e) {
     e.preventDefault();
-    if (compose === 'guide') return;
+    if (!prompt.trim()) return;
     sendText(prompt);
   }
 
-  async function onRestore() {
-    setRestoreMsg('');
-    setErr('');
-    try {
-      await restore().unwrap();
-      try {
-        const state = await dispatch(api.endpoints.desk.initiate(undefined, { subscribe: false, forceRefetch: true })).unwrap();
-        dispatch(ingest({ type: 'snapshot', ...state }));
-      } catch { /* a invalidação da query ainda atualiza a lista */ }
-      setRestoreMsg(t('restoreDone'));
-    } catch (error) {
-      setErr(errText(error, t));
-    }
+  const paths = [
+    { id: 'scratch', badge: 'rec', title: t('hubPathScratchT'), body: t('hubPathScratchB') },
+    { id: 'steps', badge: null, title: t('hubPathStepsT'), body: t('hubPathStepsB') },
+    { id: 'prompt', badge: 'adv', title: t('hubPathPromptT'), body: t('hubPathPromptB') },
+  ];
+
+  if (phase === 'hub') {
+    return (
+      <div className={hubCss.page}>
+        <div className={hubCss.intro}>
+          <h1>{t('hubT')}</h1>
+          <p>{t('hubL')}</p>
+        </div>
+        <div className={hubCss.paths} role="radiogroup" aria-label={t('hubT')}>
+          {paths.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="radio"
+              aria-checked={path === item.id}
+              className={`${hubCss.path} ${path === item.id ? hubCss.on : ''}`}
+              onClick={() => setPath(item.id)}
+            >
+              <span className={hubCss.icon}><PathIcon kind={item.id} /></span>
+              <span className={hubCss.copy}>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </span>
+              {item.badge === 'rec' && <span className={`${hubCss.badge} ${hubCss.badgeRec}`}>{t('hubBadgeRec')}</span>}
+              {item.badge === 'adv' && <span className={`${hubCss.badge} ${hubCss.badgeAdv}`}>{t('hubBadgeAdv')}</span>}
+            </button>
+          ))}
+        </div>
+        <div className={hubCss.ctaRow}>
+          <button className={hubCss.cta} type="button" onClick={startPath}>{t('hubStart')}</button>
+          <p className={hubCss.hint}>{t('hubHint')}</p>
+        </div>
+      </div>
+    );
   }
 
-  const mareLabel = mare?.label === 'BOA' ? t('mareGood')
-    : mare?.label === 'RUIM' ? t('mareNotBad')
-      : (mare?.label || '…');
-
   return (
-    <div className="wrap desk-home-v2">
-      <form className="panel composer-top composer-simple" onSubmit={submit} aria-busy={isLoading || !!jobId}>
-        <div className="composer-head">
-          <h2>{t('sayT')}</h2>
-          <p className="muted">{t('sayL')}</p>
+    <div className={hubCss.page}>
+      <div className={hubCss.panel} aria-busy={busy}>
+        <div className={hubCss.flowTop}>
+          <h2>
+            {phase === 'scratch' ? t('hubPathScratchT') : phase === 'steps' ? t('hubPathStepsT') : t('hubPathPromptT')}
+          </h2>
+          <button type="button" className={hubCss.back} onClick={backHub} disabled={busy}>{t('scratchBack')}</button>
         </div>
-        <div className="modes">
-          <button type="button" className={compose === 'paste' ? 'on' : ''} onClick={() => setCompose('paste')}>{t('guidePaste')}</button>
-          <button type="button" className={compose === 'guide' ? 'on' : ''} onClick={() => setCompose('guide')}>{t('guideSteps')}</button>
-        </div>
-        {compose === 'guide'
-          ? <Guide busy={isLoading || !!jobId} onCreate={sendText} />
-          : (
-            <>
-              <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={isLoading || !!jobId} />
-              <div className="prompt-chips">
-                {PROMPT_CHIPS.map((chip) => (
-                  <button
-                    key={chip.key}
-                    type="button"
-                    className="tiny"
-                    disabled={isLoading || !!jobId}
-                    onClick={() => {
-                      setPrompt(chip.prompt);
-                      sendText(chip.prompt, chip.alarm ? 'alarm' : 'trade');
-                    }}
-                  >
-                    {t(chip.key)}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        <button className="ghost advanced-toggle" type="button" onClick={() => setShowAdvanced((v) => !v)}>
-          {showAdvanced ? t('hideAdvanced') : t('advancedOpts')}
-        </button>
-        {showAdvanced && (
-          <div className="advanced-block">
-            <div className="wallet-row">
-              <label>{t('wallet')}
-                <input inputMode="decimal" min="100" max="999000" value={wallet} onChange={(e) => setWallet(e.target.value)} disabled={isLoading || !!jobId} />
-              </label>
-              <small>{t('walletHint')}</small>
-            </div>
-            {compose !== 'guide' && <>
-              <fieldset className="choice" disabled={isLoading || !!jobId}>
-                <legend>{t('optExit')}</legend>
-                <label className={exitMode === 'history' ? 'on' : ''}>
-                  <input type="radio" name="exitPick" checked={exitMode === 'history'} onChange={() => setExitMode('history')} />
-                  <span>{t('exitHist')}</span>
-                </label>
-                <label className={exitMode === 'manual' ? 'on' : ''}>
-                  <input type="radio" name="exitPick" checked={exitMode === 'manual'} onChange={() => setExitMode('manual')} />
-                  <span>{t('exitManual')}</span>
-                </label>
-                {exitMode === 'manual' && (
-                  <div className="choice-fields">
-                    <label>{t('stopPct')}<input inputMode="decimal" value={stopPct} onChange={(e) => setStopPct(e.target.value)} /></label>
-                    <label>{t('tpPct')}<input inputMode="decimal" value={tpPct} onChange={(e) => setTpPct(e.target.value)} /></label>
-                  </div>
-                )}
-              </fieldset>
-              <fieldset className="choice" disabled={isLoading || !!jobId}>
-                <legend>{t('optTime')}</legend>
-                <label className={timeExit ? 'on' : ''}>
-                  <input type="checkbox" checked={timeExit} onChange={(e) => setTimeExit(e.target.checked)} />
-                  <span>{t('timeExit')}</span>
-                </label>
-                {timeExit && (
-                  <>
-                    <label className={timeMode === 'history' ? 'on' : ''}>
-                      <input type="radio" name="timePick" checked={timeMode === 'history'} onChange={() => setTimeMode('history')} />
-                      <span>{t('timeHist')}</span>
-                    </label>
-                    <label className={timeMode === 'manual' ? 'on' : ''}>
-                      <input type="radio" name="timePick" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} />
-                      <span>{t('timeManual')}</span>
-                    </label>
-                    {timeMode === 'manual' && (
-                      <div className="choice-fields">
-                        <label>{t('holdMin')}<input inputMode="numeric" value={holdMin} onChange={(e) => setHoldMin(e.target.value)} /></label>
-                      </div>
-                    )}
-                  </>
-                )}
-              </fieldset>
-              <fieldset className="choice" disabled={isLoading || !!jobId}>
-                <legend>{t('optVar')} <Tip text={t('varTip')} /></legend>
-                <label className={variants ? 'on' : ''}>
-                  <input type="checkbox" checked={variants} onChange={(e) => setVariants(e.target.checked)} />
-                  <span>{t('variants')}</span>
-                </label>
-              </fieldset>
-            </>}
-            <div className="segment" role="radiogroup" aria-label={t('marePick')}>
-              <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
-              <div className="segment-track">
-                {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="radio"
-                    aria-checked={mareMode === id}
-                    className={mareMode === id ? 'on' : ''}
-                    disabled={isLoading || !!jobId}
-                    onClick={() => setMareMode(id)}
-                  >
-                    {t(key)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+
+        {phase === 'scratch' && (
+          <ScratchWizard
+            busy={busy}
+            onBack={backHub}
+            onCreate={(text, extra) => sendText(text, extra)}
+          />
         )}
-        {steps && (
+
+        {phase === 'steps' && (
+          <Guide busy={busy} onCreate={(text) => sendText(text, { guided: true })} />
+        )}
+
+        {phase === 'prompt' && (
+          <form onSubmit={submitPrompt}>
+            <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={busy} />
+            <p className="composer-hint muted" style={{ marginTop: 10 }}>
+              {t('hubPromptHint')}
+            </p>
+            <p className="composer-hint muted">
+              {t('alarmHint')}{' '}
+              <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
+            </p>
+            <button className="solid" style={{ marginTop: 14 }} disabled={busy || !prompt.trim()} type="submit">
+              {busy ? t('working') : t('send')}
+            </button>
+          </form>
+        )}
+
+        {askSteps && (
           <AskSteps
-            key={steps.id}
-            questions={steps.questions}
-            suggestions={steps.suggestions}
-            busy={isLoading || !!jobId}
+            key={askSteps.id}
+            questions={askSteps.questions}
+            suggestions={askSteps.suggestions}
+            busy={busy}
             onDone={(answer) => {
               setPrompt(answer);
-              setSteps(null);
+              setAskSteps(null);
               setErr('');
               sendPrompt({
                 prompt: answer,
                 threadId,
                 mode: 'trade',
-                options: opts(),
+                options: opts({ guided: true }),
               }).unwrap().then((res) => {
                 setThreadId(res.threadId);
                 setJobId(res.jobId);
@@ -2458,64 +2439,8 @@ function DeskHome() {
             }}
           />
         )}
-        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail="" />
-        {compose !== 'guide' && <button className="solid" disabled={isLoading || !!jobId || !prompt.trim()} type="submit">{(isLoading || jobId) ? t('working') : t('send')}</button>}
-      </form>
-      <div className="mare">
-        <span className="pill">{t('marketLive')}</span>
-        <span className={`pill ${mare?.label || ''}`}>{t('moodMarket')}: {mare ? `${mareLabel} · ${mare.upPct}%` : '…'} <Tip text={t('mareTip')} /></span>
-        <span className={`conn ${connection === 'live' ? 'live' : 'down'}`}><i />{t('connection')}: {connection || '…'}</span>
-        <span className="muted">{(live.prices.length ? live.prices : data?.prices || []).slice(0, 4).map((p) => `${p.symbol.replace('USDT', '')} ${p.price}`).join(' · ')}</span>
+        <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} detail="" />
       </div>
-      <div className="strategies" style={{ marginTop: 14 }}>
-        {!strategies.length && (
-          <div className="empty-strategies panel">
-            <h3>{t('emptyStrategies')}</h3>
-            <p className="muted">{t('emptyStrategiesB')}</p>
-          </div>
-        )}
-        {strategies.map((s) => (
-          <article className="strategy" key={s.id}>
-            <header>
-              <div>
-                <p className="kind">{s.type === 'recipe' ? t('recipe') : t('preset')}</p>
-                <h3><Link className="name" to={`/${lng}/app/strategies/${s.id}`}>{s.name}</Link></h3>
-              </div>
-              <Link className="open" to={`/${lng}/app/strategies/${s.id}`}>{t('open')}</Link>
-            </header>
-            <div className="kpi">
-              <span>{t('equity')} <b>{money(s.equity)}</b></span>
-              <span className={s.pnl > 0 ? 'up' : s.pnl < 0 ? 'down' : ''}>{t('pnl')} <b>{money(s.pnl)}</b></span>
-              <span>{t('trades')} <b>{s.nTrades}</b></span>
-              <span>{t('wr')} <b>{Math.round((s.winRate || 0) * 100)}%</b></span>
-            </div>
-            <div className="state-line">
-              {s.halted && <span className="pill RUIM">{t('halt')}</span>}
-              {s.paused && <span className="pill">{t('paused')}</span>}
-              {s.position ? <span className="up">{s.position.symbol} @ {px(s.position.entry)}</span> : <span className="muted">{t('flat')}</span>}
-            </div>
-            <div className="actions">
-              <Link className="tiny prod" to={`/${lng}/app/strategies/${s.id}/producao`}><IconPlay />{t('toProd')}</Link>
-              {s.paused
-                ? <button className="tiny" type="button" onClick={() => resume(s.id)}><IconPlay />{t('resume')}</button>
-                : <button className="tiny" type="button" onClick={() => pause(s.id)}><IconPause />{t('pause')}</button>}
-              <button className="tiny" type="button" onClick={async () => {
-                const ok = await ask({ title: t('reset'), body: t('resetAsk'), confirmLabel: t('reset'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'reset' });
-                if (ok) reset(s.id);
-              }}><IconTrash />{t('reset')}</button>
-              <button className="tiny danger" type="button" onClick={async () => {
-                const ok = await ask({ title: t('remove'), body: t('removeAsk'), confirmLabel: t('remove'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'trash' });
-                if (ok) remove(s.id);
-              }}><IconX />{t('remove')}</button>
-            </div>
-          </article>
-        ))}
-      </div>
-      <div className="restore-row">
-        <button className="ghost" type="button" disabled={restoring} onClick={onRestore}>{restoring ? '…' : t('restore')}</button>
-        {restoreMsg && <span className="restore-note">{restoreMsg}</span>}
-      </div>
-      <StrategyHelpBalloon strategies={strategies} />
     </div>
   );
 }
@@ -3318,6 +3243,7 @@ function App() {
             <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
             <Route path="/:lng/app/onboarding" element={<Guard><RequireDesk><Onboarding /></RequireDesk></Guard>} />
             <Route path="/:lng/app" element={<Guard><RequireDesk><DeskGate><DeskHome /></DeskGate></RequireDesk></Guard>} />
+            <Route path="/:lng/app/relatorios" element={<Guard><RequireDesk><DeskGate><ReportsPage /></DeskGate></RequireDesk></Guard>} />
             <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
             <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
             <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
