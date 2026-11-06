@@ -12,7 +12,7 @@ import {
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
   useStrategiesQuery, useStrategyQuery, usePromptMutation, useStrategyHelpMutation, useSuggestGuideMutation, useEditPromptMutation,
-  usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, usePatchStrategyMutation,
+  usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation,
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery,
   useCheckoutMutation, useConfirmSessionMutation, useCancelPlanMutation, usePlansQuery, useStrategyProductionQuery, useBuyProductionMutation,
@@ -24,6 +24,8 @@ import './styles.css';
 import auth from './components/AuthScreen.module.css';
 import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
+import LandingJourney from './components/LandingJourney';
+import Onboarding from './components/Onboarding';
 import LabPage from './components/Lab';
 import LaunchCountdown from './components/LaunchCountdown';
 import Faq from './components/Faq';
@@ -35,6 +37,13 @@ import { legalFor } from './legal';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
 import tradesShot from './components/img_trades.png';
+
+const PROMPT_CHIPS = [
+  { key: 'chipRise', prompt: 'Quero comprar quando uma moeda subir 1% em 3 minutos.' },
+  { key: 'chipCross', prompt: 'Compra quando a média rápida cruzar a lenta para cima.' },
+  { key: 'chipReversal', prompt: 'Detecta um candle de virada no gráfico de 15 minutos e compra.' },
+  { key: 'chipAlert', prompt: 'Me avisa quando uma moeda subir 1% em 3 minutos.', alarm: true },
+];
 
 function lngOf(pathname) {
   const part = pathname.split('/')[1];
@@ -436,27 +445,42 @@ function Landing() {
   const { t } = useTranslation();
   const { lng } = useParams();
   return (
-    <div className="landing">
-      <header className="topbar">
+    <div className="landing landing-v2">
+      <header className="topbar topbar-dark">
         <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
         <div className="spacer" />
         <Flags />
         <nav className="menu">
-          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
+          <Link to={`/${lng}/info`}>{t('howNav')}</Link>
           <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
           <Link to={`/${lng}/login`}>{t('enter')}</Link>
           <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
         </nav>
       </header>
       <Hero />
+      <LandingJourney />
       <LaunchCountdown />
       <ShieldNote />
-      <PathShow />
-      <section className="band">
+      <section className="band band-dark">
         <h2>{t('sayT')}</h2>
         <p className="lede">{t('sayL')}</p>
+        <div className="example-chips">
+          {[t('ex1'), t('ex2'), t('ex4')].map((ex) => <span key={ex} className="example-chip">{ex}</span>)}
+        </div>
         <Badge>{t('presetsBadge')}</Badge>
         <p className="lede">{t('presetsL')}</p>
+      </section>
+      <section className="vault-band">
+        <div>
+          <p className="kicker">{t('vaultK')}</p>
+          <h2>{t('vaultT')}</h2>
+          <p className="lede">{t('vaultB')}</p>
+          <ul className="honesty">
+            <li>{t('v1')}</li>
+            <li>{t('v2')}</li>
+            <li>{t('v3')}</li>
+          </ul>
+        </div>
       </section>
       <section className="trial-band">
         <img src="/robot-desk.png" alt="" />
@@ -1132,16 +1156,29 @@ function DeskBar() {
       <nav className="menu">
         <Link to={`/${lng}/app`}>{t('strategiesNav')}</Link>
         <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
-        <Link to={`/${lng}/app/precos`}>{t('pricesNav')}</Link>
-        <Link to={`/${lng}/app/laboratorio`}>{t('labNav')}</Link>
-        <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
+        <details className="more-nav">
+          <summary>{t('infoNav')}</summary>
+          <div className="more-nav-panel">
+            <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
+            <Link to={`/${lng}/app/laboratorio`}>{t('researchNav')}</Link>
+            <Link to={`/${lng}/app/precos`}>{t('pricesNav')}</Link>
+          </div>
+        </details>
       </nav>
       <div className="spacer" />
       <Flags />
       <button className="tiny" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
     </header>
   );
+}
+
+function DeskGate({ children }) {
+  const { lng } = useParams();
+  let seen = false;
+  try { seen = localStorage.getItem('spotstrat.onboarded') === '1'; } catch { seen = false; }
+  if (!seen) return <Navigate to={`/${lng}/app/onboarding`} replace />;
+  return children;
 }
 
 function RequireDesk({ children, allowExpired = false }) {
@@ -1318,11 +1355,12 @@ function whyTone(text) {
   return 'warn';
 }
 
-function AskSteps({ questions, busy, onDone }) {
+function AskSteps({ questions, busy, onDone, suggestions = [] }) {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState(() => questions.map(() => ''));
   const last = index >= questions.length - 1;
+  const tips = suggestions.length ? suggestions : [t('aiDecide'), 'Stop 0,8% e alvo 1,2%', 'Janela de 15 minutos'];
   function submit(e) {
     e.preventDefault();
     const value = answers[index].trim();
@@ -1333,29 +1371,31 @@ function AskSteps({ questions, busy, onDone }) {
     }
     onDone(questions.map((question, i) => `${question}\n${answers[i].trim()}`).join('\n\n'));
   }
+  function pickSuggestion(text) {
+    const next = answers.map((item, i) => (i === index ? text : item));
+    setAnswers(next);
+    if (last) onDone(questions.map((question, i) => `${question}\n${(i === index ? text : answers[i]).trim()}`).join('\n\n'));
+  }
   return (
-    <div className="steps">
+    <div className="steps ask-simple">
       <p className="steps-kicker">{t('needMore')}</p>
-      <Stepper count={questions.length} index={index} />
-      <p className="steps-count">{t('stepOf', { n: index + 1, total: questions.length })}</p>
       <h3>{questions[index]}</h3>
+      <div className="ask-suggestions">
+        {tips.map((tip) => (
+          <button key={tip} type="button" className="tiny" disabled={busy} onClick={() => pickSuggestion(tip === t('aiDecide') ? t('aiAnswer') : tip)}>
+            {tip}
+          </button>
+        ))}
+      </div>
       <input
         value={answers[index]}
         onChange={(e) => setAnswers(answers.map((item, i) => (i === index ? e.target.value : item)))}
         onKeyDown={(e) => { if (e.key === 'Enter') submit(e); }}
+        placeholder={t('aiDecide')}
         autoFocus
       />
       <div className="row step-actions">
-        {index > 0 && <button className="tiny" type="button" onClick={() => setIndex(index - 1)}>{t('backStep')}</button>}
-        <button
-          className="ghost"
-          type="button"
-          disabled={busy}
-          onClick={() => setAnswers(answers.map((item, i) => (i === index ? t('aiAnswer') : item)))}
-        >
-          {t('aiDecide')}
-        </button>
-        <button className="solid" type="button" onClick={submit} disabled={busy || !answers[index].trim()}>{last ? t('createNow') : t('nextStep')}</button>
+        <button className="solid" type="button" onClick={submit} disabled={busy || !answers[index].trim()}>{t('createNow')}</button>
       </div>
     </div>
   );
@@ -2152,6 +2192,22 @@ function StrategyHelpBalloon({ strategies }) {
   );
 }
 
+function tradeOptions({ exitMode, stopPct, tpPct, timeExit, timeMode, holdMin, variants, mareMode, wallet, guided = false }) {
+  return {
+    exit: exitMode,
+    stopPct: Number(stopPct),
+    tpPct: Number(tpPct),
+    timeExit,
+    time: timeMode,
+    maxHoldMin: Number(holdMin),
+    variants: variants && !guided,
+    mareMode,
+    wallet: Number(wallet),
+    guided,
+    autoFill: true,
+  };
+}
+
 function DeskHome() {
   const { t } = useTranslation();
   const { lng } = useParams();
@@ -2161,8 +2217,8 @@ function DeskHome() {
   const mare = live.mare || data?.mare;
   const connection = live.connection || data?.connection;
   const [exitMode, setExitMode] = useState('history');
-  const [stopPct, setStopPct] = useState('1.2');
-  const [tpPct, setTpPct] = useState('1.8');
+  const [stopPct, setStopPct] = useState('0.8');
+  const [tpPct, setTpPct] = useState('1.2');
   const [timeExit, setTimeExit] = useState(false);
   const [timeMode, setTimeMode] = useState('history');
   const [holdMin, setHoldMin] = useState('60');
@@ -2170,7 +2226,8 @@ function DeskHome() {
   const [wallet, setWallet] = useState('1000');
   const [mareMode, setMareMode] = useState('any');
   const [prompt, setPrompt] = useState('');
-  const [compose, setCompose] = useState('guide');
+  const [compose, setCompose] = useState('paste');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [threadId, setThreadId] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [note, setNote] = useState('');
@@ -2183,24 +2240,31 @@ function DeskHome() {
   const [reset] = useResetMutation();
   const [remove] = useRemoveMutation();
   const [restore, { isLoading: restoring }] = useRestoreMutation();
-  const [patchStrategy] = usePatchStrategyMutation();
   const [restoreMsg, setRestoreMsg] = useState('');
   const ask = useConfirm();
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
+  const opts = () => tradeOptions({
+    exitMode, stopPct, tpPct, timeExit, timeMode, holdMin, variants, mareMode, wallet, guided: compose === 'guide',
+  });
 
   useEffect(() => {
     const status = job.data?.job?.status;
     if (!status || status === 'queued' || status === 'running') return;
     if (status === 'needs_user') {
       const questions = questionsOf(job.data.job.output);
-      setSteps(questions.length ? { id: job.data.job.id, questions } : null);
+      setSteps(questions.length ? {
+        id: job.data.job.id,
+        questions,
+        suggestions: job.data.job.output?.suggestions || [],
+      } : null);
       setNote(questions.length ? '' : (job.data.job.output?.ask || ''));
       setThreadId(job.data.job.thread_id || threadId);
     } else if (status === 'failed') setErr(cleanJobError(job.data.job.error, t));
     else {
       const made = t('ready', { name: job.data.job.output?.name || '' });
-      const filled = (job.data.job.output?.defaults || []).map((item) => `${item.label}: ${item.value}`).join(' · ');
-      setNote(filled ? `${made} ${filled}` : made);
+      const assumptions = job.data.job.output?.assumptions || job.data.job.output?.defaults || [];
+      const filled = assumptions.map((item) => `${item.label}: ${item.value}`).join(' · ');
+      setNote(filled ? `${made} ${t('assumptionsNote')} ${filled}` : made);
       setSteps(null);
       setPrompt('');
       setThreadId(null);
@@ -2209,7 +2273,7 @@ function DeskHome() {
     setJobId(null);
   }, [job.data]);
 
-  async function sendText(text) {
+  async function sendText(text, mode = 'trade') {
     setErr('');
     setSteps(null);
     const walletN = Number(wallet);
@@ -2217,24 +2281,12 @@ function DeskHome() {
       setErr(t('walletBad'));
       return;
     }
-    const guided = compose === 'guide';
     try {
       const res = await sendPrompt({
         prompt: text,
         threadId,
-        mode: 'trade',
-        options: {
-          exit: exitMode,
-          stopPct: Number(stopPct),
-          tpPct: Number(tpPct),
-          timeExit,
-          time: timeMode,
-          maxHoldMin: Number(holdMin),
-          variants: variants && !guided,
-          mareMode,
-          wallet: walletN,
-          guided,
-        },
+        mode,
+        options: opts(),
       }).unwrap();
       setThreadId(res.threadId);
       setJobId(res.jobId);
@@ -2262,96 +2314,130 @@ function DeskHome() {
     }
   }
 
+  const mareLabel = mare?.label === 'BOA' ? t('mareGood')
+    : mare?.label === 'RUIM' ? t('mareNotBad')
+      : (mare?.label || '…');
+
   return (
-    <div className="wrap">
-      <form className="panel composer-top" onSubmit={submit} aria-busy={isLoading || !!jobId}>
+    <div className="wrap desk-home-v2">
+      <form className="panel composer-top composer-simple" onSubmit={submit} aria-busy={isLoading || !!jobId}>
+        <div className="composer-head">
+          <h2>{t('sayT')}</h2>
+          <p className="muted">{t('sayL')}</p>
+        </div>
         <div className="modes">
-          <button type="button" className={compose === 'guide' ? 'on' : ''} onClick={() => setCompose('guide')}>{t('guideSteps')}</button>
           <button type="button" className={compose === 'paste' ? 'on' : ''} onClick={() => setCompose('paste')}>{t('guidePaste')}</button>
+          <button type="button" className={compose === 'guide' ? 'on' : ''} onClick={() => setCompose('guide')}>{t('guideSteps')}</button>
         </div>
         {compose === 'guide'
           ? <Guide busy={isLoading || !!jobId} onCreate={sendText} />
-          : <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={isLoading || !!jobId} />}
-        <div className="wallet-row">
-          <label>{t('wallet')}
-            <input inputMode="decimal" min="100" max="999000" value={wallet} onChange={(e) => setWallet(e.target.value)} disabled={isLoading || !!jobId} />
-          </label>
-          <small>{t('walletHint')}</small>
-        </div>
-        {compose !== 'guide' && <>
-          <fieldset className="choice" disabled={isLoading || !!jobId}>
-            <legend>{t('optExit')}</legend>
-            <label className={exitMode === 'history' ? 'on' : ''}>
-              <input type="radio" name="exitPick" checked={exitMode === 'history'} onChange={() => setExitMode('history')} />
-              <span>{t('exitHist')}</span>
-            </label>
-            <label className={exitMode === 'manual' ? 'on' : ''}>
-              <input type="radio" name="exitPick" checked={exitMode === 'manual'} onChange={() => setExitMode('manual')} />
-              <span>{t('exitManual')}</span>
-            </label>
-            {exitMode === 'manual' && (
-              <div className="choice-fields">
-                <label>{t('stopPct')}<input inputMode="decimal" value={stopPct} onChange={(e) => setStopPct(e.target.value)} /></label>
-                <label>{t('tpPct')}<input inputMode="decimal" value={tpPct} onChange={(e) => setTpPct(e.target.value)} /></label>
+          : (
+            <>
+              <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={isLoading || !!jobId} />
+              <div className="prompt-chips">
+                {PROMPT_CHIPS.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    className="tiny"
+                    disabled={isLoading || !!jobId}
+                    onClick={() => {
+                      setPrompt(chip.prompt);
+                      sendText(chip.prompt, chip.alarm ? 'alarm' : 'trade');
+                    }}
+                  >
+                    {t(chip.key)}
+                  </button>
+                ))}
               </div>
-            )}
-          </fieldset>
-          <fieldset className="choice" disabled={isLoading || !!jobId}>
-            <legend>{t('optTime')}</legend>
-            <label className={timeExit ? 'on' : ''}>
-              <input type="checkbox" checked={timeExit} onChange={(e) => setTimeExit(e.target.checked)} />
-              <span>{t('timeExit')}</span>
-            </label>
-            {timeExit && (
-              <>
-                <label className={timeMode === 'history' ? 'on' : ''}>
-                  <input type="radio" name="timePick" checked={timeMode === 'history'} onChange={() => setTimeMode('history')} />
-                  <span>{t('timeHist')}</span>
+            </>
+          )}
+        <button className="ghost advanced-toggle" type="button" onClick={() => setShowAdvanced((v) => !v)}>
+          {showAdvanced ? t('hideAdvanced') : t('advancedOpts')}
+        </button>
+        {showAdvanced && (
+          <div className="advanced-block">
+            <div className="wallet-row">
+              <label>{t('wallet')}
+                <input inputMode="decimal" min="100" max="999000" value={wallet} onChange={(e) => setWallet(e.target.value)} disabled={isLoading || !!jobId} />
+              </label>
+              <small>{t('walletHint')}</small>
+            </div>
+            {compose !== 'guide' && <>
+              <fieldset className="choice" disabled={isLoading || !!jobId}>
+                <legend>{t('optExit')}</legend>
+                <label className={exitMode === 'history' ? 'on' : ''}>
+                  <input type="radio" name="exitPick" checked={exitMode === 'history'} onChange={() => setExitMode('history')} />
+                  <span>{t('exitHist')}</span>
                 </label>
-                <label className={timeMode === 'manual' ? 'on' : ''}>
-                  <input type="radio" name="timePick" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} />
-                  <span>{t('timeManual')}</span>
+                <label className={exitMode === 'manual' ? 'on' : ''}>
+                  <input type="radio" name="exitPick" checked={exitMode === 'manual'} onChange={() => setExitMode('manual')} />
+                  <span>{t('exitManual')}</span>
                 </label>
-                {timeMode === 'manual' && (
+                {exitMode === 'manual' && (
                   <div className="choice-fields">
-                    <label>{t('holdMin')}<input inputMode="numeric" value={holdMin} onChange={(e) => setHoldMin(e.target.value)} /></label>
+                    <label>{t('stopPct')}<input inputMode="decimal" value={stopPct} onChange={(e) => setStopPct(e.target.value)} /></label>
+                    <label>{t('tpPct')}<input inputMode="decimal" value={tpPct} onChange={(e) => setTpPct(e.target.value)} /></label>
                   </div>
                 )}
-              </>
-            )}
-          </fieldset>
-        </>}
-        <div className="segment" role="radiogroup" aria-label={t('marePick')}>
-          <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
-          <div className="segment-track">
-            {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={mareMode === id}
-                className={mareMode === id ? 'on' : ''}
-                disabled={isLoading || !!jobId}
-                onClick={() => setMareMode(id)}
-              >
-                {t(key)}
-              </button>
-            ))}
+              </fieldset>
+              <fieldset className="choice" disabled={isLoading || !!jobId}>
+                <legend>{t('optTime')}</legend>
+                <label className={timeExit ? 'on' : ''}>
+                  <input type="checkbox" checked={timeExit} onChange={(e) => setTimeExit(e.target.checked)} />
+                  <span>{t('timeExit')}</span>
+                </label>
+                {timeExit && (
+                  <>
+                    <label className={timeMode === 'history' ? 'on' : ''}>
+                      <input type="radio" name="timePick" checked={timeMode === 'history'} onChange={() => setTimeMode('history')} />
+                      <span>{t('timeHist')}</span>
+                    </label>
+                    <label className={timeMode === 'manual' ? 'on' : ''}>
+                      <input type="radio" name="timePick" checked={timeMode === 'manual'} onChange={() => setTimeMode('manual')} />
+                      <span>{t('timeManual')}</span>
+                    </label>
+                    {timeMode === 'manual' && (
+                      <div className="choice-fields">
+                        <label>{t('holdMin')}<input inputMode="numeric" value={holdMin} onChange={(e) => setHoldMin(e.target.value)} /></label>
+                      </div>
+                    )}
+                  </>
+                )}
+              </fieldset>
+              <fieldset className="choice" disabled={isLoading || !!jobId}>
+                <legend>{t('optVar')} <Tip text={t('varTip')} /></legend>
+                <label className={variants ? 'on' : ''}>
+                  <input type="checkbox" checked={variants} onChange={(e) => setVariants(e.target.checked)} />
+                  <span>{t('variants')}</span>
+                </label>
+              </fieldset>
+            </>}
+            <div className="segment" role="radiogroup" aria-label={t('marePick')}>
+              <span className="segment-label">{t('marePick')} <Tip text={t('mareTip')} /></span>
+              <div className="segment-track">
+                {[['any', 'mareAny'], ['good', 'mareGood'], ['not_bad', 'mareNotBad']].map(([id, key]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="radio"
+                    aria-checked={mareMode === id}
+                    className={mareMode === id ? 'on' : ''}
+                    disabled={isLoading || !!jobId}
+                    onClick={() => setMareMode(id)}
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-        {compose === 'paste' && (
-          <fieldset className="choice" disabled={isLoading || !!jobId}>
-            <legend>{t('optVar')} <Tip text={t('varTip')} /></legend>
-            <label className={variants ? 'on' : ''}>
-              <input type="checkbox" checked={variants} onChange={(e) => setVariants(e.target.checked)} />
-              <span>{t('variants')}</span>
-            </label>
-          </fieldset>
         )}
         {steps && (
           <AskSteps
             key={steps.id}
             questions={steps.questions}
+            suggestions={steps.suggestions}
             busy={isLoading || !!jobId}
             onDone={(answer) => {
               setPrompt(answer);
@@ -2361,17 +2447,7 @@ function DeskHome() {
                 prompt: answer,
                 threadId,
                 mode: 'trade',
-                options: {
-                  exit: exitMode,
-                  stopPct: Number(stopPct),
-                  tpPct: Number(tpPct),
-                  timeExit,
-                  time: timeMode,
-                  maxHoldMin: Number(holdMin),
-                  variants,
-                  mareMode,
-                  wallet: Number(wallet),
-                },
+                options: opts(),
               }).unwrap().then((res) => {
                 setThreadId(res.threadId);
                 setJobId(res.jobId);
@@ -2380,15 +2456,22 @@ function DeskHome() {
             }}
           />
         )}
-        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail={compose !== 'guide' && (exitMode === 'history' || (timeExit && timeMode === 'history')) ? t('workingHist') : ''} />
+        <PromptStatus busy={isLoading || !!jobId} status={job.data?.job?.status} note={note} err={err} detail="" />
         {compose !== 'guide' && <button className="solid" disabled={isLoading || !!jobId || !prompt.trim()} type="submit">{(isLoading || jobId) ? t('working') : t('send')}</button>}
       </form>
       <div className="mare">
-        <span className={`pill ${mare?.label || ''}`}>{mare ? `${mare.label} · ${mare.upPct}% · ${mare.windowMin} min` : '…'} <Tip text={t('mareTip')} /></span>
-        <span className={`conn ${connection === 'live' ? 'live' : 'down'}`}><i />{t('connection')}: {connection || 'connecting'}</span>
+        <span className="pill">{t('marketLive')}</span>
+        <span className={`pill ${mare?.label || ''}`}>{t('moodMarket')}: {mare ? `${mareLabel} · ${mare.upPct}%` : '…'} <Tip text={t('mareTip')} /></span>
+        <span className={`conn ${connection === 'live' ? 'live' : 'down'}`}><i />{t('connection')}: {connection || '…'}</span>
         <span className="muted">{(live.prices.length ? live.prices : data?.prices || []).slice(0, 4).map((p) => `${p.symbol.replace('USDT', '')} ${p.price}`).join(' · ')}</span>
       </div>
       <div className="strategies" style={{ marginTop: 14 }}>
+        {!strategies.length && (
+          <div className="empty-strategies panel">
+            <h3>{t('emptyStrategies')}</h3>
+            <p className="muted">{t('emptyStrategiesB')}</p>
+          </div>
+        )}
         {strategies.map((s) => (
           <article className="strategy" key={s.id}>
             <header>
@@ -2409,13 +2492,6 @@ function DeskHome() {
               {s.paused && <span className="pill">{t('paused')}</span>}
               {s.position ? <span className="up">{s.position.symbol} @ {px(s.position.entry)}</span> : <span className="muted">{t('flat')}</span>}
             </div>
-            <label className="mare-pick">{t('marePick')}
-              <select value={s.mareMode || 'any'} onChange={(e) => patchStrategy({ id: s.id, mareMode: e.target.value })}>
-                <option value="any">{t('mareAny')}</option>
-                <option value="good">{t('mareGood')}</option>
-                <option value="not_bad">{t('mareNotBad')}</option>
-              </select>
-            </label>
             <div className="actions">
               <Link className="tiny prod" to={`/${lng}/app/strategies/${s.id}/producao`}><IconPlay />{t('toProd')}</Link>
               {s.paused
@@ -2839,7 +2915,12 @@ function StrategyProduction() {
   return (
     <div className="wrap production">
       <Link to={`/${lng}/app/strategies/${id}`}>{prod.data?.strategy?.name || t('back')}</Link>
-      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('prodPageT')}</h2>
+      <h2 className="prod-title">{t('prodPageT')}</h2>
+      <ol className="prod-steps-rail">
+        <li className={!order ? 'on' : ''}>1. {t('stepLiveT')}</li>
+        <li className={order ? 'on' : ''}>2. {t('prodPrepare')}</li>
+        <li>3. Download</li>
+      </ol>
       <article className="panel warn-panel">
         <p>{t('prodAvg')}</p>
         <p>{t('prodHand')}</p>
@@ -2848,7 +2929,11 @@ function StrategyProduction() {
         <p>{t('prodAhead')}</p>
       </article>
       {order ? (
-        <p className="ok">{t('prodPaid')} · {new Date(order.readyBy).toLocaleDateString()}</p>
+        <div className="panel ok-panel">
+          <p className="ok">{t('prodPaid')}</p>
+          <p className="muted">{new Date(order.readyBy).toLocaleDateString()}</p>
+          <p className="muted">Status: {order.status || 'queued'}</p>
+        </div>
       ) : (
         <div className="panel">
           <p className="price-num">{shown}</p>
@@ -3253,14 +3338,18 @@ function App() {
             <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
             <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
             <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
-            <Route path="/:lng/app" element={<Guard><RequireDesk><DeskHome /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/onboarding" element={<Guard><RequireDesk><Onboarding /></RequireDesk></Guard>} />
+            <Route path="/:lng/app" element={<Guard><RequireDesk><DeskGate><DeskHome /></DeskGate></RequireDesk></Guard>} />
             <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
             <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
             <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
             <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/strategies/:id/operar" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
             <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/pesquisar" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
             <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
             <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
+            <Route path="/:lng/app/ajuda" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
             <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
             <Route path="/:lng/app/checkout/return" element={<Guard><RequireDesk allowExpired><CheckoutReturn /></RequireDesk></Guard>} />
             <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />

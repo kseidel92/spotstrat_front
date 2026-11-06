@@ -29,6 +29,7 @@ export default function Hero() {
       <div className={styles.overlay} />
       <div className={styles.grid}>
         <div className={styles.copy}>
+          <p className={styles.brand}>SpotStrat</p>
           <p className={styles.kicker}>{t('heroKicker')}</p>
           <h1 className={styles.title}>
             <Title text={title} accent={t('heroAccent')} />
@@ -38,10 +39,15 @@ export default function Hero() {
             <Link className={styles.cta} to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
             <p className={styles.note}>{t('freeNote')}</p>
           </div>
+          <ol className={styles.rail}>
+            <li><span>1</span>{t('stepCreateT')}</li>
+            <li><span>2</span>{t('stepSimT')}</li>
+            <li><span>3</span>{t('stepLiveT')}</li>
+          </ol>
         </div>
         <div className={styles.visual}>
           <img className={styles.glow} src={img1} alt="" />
-          <img className={styles.panel} src={img4} alt={title} />
+          <img className={styles.panel} src={img4} alt="SpotStrat" />
         </div>
       </div>
     </section>
