@@ -26,25 +26,34 @@ export default function ScratchWizard({ busy, onCreate }) {
     exit: t(`scratchExit_${exit}_t`),
   }), [t, style, tempo, mare, exit]);
 
+  function exitNums() {
+    if (exit === 'protect') return { stop: '0.6', target: '1.0' };
+    if (exit === 'balanced') return { stop: '0.8', target: '1.4' };
+    return { stop: '1.0', target: '2.0' };
+  }
+
   function buildPrompt() {
+    const { stop, target } = exitNums();
     return [
       t('scratchPromptLead'),
       t(`scratchStyle_${style}_prompt`),
       t(`scratchTempo_${tempo}_prompt`),
       t(`scratchMare_${mare}_prompt`),
       t(`scratchExit_${exit}_prompt`),
+      `Saída: Stop ${stop}% e alvo ${target}% a partir da entrada.`,
       t('scratchPromptTail'),
     ].join('\n');
   }
 
   function next() {
     if (last) {
+      const { stop, target } = exitNums();
       onCreate(buildPrompt(), {
         mareMode: mare,
         guided: true,
-        exitMode: exit === 'protect' ? 'manual' : 'history',
-        stopPct: exit === 'protect' ? '0.6' : exit === 'balanced' ? '0.8' : '1.0',
-        tpPct: exit === 'protect' ? '1.0' : exit === 'balanced' ? '1.4' : '2.0',
+        exitMode: 'manual',
+        stopPct: stop,
+        tpPct: target,
       });
       return;
     }

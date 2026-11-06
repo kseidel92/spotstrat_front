@@ -63,21 +63,20 @@ function briefOf(guide, t) {
     book: t('guideBriefBook'),
     ema: t('guideBriefEma'),
   };
-  const exit = guide.exitKind === 'numbers'
-    ? t('guideBriefExitNums', { stop: guide.stop, target: guide.target })
-    : guide.exitKind === 'ai'
-      ? t('guideBriefExitAi', { stop: guide.stop, target: guide.target })
-      : guide.exitText.trim();
+  const exit = (guide.exitKind === 'numbers' || guide.exitKind === 'ai')
+    ? `Stop ${guide.stop}% e alvo ${guide.target}% a partir da entrada.`
+    : guide.exitText.trim();
+  const list = guide.timing === 'confirm'
+    ? `Lista: ${guide.timingText.trim() || t('guideBriefTimingConfirm')}`
+    : 'Lista: não grava preço. A compra acontece no próprio gatilho.';
+  const fontes = guide.sources.map((id) => sourceText[id] || id).filter(Boolean).join('; ');
   return [
     'Brief.',
     guide.name.trim() ? `Nome: ${guide.name.trim()}` : '',
     `Entrada: ${guide.entry.trim()}`,
-    `Fontes no ctx: ${guide.sources.map((id) => sourceText[id] || id).join('; ')}.`,
-    guide.timing === 'confirm'
-      ? `Confirmação: ${guide.timingText.trim() || t('guideBriefTimingConfirm')}`
-      : t('guideBriefTimingNow'),
+    `Fontes: ${fontes}.`,
+    list,
     `Saída: ${exit}`,
-    `Carteira virtual: ${guide.wallet} USD.`,
   ].filter(Boolean).join('\n');
 }
 
@@ -109,7 +108,7 @@ export default function GuideFlow({ busy, onCreate }) {
   const blocked = (current === 'trigger' && !guide.entry.trim())
     || (current === 'watch' && !guide.sources.length)
     || (current === 'timing' && guide.timing === 'confirm' && !guide.timingText.trim())
-    || (current === 'exit' && guide.exitKind === 'numbers' && !(Number(guide.stop) > 0 && Number(guide.target) > 0))
+    || (current === 'exit' && (guide.exitKind === 'numbers' || guide.exitKind === 'ai') && !(Number(guide.stop) > 0 && Number(guide.target) > 0))
     || (current === 'exit' && guide.exitKind === 'describe' && !guide.exitText.trim())
     || (current === 'review' && !(Number(guide.wallet) >= 100 && Number(guide.wallet) <= 999000));
 
@@ -175,14 +174,20 @@ export default function GuideFlow({ busy, onCreate }) {
   }
 
   function create() {
-    const brief = briefOf(guide, t);
+    const kind = detectKind(guide.entry);
+    const catalog = GUIDE_SPEC[kind] || GUIDE_SPEC.momentum;
+    const stop = guide.exitKind === 'ai' && !(Number(guide.stop) > 0) ? catalog.stop : guide.stop;
+    const target = guide.exitKind === 'ai' && !(Number(guide.target) > 0) ? catalog.target : guide.target;
+    const ready = { ...guide, stop, target };
+    const brief = briefOf(ready, t);
+    const manualExit = ready.exitKind === 'numbers' || ready.exitKind === 'ai';
     onCreate(brief, {
       guided: true,
-      wallet: guide.wallet,
-      exitMode: guide.exitKind === 'describe' ? 'history' : 'manual',
-      stopPct: guide.stop,
-      tpPct: guide.target,
-      mareMode: /mar[eé]|press|bom/.test(guide.entry.toLowerCase()) ? 'good' : 'any',
+      wallet: ready.wallet,
+      exitMode: manualExit ? 'manual' : 'history',
+      stopPct: stop,
+      tpPct: target,
+      mareMode: /mar[eé]|press[aã]o|bom/.test(ready.entry.toLowerCase()) ? 'good' : 'any',
     });
   }
 

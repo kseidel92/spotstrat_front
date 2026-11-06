@@ -233,6 +233,10 @@ function errText(error, t) {
     nothing_to_cancel: t('cancelOnlyPaid'),
     google_off: t('errGoogleOff'),
     upstream_fail: t('errUpstream'),
+    invalid_body: error?.data?.message || t('errGeneric'),
+    invalid_message: error?.data?.message || t('errGeneric'),
+    not_found: error?.data?.message || t('errGeneric'),
+    desk_required: error?.data?.message || t('expired'),
   };
   if (map[code]) return map[code];
   if (error?.data?.message) return error.data.message;
@@ -1997,13 +2001,14 @@ function DeskHome() {
   const [holdMin, setHoldMin] = useState('60');
   const [variants, setVariants] = useState(false);
   const [wallet, setWallet] = useState('1000');
-  const [mareMode, setMareMode] = useState('good');
+  const [mareMode, setMareMode] = useState('any');
   const [prompt, setPrompt] = useState('');
   const [threadId, setThreadId] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
   const [askSteps, setAskSteps] = useState(null);
+  const [jobGuided, setJobGuided] = useState(false);
   const dispatch = useDispatch();
   const [sendPrompt, { isLoading }] = usePromptMutation();
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
@@ -2060,30 +2065,43 @@ function DeskHome() {
       setErr(t('walletBad'));
       return;
     }
+    const guided = extra.guided ?? (phase === 'scratch' || phase === 'steps');
+    setJobGuided(!!guided);
     try {
       const res = await sendPrompt({
         prompt: text,
         threadId,
         mode,
-        options: opts({ ...extra, wallet: walletN }),
+        options: opts({ ...extra, wallet: walletN, guided }),
       }).unwrap();
       setThreadId(res.threadId);
       setJobId(res.jobId);
     } catch (error) { setErr(errText(error, t)); }
   }
 
-  function startPath() {
+  function resetJobState() {
     setErr('');
     setNote('');
     setAskSteps(null);
+    setJobId(null);
+    setThreadId(null);
+    setJobGuided(false);
+    setExitMode('history');
+    setStopPct('0.8');
+    setTpPct('1.2');
+    setMareMode('any');
+    setWallet('1000');
+    setPrompt('');
+  }
+
+  function startPath() {
+    resetJobState();
     setPhase(path);
   }
 
   function backHub() {
+    resetJobState();
     setPhase('hub');
-    setErr('');
-    setNote('');
-    setAskSteps(null);
   }
 
   function submitPrompt(e) {
@@ -2185,7 +2203,7 @@ function DeskHome() {
                 prompt: answer,
                 threadId,
                 mode: 'trade',
-                options: opts({ guided: true }),
+                options: opts({ guided: jobGuided }),
               }).unwrap().then((res) => {
                 setThreadId(res.threadId);
                 setJobId(res.jobId);
