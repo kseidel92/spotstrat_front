@@ -29,7 +29,6 @@ export default function Hero() {
       <div className={styles.overlay} />
       <div className={styles.grid}>
         <div className={styles.copy}>
-          <p className={styles.brand}>SpotStrat</p>
           <p className={styles.kicker}>{t('heroKicker')}</p>
           <h1 className={styles.title}>
             <Title text={title} accent={t('heroAccent')} />
@@ -47,7 +46,7 @@ export default function Hero() {
         </div>
         <div className={styles.visual}>
           <img className={styles.glow} src={img1} alt="" />
-          <img className={styles.panel} src={img4} alt="SpotStrat" />
+          <img className={styles.panel} src={img4} alt="" />
         </div>
       </div>
     </section>

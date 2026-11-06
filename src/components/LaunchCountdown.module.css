@@ -1,67 +1,68 @@
 .wrap {
   width: 100%;
   margin: 0;
-  padding: 18px max(var(--gutter, 28px), calc((100% - var(--page, 1120px)) / 2)) 36px;
+  padding: 8px max(var(--gutter), calc((100% - var(--page)) / 2)) 0;
 }
 
 .card {
-  padding: 28px 24px 24px;
-  border-radius: 18px;
-  border: 1px solid rgba(6, 182, 212, 0.45);
+  padding: 22px 22px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   background:
-    radial-gradient(520px 180px at 0% 0%, rgba(6, 182, 212, 0.16), transparent 60%),
-    rgba(8, 14, 22, 0.92);
+    radial-gradient(480px 160px at 0% 0%, var(--accent-soft), transparent 60%),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-soft);
 }
 
 .kicker {
-  margin: 0 0 10px;
-  color: #8ea0b3;
-  font-size: 14px;
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
   line-height: 1.45;
 }
 
 .card h2 {
-  margin: 0 0 20px;
-  font-family: Outfit, sans-serif;
-  font-size: clamp(22px, 3.4vw, 34px);
+  margin: 0 0 16px;
+  font-family: var(--font);
+  font-size: clamp(1.2rem, 2.4vw, 1.65rem);
   font-weight: 650;
   letter-spacing: -0.03em;
-  line-height: 1.2;
-  color: #fff;
-  max-width: 28ch;
+  line-height: 1.25;
+  color: var(--text);
+  max-width: 34ch;
 }
 
 .clock {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 22px;
+  gap: 10px;
+  margin: 0 0 16px;
 }
 
 .clock div {
   min-width: 0;
-  padding: 14px 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(6, 182, 212, 0.22);
-  background: rgba(6, 182, 212, 0.08);
+  padding: 12px 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--accent-soft);
   text-align: center;
 }
 
 .clock dt {
   margin: 0;
-  font-family: Outfit, sans-serif;
-  font-size: clamp(28px, 5vw, 48px);
+  font-family: var(--font);
+  font-size: clamp(1.4rem, 3.5vw, 2rem);
   font-weight: 680;
   letter-spacing: -0.04em;
   line-height: 1;
-  color: #06b6d4;
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 
 .clock dd {
-  margin: 8px 0 0;
-  color: #b7c4d2;
-  font-size: 12px;
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -70,27 +71,22 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px 12px;
+  gap: 6px 10px;
   margin: 0;
-  color: #d5e2ee;
-  font-size: 16px;
+  color: var(--text-soft);
+  font-size: 0.95rem;
 }
 
 .accounts strong {
-  font-family: Outfit, sans-serif;
-  font-size: clamp(28px, 4vw, 40px);
+  font-family: var(--font);
+  font-size: clamp(1.4rem, 3vw, 1.85rem);
   font-weight: 680;
   letter-spacing: -0.04em;
-  color: #fff;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 640px) {
-  .clock {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .card h2 {
-    max-width: none;
-  }
+  .clock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card h2 { max-width: none; }
 }

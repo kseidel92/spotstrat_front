@@ -1,14 +1,14 @@
 .page {
   min-height: calc(100vh - 72px);
-  background: #0f1115;
-  color: #e8eaef;
+  background: var(--bg);
+  color: var(--text);
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
 }
 
 .sidebar {
-  border-right: 1px solid #2a2f3a;
-  background: #12151b;
+  border-right: 1px solid var(--border);
+  background: var(--bg-elevated);
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 72px);
@@ -28,7 +28,7 @@
   font-size: 13px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #d5dbe6;
+  color: var(--text-soft);
 }
 
 .sideList {
@@ -62,7 +62,7 @@
 
 .threadOn {
   background: rgba(122, 215, 255, 0.08);
-  border-color: #2a2f3a;
+  border-color: var(--border);
 }
 
 .threadRow { position: relative; }
@@ -83,9 +83,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   background: #1b212b;
-  color: #e8eaef;
+  color: var(--text);
   border-radius: 10px;
   padding: 7px;
 }
@@ -96,7 +96,7 @@
   width: calc(100% - 8px);
   margin: 4px;
   border: 1px solid #7ad7ff;
-  background: #0f1115;
+  background: var(--bg);
   color: #f4f7fb;
   border-radius: 8px;
   padding: 8px 10px;
@@ -151,7 +151,7 @@
   align-items: flex-start;
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: rgba(22, 26, 34, 0.9);
   color: #b7c2d0;
@@ -167,7 +167,7 @@
   display: flex;
   flex-direction: column;
   background: #161a22;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
   overflow: hidden;
@@ -206,8 +206,8 @@
 .assistant {
   align-self: flex-start;
   background: #10141b;
-  border: 1px solid #2a2f3a;
-  color: #e8eaef;
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
 .user {
@@ -233,14 +233,14 @@
   padding: 16px 18px;
   border-radius: 16px;
   background: #10141b;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
 }
 
 .typing i {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #d5dbe6;
+  background: var(--text-soft);
   animation: labBlink 1.15s infinite;
 }
 
@@ -261,9 +261,9 @@
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .chip {
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   background: #12161d;
-  color: #e8eaef;
+  color: var(--text);
   border-radius: 999px;
   padding: 7px 12px;
   font-size: 13px;
@@ -277,7 +277,7 @@
   gap: 8px;
   align-items: end;
   padding: 10px;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   border-radius: 16px;
   background: #10141b;
 }
@@ -318,7 +318,7 @@
 }
 
 .data {
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   border-radius: 14px;
   background: #161a22;
   padding: 12px 14px 14px;
@@ -326,7 +326,7 @@
 
 .data summary {
   cursor: pointer;
-  color: #e8eaef;
+  color: var(--text);
   font-weight: 650;
 }
 
@@ -335,7 +335,7 @@
   margin-top: 12px;
   background: #10141b;
   color: #f4f6fa;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
 }

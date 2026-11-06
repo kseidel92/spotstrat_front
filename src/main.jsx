@@ -26,6 +26,7 @@ import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
 import LandingJourney from './components/LandingJourney';
 import Onboarding from './components/Onboarding';
+import ThemeToggle from './components/ThemeToggle';
 import LabPage from './components/Lab';
 import LaunchCountdown from './components/LaunchCountdown';
 import Faq from './components/Faq';
@@ -34,9 +35,12 @@ import LaunchPrice from './components/LaunchPrice';
 import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
 import Badge from './components/Badge';
 import { legalFor } from './legal';
+import { initTheme } from './theme';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
 import tradesShot from './components/img_trades.png';
+
+initTheme();
 
 const PROMPT_CHIPS = [
   { key: 'chipRise', prompt: 'Quero comprar quando uma moeda subir 1% em 3 minutos.' },
@@ -53,24 +57,45 @@ function lngOf(pathname) {
 function Flags() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const current = lngOf(pathname) || i18n.language;
+  const currentId = lngOf(pathname) || i18n.language;
+  const current = LOCALES.find((l) => l.id === currentId) || LOCALES[0];
   return (
-    <div className="flags">
-      {LOCALES.map((lng) => (
-        <button
-          key={lng.id}
-          className={current === lng.id ? 'on' : ''}
-          type="button"
-          onClick={() => {
-            setLocaleCookie(lng.id);
-            const rest = pathname.split('/').slice(2).join('/');
-            navigate(`/${lng.id}${rest ? `/${rest}` : ''}`);
-          }}
-        >
-          {lng.flag} <span className="flag-label">{lng.label}</span>
-        </button>
-      ))}
-    </div>
+    <label className="lang-select">
+      <span className="sr-only">Idioma</span>
+      <select
+        value={current.id}
+        aria-label="Idioma"
+        onChange={(e) => {
+          const id = e.target.value;
+          setLocaleCookie(id);
+          const rest = pathname.split('/').slice(2).join('/');
+          navigate(`/${id}${rest ? `/${rest}` : ''}`);
+        }}
+      >
+        {LOCALES.map((lng) => (
+          <option key={lng.id} value={lng.id}>{lng.flag} {lng.label}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function MarketTop({ cta = true }) {
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  return (
+    <header className="topbar market-top">
+      <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
+      <div className="spacer" />
+      <nav className="menu">
+        <Link to={`/${lng}/info`}>{t('howNav')}</Link>
+        <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
+        <Link to={`/${lng}/login`}>{t('enter')}</Link>
+        {cta && <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>}
+      </nav>
+      <ThemeToggle />
+      <Flags />
+    </header>
   );
 }
 
@@ -446,32 +471,15 @@ function Landing() {
   const { lng } = useParams();
   return (
     <div className="landing landing-v2">
-      <header className="topbar topbar-dark">
-        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
-        <div className="spacer" />
-        <Flags />
-        <nav className="menu">
-          <Link to={`/${lng}/info`}>{t('howNav')}</Link>
-          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-          <Link to={`/${lng}/login`}>{t('enter')}</Link>
-          <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
-        </nav>
-      </header>
+      <MarketTop />
       <Hero />
-      <LandingJourney />
-      <LaunchCountdown />
-      <ShieldNote />
-      <section className="band band-dark">
-        <h2>{t('sayT')}</h2>
-        <p className="lede">{t('sayL')}</p>
-        <div className="example-chips">
-          {[t('ex1'), t('ex2'), t('ex4')].map((ex) => <span key={ex} className="example-chip">{ex}</span>)}
-        </div>
-        <Badge>{t('presetsBadge')}</Badge>
-        <p className="lede">{t('presetsL')}</p>
-      </section>
-      <section className="vault-band">
-        <div>
+      <LandingJourney examples={[t('ex1'), t('ex2'), t('ex4')]} />
+      <section className="proof-band">
+        <LaunchCountdown />
+        <ShieldNote />
+        <div className="proof-copy">
+          <Badge>{t('presetsBadge')}</Badge>
+          <p className="lede">{t('presetsL')}</p>
           <p className="kicker">{t('vaultK')}</p>
           <h2>{t('vaultT')}</h2>
           <p className="lede">{t('vaultB')}</p>
@@ -498,21 +506,9 @@ function Landing() {
 }
 
 function AuthFrame({ children }) {
-  const { t } = useTranslation();
-  const { lng } = useParams();
   return (
     <div className="landing auth-page">
-      <header className="topbar">
-        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
-        <div className="spacer" />
-        <Flags />
-        <nav className="menu">
-          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
-          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-          <Link to={`/${lng}/login`}>{t('enter')}</Link>
-          <Link className="solid" to={`/${lng}/register`}>{t('cta')}</Link>
-        </nav>
-      </header>
+      <MarketTop />
       <main className="auth-wrap">{children}</main>
       <SiteFooter />
     </div>
@@ -1167,6 +1163,7 @@ function DeskBar() {
         </details>
       </nav>
       <div className="spacer" />
+      <ThemeToggle />
       <Flags />
       <button className="tiny" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
     </header>
@@ -3256,21 +3253,9 @@ function PricesBody({ showCta = false }) {
 
 function Prices() {
   useLang();
-  const { t } = useTranslation();
-  const { lng } = useParams();
   return (
     <div className="landing">
-      <header className="topbar">
-        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
-        <div className="spacer" />
-        <Flags />
-        <nav className="menu">
-          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
-          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-          <Link to={`/${lng}/login`}>{t('enter')}</Link>
-          <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
-        </nav>
-      </header>
+      <MarketTop />
       <PricesBody showCta />
       <SiteFooter />
     </div>
@@ -3288,21 +3273,9 @@ function DeskPrices() {
 
 function PublicInfo() {
   useLang();
-  const { t } = useTranslation();
-  const { lng } = useParams();
   return (
     <div className="landing">
-      <header className="topbar">
-        <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
-        <div className="spacer" />
-        <Flags />
-        <nav className="menu">
-          <Link to={`/${lng}/info`}>{t('infoNav')}</Link>
-          <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-          <Link to={`/${lng}/login`}>{t('enter')}</Link>
-          <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>
-        </nav>
-      </header>
+      <MarketTop />
       <div className="desk public-info">
         <Info />
       </div>

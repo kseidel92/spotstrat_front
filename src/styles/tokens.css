@@ -1,0 +1,97 @@
+/* SpotStrat design tokens — dark / light */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0B0E14;
+  --bg-elevated: #151A23;
+  --bg-muted: #1B2230;
+  --bg-soft: #121822;
+  --text: #E8EEF5;
+  --text-soft: #C5D2DF;
+  --text-muted: #8B98A8;
+  --accent: #06B6D4;
+  --accent-hover: #22D3EE;
+  --accent-contrast: #04242C;
+  --accent-soft: rgba(6, 182, 212, 0.14);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --up: #3ECF8E;
+  --down: #FF6D5A;
+  --danger: #F43F5E;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.22);
+  --overlay-hero: linear-gradient(180deg, rgba(11, 14, 20, 0.55) 0%, rgba(11, 14, 20, 0.82) 100%),
+    linear-gradient(90deg, #0B0E14 0%, rgba(11, 14, 20, 0.78) 46%, transparent 100%);
+  --topbar-bg: rgba(11, 14, 20, 0.88);
+  --page: 1120px;
+  --gutter: 28px;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --font: Outfit, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* legacy aliases used across the app */
+  --paper: var(--bg);
+  --paper-2: var(--bg-elevated);
+  --ink: var(--text);
+  --ink-soft: var(--text-soft);
+  --line: var(--border);
+  --desk: var(--bg);
+  --desk-2: var(--bg-elevated);
+  --desk-3: var(--bg-muted);
+  --desk-line: var(--border-strong);
+  --cream: var(--text-soft);
+  --muted: var(--text-muted);
+  --green: #0F766E;
+  --green-2: var(--accent);
+  --clay: var(--danger);
+  --gold: var(--accent);
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elevated);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-soft);
+  --border-color: var(--border);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F5F7FA;
+  --bg-elevated: #FFFFFF;
+  --bg-muted: #EEF2F6;
+  --bg-soft: #E8EDF3;
+  --text: #0B0E14;
+  --text-soft: #3D4754;
+  --text-muted: #5B6775;
+  --accent: #0891B2;
+  --accent-hover: #06B6D4;
+  --accent-contrast: #FFFFFF;
+  --accent-soft: rgba(8, 145, 178, 0.12);
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --up: #059669;
+  --down: #E11D48;
+  --danger: #E11D48;
+  --shadow: 0 18px 48px rgba(11, 14, 20, 0.08);
+  --shadow-soft: 0 10px 28px rgba(11, 14, 20, 0.06);
+  --overlay-hero: linear-gradient(180deg, rgba(245, 247, 250, 0.72) 0%, rgba(245, 247, 250, 0.92) 100%),
+    linear-gradient(90deg, #F5F7FA 0%, rgba(245, 247, 250, 0.85) 50%, transparent 100%);
+  --topbar-bg: rgba(245, 247, 250, 0.9);
+
+  --paper: var(--bg);
+  --paper-2: var(--bg-elevated);
+  --ink: var(--text);
+  --ink-soft: var(--text-soft);
+  --line: var(--border);
+  --desk: var(--bg);
+  --desk-2: var(--bg-elevated);
+  --desk-3: var(--bg-muted);
+  --desk-line: var(--border-strong);
+  --cream: var(--text-soft);
+  --muted: var(--text-muted);
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elevated);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-soft);
+  --border-color: var(--border);
+}
