@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { usePromptMutation, useRestoreMutation } from '../store';
+import { useMeQuery, usePromptMutation, useRestoreMutation } from '../store';
 import styles from './Onboarding.module.css';
 
 const CHIPS = [
@@ -10,10 +10,18 @@ const CHIPS = [
   { key: 'chipReversal', prompt: 'Detecta um candle de virada no gráfico de 15 minutos e compra.' },
 ];
 
+function writeOnboarded(userId) {
+  try {
+    if (userId) localStorage.setItem(`spotstrat.onboarded.${userId}`, '1');
+  } catch { /* ignore */ }
+}
+
 export default function Onboarding() {
   const { t } = useTranslation();
   const { lng } = useParams();
   const navigate = useNavigate();
+  const { data: me } = useMeQuery();
+  const userId = me?.user?.id;
   const [mode, setMode] = useState(null);
   const [prompt, setPrompt] = useState('');
   const [err, setErr] = useState('');
@@ -22,7 +30,7 @@ export default function Onboarding() {
   const [sendPrompt] = usePromptMutation();
 
   function finish() {
-    try { localStorage.setItem('spotstrat.onboarded', '1'); } catch { /* ignore */ }
+    writeOnboarded(userId);
     navigate(`/${lng}/app`, { replace: true });
   }
 

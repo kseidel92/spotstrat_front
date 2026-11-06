@@ -134,7 +134,13 @@ export default function GuideFlow({ busy, onCreate }) {
   function pickPreset(id) {
     const item = TRIGGER_PRESETS.find((p) => p.id === id);
     if (!item) return;
-    patch({ preset: id, entry: t(item.textKey) });
+    const spec = GUIDE_SPEC[id] || {};
+    patch({
+      preset: id,
+      entry: t(item.textKey),
+      // Keep watch sources aligned with the catalog for this preset.
+      sources: Array.isArray(spec.sources) && spec.sources.length ? [...spec.sources] : ['candles'],
+    });
   }
 
   async function aiPickExit() {

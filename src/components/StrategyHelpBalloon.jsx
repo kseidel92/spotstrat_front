@@ -83,7 +83,7 @@ export default function StrategyHelpBalloon({ strategies }) {
               </label>
               {err && <p className="help-balloon-err" role="alert">{err}</p>}
               <button className="solid" type="submit" disabled={isLoading || message.trim().length < 8}>
-                {isLoading ? t('working') : t('helpSend')}
+                {isLoading ? t('helpSending') : t('helpSend')}
               </button>
             </>
           )}

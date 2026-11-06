@@ -1,9 +1,8 @@
-import { Component, StrictMode, useEffect, useMemo, useState } from 'react';
+import { Component, StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createChart } from 'lightweight-charts';
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n, { LOCALES, detectLocale, setLocaleCookie } from './i18n';
 import {
@@ -77,18 +76,29 @@ function Flags() {
   );
 }
 
+function pathActive(pathname, to, { end = false } = {}) {
+  if (!to) return false;
+  if (end) return pathname === to || pathname === `${to}/`;
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
 function MarketTop({ cta = true }) {
   const { t } = useTranslation();
   const { lng } = useParams();
+  const { pathname } = useLocation();
+  const infoTo = `/${lng}/info`;
+  const pricesTo = `/${lng}/precos`;
+  const loginTo = `/${lng}/login`;
+  const registerTo = `/${lng}/register`;
   return (
     <header className="topbar market-top">
       <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
       <div className="spacer" />
       <nav className="menu">
-        <Link to={`/${lng}/info`}>{t('howNav')}</Link>
-        <Link to={`/${lng}/precos`}>{t('pricesNav')}</Link>
-        <Link to={`/${lng}/login`}>{t('enter')}</Link>
-        {cta && <Link className="solid" to={`/${lng}/register`}>{t('lCta')}</Link>}
+        <Link to={infoTo} aria-current={pathActive(pathname, infoTo) ? 'page' : undefined}>{t('howNav')}</Link>
+        <Link to={pricesTo} aria-current={pathActive(pathname, pricesTo, { end: true }) ? 'page' : undefined}>{t('pricesNav')}</Link>
+        <Link to={loginTo} aria-current={pathActive(pathname, loginTo, { end: true }) ? 'page' : undefined}>{t('enter')}</Link>
+        {cta && <Link className="solid" to={registerTo} aria-current={pathActive(pathname, registerTo, { end: true }) ? 'page' : undefined}>{t('lCta')}</Link>}
       </nav>
       <ThemeToggle />
       <Flags />
@@ -323,21 +333,6 @@ const ENGULF_BARS = [
   [102.4, 103.0, 101.7, 102.7],
   [102.7, 104.1, 102.2, 103.6],
 ];
-const EMA_BARS = [
-  [100, 100.8, 99.2, 99.4],
-  [99.4, 99.8, 98.1, 98.4],
-  [98.4, 98.9, 97.4, 97.8],
-  [97.8, 98.2, 96.8, 97.1],
-  [97.1, 97.6, 96.2, 96.5],
-  [96.5, 97.4, 96.1, 97.2],
-  [97.2, 98.6, 97.0, 98.4],
-  [98.4, 99.8, 98.2, 99.5],
-  [99.5, 100.8, 99.2, 100.4],
-  [100.4, 101.6, 100.1, 101.2],
-  [101.2, 102.2, 100.6, 101.0],
-  [101.0, 102.4, 100.8, 102.1],
-];
-
 function emaLine(bars, period) {
   const k = 2 / (period + 1);
   let sum = 0;
@@ -359,7 +354,7 @@ function emaLine(bars, period) {
   return out;
 }
 
-function CandleChart({ title, bars, mark }) {
+function CandleChart({ title, bars, mark, showEma = true, markPrev }) {
   const pad = 18;
   const w = 640;
   const h = 300;
@@ -368,30 +363,38 @@ function CandleChart({ title, bars, mark }) {
   const span = max - min || 1;
   const slot = (w - pad * 2) / bars.length;
   const y = (v) => pad + ((max - v) / span) * (h - pad * 2);
-  const fast = emaLine(bars, 3);
-  const slow = emaLine(bars, 6);
+  const fast = showEma ? emaLine(bars, 3) : [];
+  const slow = showEma ? emaLine(bars, 6) : [];
   const pathOf = (series) => series.map((v, i) => (v == null ? null : `${i === 0 || series[i - 1] == null ? 'M' : 'L'} ${pad + i * slot + slot / 2} ${y(v)}`)).filter(Boolean).join(' ');
+  const marks = new Set([mark, markPrev].filter((n) => Number.isInteger(n)));
   return (
     <figure className="chart-card">
       <figcaption>{title}</figcaption>
       <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label={title}>
+        <defs>
+          <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(62,207,142,0.22)" />
+            <stop offset="100%" stopColor="rgba(62,207,142,0)" />
+          </linearGradient>
+        </defs>
         <rect width={w} height={h} fill="#0b121b" />
         {[0, 1, 2, 3].map((i) => (
           <line key={i} x1={pad} x2={w - pad} y1={pad + i * ((h - pad * 2) / 3)} y2={pad + i * ((h - pad * 2) / 3)} stroke="rgba(160,196,220,0.14)" />
         ))}
-        <path d={pathOf(slow)} fill="none" stroke="#d7ff6a" strokeWidth="1.6" />
-        <path d={pathOf(fast)} fill="none" stroke="#7ad7ff" strokeWidth="1.6" />
+        {showEma && <path d={pathOf(slow)} fill="none" stroke="#d7ff6a" strokeWidth="1.6" />}
+        {showEma && <path d={pathOf(fast)} fill="none" stroke="#7ad7ff" strokeWidth="1.6" />}
         {bars.map((b, i) => {
           const [o, hi, lo, c] = b;
           const up = c >= o;
           const x = pad + i * slot + slot * 0.22;
           const bw = Math.max(2, slot * 0.56);
           const color = up ? '#3ddc97' : '#ff6b6b';
+          const focused = marks.has(i);
           return (
             <g key={i}>
-              {mark === i && <rect x={x - 6} y={pad - 6} width={bw + 12} height={h - pad} fill="rgba(122,215,255,0.1)" />}
-              <line x1={x + bw / 2} x2={x + bw / 2} y1={y(hi)} y2={y(lo)} stroke={color} strokeWidth="1.5" />
-              <rect x={x} y={y(Math.max(o, c))} width={bw} height={Math.max(2, Math.abs(y(o) - y(c)))} fill={color} />
+              {focused && <rect x={x - 6} y={pad - 6} width={bw + 12} height={h - pad} fill={up ? 'url(#chartGlow)' : 'rgba(255,109,90,0.12)'} />}
+              <line x1={x + bw / 2} x2={x + bw / 2} y1={y(hi)} y2={y(lo)} stroke={color} strokeWidth={focused ? 2 : 1.5} />
+              <rect x={x} y={y(Math.max(o, c))} width={bw} height={Math.max(2, Math.abs(y(o) - y(c)))} fill={color} rx="1" />
             </g>
           );
         })}
@@ -457,7 +460,7 @@ function PathShow() {
             <p>{t('ex4')}</p>
           </div>
         )}
-        {i === 1 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} />}
+        {i === 1 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} markPrev={5} showEma={false} />}
         {i === 2 && <img className="path-shot frame" src={tradesShot} alt={t('path3t')} />}
         {i === 3 && <AlertVisual src={alertShot} alt={t('path4t')} />}
         {i === 4 && <img className="path-shot frame" src={deskShot} alt={t('path5t')} />}
@@ -1147,26 +1150,55 @@ function Verify() {
   );
 }
 
+function onboardStorageKey(userId) {
+  return userId ? `spotstrat.onboarded.${userId}` : 'spotstrat.onboarded';
+}
+
+function readOnboarded(userId) {
+  try {
+    if (userId && localStorage.getItem(onboardStorageKey(userId)) === '1') return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function writeOnboarded(userId) {
+  try {
+    if (userId) localStorage.setItem(onboardStorageKey(userId), '1');
+  } catch { /* ignore */ }
+}
+
 function DeskBar() {
   const { t } = useTranslation();
   const { lng } = useParams();
   const location = useLocation();
   const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
+  const path = location.pathname;
+  const app = `/${lng}/app`;
+  const onStrategies = pathActive(path, app, { end: true });
+  const onReports = pathActive(path, `${app}/relatorios`);
+  const onAlarms = pathActive(path, `${app}/alarmes`);
+  const onAccount = pathActive(path, `${app}/account`);
+  const onHelp = pathActive(path, `${app}/info`) || pathActive(path, `${app}/ajuda`);
+  const onLab = pathActive(path, `${app}/laboratorio`);
+  const onPrices = pathActive(path, `${app}/precos`);
+  const onMore = onHelp || onLab || onPrices;
   return (
     <header className="deskbar">
-      <Link className="brand" to={`/${lng}/app`}>SpotStrat</Link>
+      <Link className="brand" to={app}>SpotStrat</Link>
       <nav className="menu">
-        <Link to={`/${lng}/app`} aria-current={location.pathname === `/${lng}/app` ? 'page' : undefined}>{t('strategiesNav')}</Link>
-        <Link to={`/${lng}/app/relatorios`} aria-current={location.pathname.startsWith(`/${lng}/app/relatorios`) ? 'page' : undefined}>{t('reportsNav')}</Link>
-        <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
-        <Link to={`/${lng}/app/account`}>{t('account')}</Link>
-        <details className="more-nav" key={location.pathname}>
-          <summary>{t('moreNav')}</summary>
+        <Link to={app} aria-current={onStrategies ? 'page' : undefined}>{t('strategiesNav')}</Link>
+        <Link to={`${app}/relatorios`} aria-current={onReports ? 'page' : undefined}>{t('reportsNav')}</Link>
+        <Link to={`${app}/alarmes`} aria-current={onAlarms ? 'page' : undefined}>{t('alarmsT')}</Link>
+        <Link to={`${app}/account`} aria-current={onAccount ? 'page' : undefined}>{t('account')}</Link>
+        <details className={`more-nav${onMore ? ' on' : ''}`} key={path}>
+          <summary aria-current={onMore ? 'page' : undefined}>{t('moreNav')}</summary>
           <div className="more-nav-panel">
-            <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
-            <Link to={`/${lng}/app/laboratorio`}>{t('researchNav')}</Link>
-            <Link to={`/${lng}/app/precos`}>{t('pricesNav')}</Link>
+            <Link to={`${app}/info`} aria-current={onHelp ? 'page' : undefined}>{t('infoNav')}</Link>
+            <Link to={`${app}/laboratorio`} aria-current={onLab ? 'page' : undefined}>{t('researchNav')}</Link>
+            <Link to={`${app}/precos`} aria-current={onPrices ? 'page' : undefined}>{t('pricesNav')}</Link>
           </div>
         </details>
       </nav>
@@ -1180,9 +1212,11 @@ function DeskBar() {
 
 function DeskGate({ children }) {
   const { lng } = useParams();
-  let seen = false;
-  try { seen = localStorage.getItem('spotstrat.onboarded') === '1'; } catch { seen = false; }
-  if (!seen) return <Navigate to={`/${lng}/app/onboarding`} replace />;
+  const { data } = useMeQuery();
+  const userId = data?.user?.id;
+  // Wait for /me so we don't bounce a returning user to onboarding with a missing key.
+  if (!userId) return children;
+  if (!readOnboarded(userId)) return <Navigate to={`/${lng}/app/onboarding`} replace />;
   return children;
 }
 
@@ -2317,7 +2351,7 @@ function statusLabel(user, t) {
   return user.desk;
 }
 
-function PlanPicker({ showBody = true }) {
+function PlanPicker({ showBody = true, startPath = 'checkout' }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const { data } = usePlansQuery();
@@ -2336,8 +2370,11 @@ function PlanPicker({ showBody = true }) {
           {terms.map((term) => {
             const quote = term.paper;
             const label = term.months === 12 ? t('termYear') : term.months === 1 ? t('termMonth') : t('termMonths', { n: term.months });
+            const to = startPath === 'register'
+              ? `/${lng}/register`
+              : `/${lng}/app/checkout?tier=${tier}&months=${term.months}`;
             return (
-              <Link key={term.months} className="term" to={`/${lng}/app/checkout?tier=${tier}&months=${term.months}`}>
+              <Link key={term.months} className="term" to={to}>
                 <strong>{label}</strong>
                 <span>{localMoney(lng, quote.monthly)} {t('perMonth')}</span>
                 <b>{localMoney(lng, quote.total)}</b>
@@ -2710,12 +2747,18 @@ function Info() {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState('como');
   const [opened, setOpened] = useState({});
+  const lockRef = useRef(null);
+  const jumpTimerRef = useRef(0);
   const needle = foldText(query.trim());
   const steps = [
     ['pen', 'infoS1t', 'infoS1'],
-    ['brain', 'infoS2t', 'infoS2'],
-    ['chart', 'infoS3t', 'infoS3'],
-    ['wallet', 'infoS4t', 'infoS4'],
+    ['chart', 'infoS2t', 'infoS2'],
+    ['wallet', 'infoS3t', 'infoS3'],
+  ];
+  const ways = [
+    ['scratch', 'hubPathScratchT', 'hubPathScratchB', 'rec'],
+    ['steps', 'hubPathStepsT', 'hubPathStepsB', null],
+    ['prompt', 'hubPathPromptT', 'hubPathPromptB', 'adv'],
   ];
   const openCards = [
     ['mare', 'wave', 'infoMare'],
@@ -2741,7 +2784,11 @@ function Info() {
   ];
   const blobs = useMemo(() => {
     const bag = {
-      como: ['infoT', 'infoL', 'infoHowT', 'infoHow', ...steps.flatMap(([, title, body]) => [title, body])],
+      como: [
+        'infoT', 'infoL', 'infoWaysT', 'infoWaysL', 'infoHowT', 'infoHow', 'chartEngulf',
+        ...steps.flatMap(([, title, body]) => [title, body]),
+        ...ways.flatMap(([, title, body]) => [title, body]),
+      ],
       pares: ['infoUniT', 'infoUni', 'infoInT', 'infoOutT', 'infoIn1', 'infoIn2', 'infoIn3', 'infoIn4', 'infoOut1', 'infoOut2', 'infoOut3', 'infoOut4', 'infoOut5', 'infoOut6'],
     };
     [...openCards, ...drawers].forEach(([id, , key]) => { bag[id] = [`${key}T`, key]; });
@@ -2750,38 +2797,65 @@ function Info() {
   const show = (id) => !needle || (blobs[id] || '').includes(needle);
   const any = toc.some(([id]) => show(id));
 
+  function jump(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const drawerIds = new Set(drawers.map(([drawerId]) => drawerId));
+    const needsOpen = drawerIds.has(id);
+    if (needsOpen) setOpened((prev) => ({ ...prev, [id]: true }));
+    lockRef.current = id;
+    setActive(id);
+    const go = () => {
+      const target = document.getElementById(id);
+      if (!target) return;
+      const offset = 96;
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset);
+      // Instant jump: smooth scroll was landing on the wrong section when
+      // the page couldn't scroll the target to the top (short last topics).
+      window.scrollTo({ top, behavior: 'auto' });
+      window.clearTimeout(jumpTimerRef.current);
+      jumpTimerRef.current = window.setTimeout(() => {
+        if (lockRef.current === id) lockRef.current = null;
+      }, 120);
+    };
+    // Wait for drawer expand (React commit) before measuring.
+    window.setTimeout(go, needsOpen ? 50 : 0);
+  }
+
   useEffect(() => {
     const mark = () => {
-      const line = 120;
+      if (lockRef.current) return;
+      const line = 110;
       let current = '';
       for (const [id] of toc) {
+        if (!show(id)) continue;
         const el = document.getElementById(id);
         if (!el) continue;
         if (el.getBoundingClientRect().top <= line) current = id;
+      }
+      if (!current) {
+        current = toc.find(([id]) => show(id) && document.getElementById(id))?.[0] || '';
       }
       if (current) setActive(current);
     };
     mark();
     window.addEventListener('scroll', mark, { passive: true });
-    return () => window.removeEventListener('scroll', mark);
-  }, [needle]);
+    window.addEventListener('resize', mark, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', mark);
+      window.removeEventListener('resize', mark);
+    };
+  }, [needle, t]);
 
   useEffect(() => {
     if (needle.length < 2) return undefined;
     const hit = toc.find(([id]) => show(id));
     if (!hit) return undefined;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timer = window.setTimeout(() => {
-      document.getElementById(hit[0])?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-    }, 180);
+    const timer = window.setTimeout(() => jump(hit[0]), 180);
     return () => window.clearTimeout(timer);
   }, [needle]);
 
-  function jump(id) {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    document.getElementById(id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-    setActive(id);
-  }
+  useEffect(() => () => window.clearTimeout(jumpTimerRef.current), []);
 
   function Top() {
     return <button className="info-top" type="button" onClick={scrollPageTop}>{t('infoTop')}</button>;
@@ -2801,23 +2875,47 @@ function Info() {
         </label>
         {!any && <p className="info-empty">{t('infoSearchEmpty')}</p>}
         {show('como') && (
-          <section id="como">
+          <section id="como" className="info-hero-block">
             <p className="kicker">{t('infoNav')}</p>
             <h2>{t('infoT')}</h2>
             <p className="info-lead">{t('infoL')}</p>
-            <div className="info-flow">
+            <div className="info-flow info-flow-3">
               {steps.map(([icon, title, body], index) => (
-                <article key={title}>
-                  <InfoIcon d={INFO_PATH[icon]} />
-                  <span>0{index + 1}</span>
+                <article key={title} className="info-step">
+                  <div className="info-step-top">
+                    <InfoIcon d={INFO_PATH[icon]} />
+                    <span>0{index + 1}</span>
+                  </div>
                   <h3>{t(title)}</h3>
                   <p>{t(body)}</p>
                 </article>
               ))}
             </div>
+            <div className="info-ways">
+              <div className="info-ways-copy">
+                <h3>{t('infoWaysT')}</h3>
+                <p>{t('infoWaysL')}</p>
+              </div>
+              <div className="info-ways-grid">
+                {ways.map(([kind, title, body, badge]) => (
+                  <article key={kind} className={`info-way${badge === 'rec' ? ' rec' : ''}`}>
+                    <span className="info-way-icon"><PathIcon kind={kind} /></span>
+                    <div>
+                      <strong>
+                        {t(title)}
+                        {badge === 'rec' && <em>{t('hubBadgeRec')}</em>}
+                        {badge === 'adv' && <em className="adv">{t('hubBadgeAdv')}</em>}
+                      </strong>
+                      <p>{t(body)}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
             <div className="info-chart">
-              <CandleChart title={t('chartEma')} bars={EMA_BARS} mark={8} />
-              <article className="info-card">
+              <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} markPrev={5} showEma={false} />
+              <article className="info-card info-chart-note">
+                <p className="kicker">{t('infoHowK')}</p>
                 <h3>{t('infoHowT')}</h3>
                 <p>{t('infoHow')}</p>
               </article>
@@ -2898,6 +2996,12 @@ function PricesBody({ showCta = false }) {
         <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
         <p><strong>{t('cancelTitle')}</strong> {t('cancelPolicy')}</p>
       </div>
+      {showCta && (
+        <div className="prices-cta">
+          <Link className="solid free" to={`/${lng}/register`}>{t('freeCta')}</Link>
+          <p className="mono dim">{t('freeNote')}</p>
+        </div>
+      )}
       <div className="price-grid">
         {plans.map((plan) => (
           <article key={plan.key} className={plan.key}>
@@ -2909,11 +3013,10 @@ function PricesBody({ showCta = false }) {
           </article>
         ))}
       </div>
-      <PlanPicker showBody={false} />
+      <PlanPicker showBody={false} startPath={showCta ? 'register' : 'checkout'} />
       <p className="mono dim">{t('planFx')}</p>
-        {showCta && <Link className="solid free" to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>}
-        <Faq />
-      </section>
+      <Faq />
+    </section>
   );
 }
 
