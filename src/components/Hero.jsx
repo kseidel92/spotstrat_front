@@ -46,7 +46,9 @@ export default function Hero() {
         </div>
         <div className={styles.visual}>
           <img className={styles.glow} src={img1} alt="" />
-          <img className={styles.panel} src={img4} alt="" />
+          <div className={styles.frame}>
+            <img className={styles.panel} src={img4} alt="" />
+          </div>
         </div>
       </div>
     </section>

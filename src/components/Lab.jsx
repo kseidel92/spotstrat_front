@@ -413,7 +413,12 @@ function LabScreen() {
         </p>
         <section className={css.chat} aria-busy={busy}>
           <div className={css.stream}>
-            {!messages.length && <p className={css.empty}>{t('labEmptyChat')}</p>}
+            {!messages.length && (
+              <div className={css.empty}>
+                <img className={css.emptyImg} src="/robot.png" alt="" />
+                <p>{t('labEmptyChat')}</p>
+              </div>
+            )}
             {messages.map((message, index) => (
               <div key={`${message.role}-${index}`} className={css.turn}>
                 <LabMessage role={message.role} content={message.content} />

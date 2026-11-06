@@ -152,18 +152,31 @@
 .visual {
   position: relative;
   min-width: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .glow { display: none; }
 
-.panel {
+.frame {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  box-shadow: var(--shadow);
+  animation: float 7s ease-in-out infinite;
+}
+
+.panel {
   display: block;
   width: 100%;
   height: auto;
-  animation: float 7s ease-in-out infinite;
-  filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.35));
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
 
 @keyframes float {
@@ -201,5 +214,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel { animation: none; }
+  .frame { animation: none; }
 }

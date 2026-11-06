@@ -477,17 +477,22 @@ function Landing() {
       <section className="proof-band">
         <LaunchCountdown />
         <ShieldNote />
-        <div className="proof-copy">
-          <Badge>{t('presetsBadge')}</Badge>
-          <p className="lede">{t('presetsL')}</p>
-          <p className="kicker">{t('vaultK')}</p>
-          <h2>{t('vaultT')}</h2>
-          <p className="lede">{t('vaultB')}</p>
-          <ul className="honesty">
-            <li>{t('v1')}</li>
-            <li>{t('v2')}</li>
-            <li>{t('v3')}</li>
-          </ul>
+        <div className="proof-grid">
+          <div className="proof-copy">
+            <Badge>{t('presetsBadge')}</Badge>
+            <p className="lede">{t('presetsL')}</p>
+            <p className="kicker">{t('vaultK')}</p>
+            <h2>{t('vaultT')}</h2>
+            <p className="lede">{t('vaultB')}</p>
+            <ul className="honesty">
+              <li>{t('v1')}</li>
+              <li>{t('v2')}</li>
+              <li>{t('v3')}</li>
+            </ul>
+          </div>
+          <figure className="proof-shot">
+            <img src={deskShot} alt="" />
+          </figure>
         </div>
       </section>
       <section className="trial-band">

@@ -152,7 +152,7 @@
 .social :global(.google-box .error),
 .banner {
   background: rgba(232, 93, 76, 0.14);
-  color: #fecaca;
+  color: var(--error-fg);
   border: 1px solid rgba(252, 165, 165, 0.45);
   border-radius: 8px;
   padding: 10px 12px;
@@ -161,7 +161,7 @@
 
 .note {
   background: rgba(62, 207, 142, 0.12);
-  color: #d1fae5;
+  color: var(--success-fg);
   border: 1px solid rgba(110, 231, 183, 0.45);
   border-radius: 8px;
   padding: 10px 12px;
@@ -256,17 +256,17 @@
   outline-offset: 2px;
 }
 
-.form input.invalid { border-color: #e85d4c; }
+.form input.invalid { border-color: var(--down); }
 
 .form input.invalid:focus,
 .form input.invalid:focus-visible {
-  border-color: #e85d4c;
+  border-color: var(--down);
   box-shadow: 0 0 0 2px rgba(232, 93, 76, 0.28);
 }
 
 .fieldError {
   margin: 6px 0 0;
-  color: #fecaca;
+  color: var(--error-fg);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -310,14 +310,14 @@
   transition: width 0.2s ease, background-color 0.2s ease;
 }
 
-.meter > span:global(.weak) { width: 33%; background: #e85d4c; }
-.meter > span:global(.medium) { width: 66%; background: #fbbf24; }
-.meter > span:global(.strong) { width: 100%; background: #3ecf8e; }
+.meter > span:global(.weak) { width: 33%; background: var(--down); }
+.meter > span:global(.medium) { width: 66%; background: var(--warn); }
+.meter > span:global(.strong) { width: 100%; background: var(--up); }
 
 .pwLabel { margin: 6px 0 0; font-size: 13px; }
-.pwLabel:global(.weak) { color: #ff8f84; }
-.pwLabel:global(.medium) { color: #fbbf24; }
-.pwLabel:global(.strong) { color: #8ee0b4; }
+.pwLabel:global(.weak) { color: var(--down); }
+.pwLabel:global(.medium) { color: var(--warn); }
+.pwLabel:global(.strong) { color: var(--up); }
 
 .forgot {
   display: flex;
@@ -340,7 +340,7 @@
 
 .forgot a:hover,
 .legal a:hover,
-.alt a:hover { color: #67e8f9; }
+.alt a:hover { color: var(--accent-hover); }
 
 .forgot a:focus-visible,
 .legal a:focus-visible,
@@ -361,7 +361,7 @@
   border: 0;
   border-radius: 8px;
   background: var(--accent);
-  color: #0a0e1a;
+  color: var(--accent-contrast);
   font-weight: 600;
   transition: box-shadow 0.2s ease;
 }
@@ -446,7 +446,7 @@
 .overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #0a0e1a 0%, rgba(10, 14, 26, 0.2) 42%, transparent 72%);
+  background: linear-gradient(90deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 20%, transparent) 42%, transparent 72%);
 }
 
 @media (min-width: 900px) {
