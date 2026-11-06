@@ -11,7 +11,7 @@ import {
   useRegisterMutation, useLoginMutation, useForgotMutation, useResetPasswordMutation, useGoogleMutation,
   useVerifyEmailMutation, useResendMutation,
   useLogoutMutation, useMeQuery, usePatchMeMutation, useDeleteMeMutation,
-  useStrategiesQuery, useStrategyQuery, usePromptMutation, useStrategyHelpMutation, useSuggestGuideMutation, useEditPromptMutation,
+  useStrategiesQuery, useStrategyQuery, usePromptMutation, useStrategyHelpMutation, useEditPromptMutation,
   usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation,
   useAlarmPauseMutation, useAlarmArmMutation, useAlarmRemoveMutation, useAlarmChannelsMutation,
   useDeskQuery, useJobQuery,
@@ -36,6 +36,7 @@ import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
 import Badge from './components/Badge';
 import ScratchWizard from './components/ScratchWizard';
 import ReportsPage from './components/ReportsPage';
+import GuideFlow from './components/GuideFlow';
 import hubCss from './components/CreateHub.module.css';
 import { legalFor } from './legal';
 import { initTheme } from './theme';
@@ -1230,55 +1231,6 @@ function questionsOf(output) {
     : item));
 }
 
-const GUIDE_SPEC = {
-  touches: { entryType: 'pattern', sources: ['candles'], stop: '1.6', target: '2.2' },
-  swings: { entryType: 'momentum', sources: ['candles'], stop: '4', target: '6' },
-  dump: { entryType: 'momentum', sources: ['candles', 'trades', 'book'], stop: '1.3', target: '2.5' },
-  lead: { entryType: 'momentum', sources: ['candles', 'book'], stop: '2.8', target: '6.5' },
-  spike: { entryType: 'momentum', sources: ['candles', 'trades', 'book'], stop: '1.8', target: '3.2' },
-  laggard: { entryType: 'momentum', sources: ['candles'], stop: '2.2', target: '4.2' },
-  range: { entryType: 'breakout', sources: ['candles'], stop: '1.6', target: '2.4' },
-  pattern: { entryType: 'pattern', sources: ['candles'], stop: '0.8', target: '1.2' },
-  cross: { entryType: 'cross', sources: ['candles', 'ema'], stop: '0.8', target: '1.6' },
-  breakout: { entryType: 'breakout', sources: ['candles'], stop: '1.2', target: '2.2' },
-  momentum: { entryType: 'momentum', sources: ['candles', 'trades'], stop: '1', target: '1.8' },
-};
-
-function detectGuideKind(guide) {
-  const text = String(guide?.entry || '').toLowerCase();
-  if (/toque|caixa|piso/.test(text)) return 'touches';
-  if (/serra|zigzag|oscil/.test(text)) return 'swings';
-  if (/queda|dump|rebote|despenc/.test(text)) return 'dump';
-  if (/lider|força|forca|rank/.test(text)) return 'lead';
-  if (/spike|anomalia|explos/.test(text)) return 'spike';
-  if (/maré|mare|caíd|caid|atrasad|fund[oa]/.test(text)) return 'laggard';
-  if (/faixa|range/.test(text)) return 'range';
-  if (/engulf|engolfo|engolfe|padrão de vela|padrao de vela/.test(text)) return 'pattern';
-  if (/\bema\b|cruzamento|cruzar|cruza/.test(text)) return 'cross';
-  if (/romp|breakout/.test(text)) return 'breakout';
-  if (/sobe|subir|impulso|momentum/.test(text)) return 'momentum';
-  if (GUIDE_SPEC[guide?.entryType]) return guide.entryType;
-  return 'touches';
-}
-
-function fieldsFor(step, spec, t, kind, remote = {}) {
-  if (step === 'entry') return { entry: t(`aiEntry_${kind}`) };
-  if (step === 'entryType') return { entryType: spec.entryType, entryTypeText: '' };
-  if (step === 'sources') {
-    const sources = Array.isArray(remote.sources) && remote.sources.length
-      ? remote.sources.slice()
-      : spec.sources.slice();
-    return { sources, sourcesOther: '' };
-  }
-  if (step === 'list') {
-    const list = remote.list === 'yes' ? 'yes' : 'no';
-    return { list, listText: list === 'yes' ? String(remote.listText || '') : '' };
-  }
-  if (step === 'exit') return { exitKind: 'numbers', stop: String(spec.stop), target: String(spec.target), exitText: '' };
-  if (step === 'review') return { name: t(`aiName_${kind}`) };
-  return {};
-}
-
 function IconPlay() {
   return (
     <svg className="ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
@@ -1534,204 +1486,6 @@ function TradeBook({ trades, position }) {
   );
 }
 
-const ENTRY_TYPES = ['pattern', 'cross', 'breakout', 'momentum', 'other'];
-
-function entryTypeBrief(guide, t) {
-  const labels = {
-    pattern: t('typePattern'),
-    cross: t('typeCross'),
-    breakout: t('typeBreakout'),
-    momentum: t('typeMomentum'),
-    other: t('typeOther'),
-  };
-  if (guide.entryType === 'other') {
-    const text = guide.entryTypeText.trim();
-    return text ? `Tipo: ${text}` : `Tipo: ${labels.other}`;
-  }
-  if (guide.entryType && labels[guide.entryType]) return `Tipo: ${labels[guide.entryType]}`;
-  return '';
-}
-
-function briefOf(guide, t) {
-  const sourceText = {
-    candles: 'velas fechadas',
-    trades: 'aggTrades, buyerMaker true é venda agressiva',
-    book: 'livro com até 10 níveis em ctx.book()',
-    ema: 'as médias que o texto citar',
-    other: guide.sourcesOther.trim() || 'outros (ver texto do gatilho)',
-  };
-  const exit = guide.exitKind === 'numbers'
-    ? `Stop ${guide.stop}% e alvo ${guide.target}% a partir da entrada.`
-    : guide.exitKind === 'standard'
-      ? 'Stop 0.8% e alvo 1.2% a partir da entrada. Estes números são o padrão porque a saída não foi definida.'
-      : guide.exitText.trim();
-  return [
-    'Brief.',
-    guide.name.trim() ? `Nome: ${guide.name.trim()}` : '',
-    entryTypeBrief(guide, t),
-    `Entrada: ${guide.entry.trim()}`,
-    'Tempos de candle: conforme descrito no gatilho (pode ser mais de um).',
-    `Fontes disponíveis no ctx (só entram na compra ou saída se Entrada ou Saída descreverem a condição): ${guide.sources.map((id) => sourceText[id]).join('; ')}.`,
-    guide.list === 'yes'
-      ? `Lista: ${guide.listText.trim()} Grave o preço em ctx.memory.`
-      : 'Lista: não grava preço. A compra acontece no próprio gatilho.',
-    `Saída: ${exit}`,
-  ].filter(Boolean).join('\n');
-}
-
-function Guide({ busy, onCreate }) {
-  const { t } = useTranslation();
-  const [suggestGuide] = useSuggestGuideMutation();
-  const [step, setStep] = useState(0);
-  const [aiBusy, setAiBusy] = useState(false);
-  const [guide, setGuide] = useState({
-    sources: ['candles'],
-    sourcesOther: '',
-    entry: '',
-    entryType: '',
-    entryTypeText: '',
-    list: 'no',
-    listText: '',
-    exitKind: 'describe',
-    stop: '0.8',
-    target: '1.2',
-    exitText: '',
-    name: '',
-  });
-  const ids = ['entry', 'entryType', 'sources', 'list', 'exit', 'review'];
-  const current = ids[step];
-  function patch(partial) { setGuide({ ...guide, ...partial }); }
-  function toggleSource(id) {
-    const sources = guide.sources.includes(id) ? guide.sources.filter((item) => item !== id) : [...guide.sources, id];
-    if (sources.length) patch({ sources });
-  }
-  const blocked = (current === 'entry' && !guide.entry.trim())
-    || (current === 'entryType' && (!guide.entryType || (guide.entryType === 'other' && !guide.entryTypeText.trim())))
-    || (current === 'sources' && guide.sources.includes('other') && !guide.sourcesOther.trim())
-    || (current === 'list' && guide.list === 'yes' && !guide.listText.trim())
-    || (current === 'exit' && guide.exitKind === 'numbers' && !(Number(guide.stop) > 0 && Number(guide.target) > 0))
-    || (current === 'exit' && guide.exitKind === 'describe' && !guide.exitText.trim());
-  const last = step === ids.length - 1;
-  const brief = briefOf(guide, t);
-  async function decide() {
-    if (aiBusy || busy) return;
-    setAiBusy(true);
-    let kind = detectGuideKind(guide);
-    let spec = { ...GUIDE_SPEC[kind] };
-    let remote = null;
-    try {
-      remote = await suggestGuide({ step: current, guide }).unwrap();
-      if (remote?.kind && GUIDE_SPEC[remote.kind]) {
-        kind = remote.kind;
-        spec = {
-          ...GUIDE_SPEC[kind],
-          entryType: remote.entryType || GUIDE_SPEC[kind].entryType,
-          sources: Array.isArray(remote.sources) && remote.sources.length ? remote.sources : GUIDE_SPEC[kind].sources,
-          stop: remote.stop || GUIDE_SPEC[kind].stop,
-          target: remote.target || GUIDE_SPEC[kind].target,
-        };
-      }
-    } catch { /* o catálogo local cobre o desk sem sessão */ }
-    patch(fieldsFor(current, spec, t, kind, remote || {}));
-    setAiBusy(false);
-  }
-  return (
-    <div className="steps">
-      <p className="steps-kicker">{t('guideSteps')}</p>
-      <Stepper count={ids.length} index={step} />
-      <p className="steps-count">{t('stepOf', { n: step + 1, total: ids.length })}</p>
-      {current === 'entry' && (
-        <>
-          <h3>{t('guideEntry')}</h3>
-          <DeskArea value={guide.entry} onChange={(e) => patch({ entry: e.target.value })} placeholder={t('guideEntryPh')} />
-          <p className="muted">{t('guideEntryHint')}</p>
-        </>
-      )}
-      {current === 'entryType' && (
-        <>
-          <h3>{t('guideEntryType')}</h3>
-          <div className="chips">
-            {ENTRY_TYPES.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className={guide.entryType === id ? 'on' : ''}
-                aria-pressed={guide.entryType === id}
-                onClick={() => patch({ entryType: id })}
-              >
-                {t(id === 'pattern' ? 'typePattern' : id === 'cross' ? 'typeCross' : id === 'breakout' ? 'typeBreakout' : id === 'momentum' ? 'typeMomentum' : 'typeOther')}
-              </button>
-            ))}
-          </div>
-          {guide.entryType === 'other' && (
-            <DeskArea
-              value={guide.entryTypeText}
-              onChange={(e) => patch({ entryTypeText: e.target.value })}
-              placeholder={t('guideEntryTypeOtherPh')}
-            />
-          )}
-        </>
-      )}
-      {current === 'sources' && (
-        <>
-          <h3>{t('guideSources')}</h3>
-          <div className="chips">
-            {[['candles', 'srcCandles'], ['trades', 'srcTrades'], ['book', 'srcBook'], ['ema', 'srcEma'], ['other', 'srcOther']].map(([id, key]) => (
-              <button key={id} type="button" className={guide.sources.includes(id) ? 'on' : ''} aria-pressed={guide.sources.includes(id)} onClick={() => toggleSource(id)}>{t(key)}</button>
-            ))}
-          </div>
-          {guide.sources.includes('other') && (
-            <DeskArea
-              value={guide.sourcesOther}
-              onChange={(e) => patch({ sourcesOther: e.target.value })}
-              placeholder={t('guideSourcesOtherPh')}
-            />
-          )}
-        </>
-      )}
-      {current === 'list' && (
-        <>
-          <h3>{t('guideList')}</h3>
-          <div className="segment-track block">
-            <button type="button" className={guide.list === 'no' ? 'on' : ''} aria-pressed={guide.list === 'no'} onClick={() => patch({ list: 'no' })}>{t('guideListNo')}</button>
-            <button type="button" className={guide.list === 'yes' ? 'on' : ''} aria-pressed={guide.list === 'yes'} onClick={() => patch({ list: 'yes' })}>{t('guideListYes')}</button>
-          </div>
-          {guide.list === 'yes' && <DeskArea value={guide.listText} onChange={(e) => patch({ listText: e.target.value })} placeholder={t('guideListPh')} />}
-        </>
-      )}
-      {current === 'exit' && (
-        <>
-          <h3>{t('guideExit')}</h3>
-          <button type="button" className={`guide-choice ${guide.exitKind === 'numbers' ? 'on' : ''}`} aria-pressed={guide.exitKind === 'numbers'} onClick={() => patch({ exitKind: 'numbers' })}>{t('guideExitNumbers')}</button>
-          {guide.exitKind === 'numbers' && (
-            <div className="choice-fields">
-              <label>{t('stopPct')}<input inputMode="decimal" value={guide.stop} onChange={(e) => patch({ stop: e.target.value })} /></label>
-              <label>{t('tpPct')}<input inputMode="decimal" value={guide.target} onChange={(e) => patch({ target: e.target.value })} /></label>
-            </div>
-          )}
-          <button type="button" className={`guide-choice ${guide.exitKind === 'describe' ? 'on' : ''}`} aria-pressed={guide.exitKind === 'describe'} onClick={() => patch({ exitKind: 'describe' })}>{t('guideExitDescribe')}</button>
-          {guide.exitKind === 'describe' && <DeskArea value={guide.exitText} onChange={(e) => patch({ exitText: e.target.value })} placeholder={t('guideExitPh')} />}
-          <button type="button" className={`guide-choice ${guide.exitKind === 'standard' ? 'on' : ''}`} aria-pressed={guide.exitKind === 'standard'} onClick={() => patch({ exitKind: 'standard' })}>{t('guideExitStandard')}</button>
-          <p className="muted">{t('guideExitNote')}</p>
-        </>
-      )}
-      {current === 'review' && (
-        <>
-          <h3>{t('guideReview')}</h3>
-          <input value={guide.name} onChange={(e) => patch({ name: e.target.value })} placeholder={t('guideName')} />
-          <pre className="strategy-code guide-brief">{brief}</pre>
-        </>
-      )}
-      <div className="row step-actions">
-        {step > 0 && <button className="tiny" type="button" onClick={() => setStep(step - 1)}>{t('backStep')}</button>}
-        <button className="ghost" type="button" disabled={aiBusy || busy} onClick={decide}>{aiBusy ? t('aiDecideBusy') : t('aiDecide')}</button>
-        {last
-          ? <button className="solid" type="button" disabled={busy} onClick={() => onCreate(brief)}>{t('guideCreate')}</button>
-          : <button className="solid" type="button" disabled={blocked} onClick={() => setStep(step + 1)}>{t('nextStep')}</button>}
-      </div>
-    </div>
-  );
-}
 
 function money(n) {
   const v = Number(n || 0);
@@ -2264,7 +2018,7 @@ function DeskHome() {
     holdMin,
     variants,
     mareMode: extra.mareMode || mareMode,
-    wallet,
+    wallet: extra.wallet != null ? extra.wallet : wallet,
     guided: extra.guided ?? (phase === 'scratch' || phase === 'steps'),
   });
 
@@ -2300,7 +2054,8 @@ function DeskHome() {
     if (extra.exitMode) setExitMode(extra.exitMode);
     if (extra.stopPct) setStopPct(String(extra.stopPct));
     if (extra.tpPct) setTpPct(String(extra.tpPct));
-    const walletN = Number(wallet);
+    if (extra.wallet != null) setWallet(String(extra.wallet));
+    const walletN = Number(extra.wallet != null ? extra.wallet : wallet);
     if (!(walletN >= 100 && walletN <= 999000)) {
       setErr(t('walletBad'));
       return;
@@ -2310,7 +2065,7 @@ function DeskHome() {
         prompt: text,
         threadId,
         mode,
-        options: opts(extra),
+        options: opts({ ...extra, wallet: walletN }),
       }).unwrap();
       setThreadId(res.threadId);
       setJobId(res.jobId);
@@ -2397,7 +2152,7 @@ function DeskHome() {
         )}
 
         {phase === 'steps' && (
-          <Guide busy={busy} onCreate={(text) => sendText(text, { guided: true })} />
+          <GuideFlow busy={busy} onCreate={(text, extra) => sendText(text, { guided: true, ...extra })} />
         )}
 
         {phase === 'prompt' && (
