@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { usePromptMutation, useRestoreMutation } from '../store';
 import styles from './Onboarding.module.css';
@@ -112,7 +112,7 @@ export default function Onboarding() {
 
         {err && <p className={styles.err}>{err}</p>}
         <p className={styles.foot}>
-          <Link to={`/${lng}/app`}>{t('onboardingSkip')}</Link>
+          <button type="button" className={styles.skip} onClick={finish}>{t('onboardingSkip')}</button>
         </p>
       </div>
     </div>

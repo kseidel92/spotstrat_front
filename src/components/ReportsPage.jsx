@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useDeskQuery, usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, api, ingest } from '../store';
 import { useConfirm } from '../confirm';
+import StrategyHelpBalloon from './StrategyHelpBalloon';
 import css from './ReportsPage.module.css';
 
 function money(n) {
@@ -258,6 +259,8 @@ export default function ReportsPage() {
         <button className={css.ghost} type="button" disabled={restoring} onClick={onRestore}>{restoring ? '…' : t('restore')}</button>
         {restoreMsg && <span>{restoreMsg}</span>}
       </div>
+
+      <StrategyHelpBalloon strategies={strategies} />
     </div>
   );
 }

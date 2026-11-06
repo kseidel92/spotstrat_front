@@ -1150,18 +1150,19 @@ function Verify() {
 function DeskBar() {
   const { t } = useTranslation();
   const { lng } = useParams();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
   return (
     <header className="deskbar">
       <Link className="brand" to={`/${lng}/app`}>SpotStrat</Link>
       <nav className="menu">
-        <Link to={`/${lng}/app`}>{t('strategiesNav')}</Link>
-        <Link to={`/${lng}/app/relatorios`}>{t('reportsNav')}</Link>
+        <Link to={`/${lng}/app`} aria-current={location.pathname === `/${lng}/app` ? 'page' : undefined}>{t('strategiesNav')}</Link>
+        <Link to={`/${lng}/app/relatorios`} aria-current={location.pathname.startsWith(`/${lng}/app/relatorios`) ? 'page' : undefined}>{t('reportsNav')}</Link>
         <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
         <Link to={`/${lng}/app/account`}>{t('account')}</Link>
-        <details className="more-nav">
-          <summary>{t('infoNav')}</summary>
+        <details className="more-nav" key={location.pathname}>
+          <summary>{t('moreNav')}</summary>
           <div className="more-nav-panel">
             <Link to={`/${lng}/app/info`}>{t('infoNav')}</Link>
             <Link to={`/${lng}/app/laboratorio`}>{t('researchNav')}</Link>
@@ -1187,6 +1188,7 @@ function DeskGate({ children }) {
 
 function RequireDesk({ children, allowExpired = false }) {
   const lng = useLang();
+  const location = useLocation();
   const token = useSelector((s) => s.auth.token);
   const { data, isLoading, isFetching, error, isError, refetch } = useMeQuery();
   const [waited, setWaited] = useState(false);
@@ -1216,7 +1218,9 @@ function RequireDesk({ children, allowExpired = false }) {
     <div className="desk">
       <DeskBar />
       <AlarmWatcher />
-      {children}
+      <div key={location.pathname} className="desk-route">
+        {children}
+      </div>
     </div>
   );
 }
@@ -1226,13 +1230,21 @@ function cleanJobError(text, t) {
   return text;
 }
 
+function isLeakedAsk(text) {
+  return /ctx\.(sma|ema|vwap|rsi|trades|book|memory)|function strategy|Declare no thesis|Escreva o código|Use ctx\.|mare_mode|candles\.volume|Não crio uma estratégia diferente/i
+    .test(String(text || ''));
+}
+
 function questionsOf(output) {
   const list = Array.isArray(output?.questions) ? output.questions.map((item) => String(item || '').trim()).filter(Boolean) : [];
   const ask = String(output?.ask || '').trim();
   const raw = (list.length ? list : (ask ? [ask] : [])).slice(0, 6);
-  return raw.map((item) => (/Não achei o gatilho|Descreve o gatilho/.test(item)
-    ? i18n.t('askTrigger')
-    : item));
+  return raw.map((item) => {
+    if (isLeakedAsk(item)) return i18n.t('askTrigger');
+    return (/Não achei o gatilho|Descreve o gatilho|Quando exatamente a estratégia/.test(item)
+      ? i18n.t('askTrigger')
+      : item);
+  });
 }
 
 function IconPlay() {
@@ -1291,12 +1303,32 @@ function DeskArea({ value, onChange, placeholder, disabled }) {
     <div className={`field-box${open ? ' expanded' : ''}${long ? ' has-expand' : ''}`}>
       <textarea value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} />
       {long && (
-        <button className="expand" type="button" onClick={() => setOpen((v) => !v)}>
+        <button className="expand" type="button" disabled={disabled} onClick={() => setOpen((v) => !v)}>
           {open ? t('collapseField') : t('expandField')}
         </button>
       )}
     </div>
   );
+}
+
+/** Lê maré / stop / alvo do texto livre para alinhar options ao prompt (espelha a API). */
+function parsePromptOptions(prompt) {
+  const text = String(prompt || '');
+  const out = {};
+  if (/\b(?:s[oó]\s+)?(?:em\s+)?mar[eé]\s+boa\b|\bonly\s+good\s+tide\b|\bmar[eé]\s+de\s+alta\b/i.test(text)) {
+    out.mareMode = 'good';
+  } else if (/\bmar[eé]\s+n[aã]o\s+ruim\b|\bnot\s+bad\s+tide\b|\bevit(?:ar|e)\s+mar[eé]\s+ruim\b/i.test(text)) {
+    out.mareMode = 'not_bad';
+  }
+  const stop = text.match(/\bstop\b(?:\s*(?:de|em)?|\s+)(\d+(?:[.,]\d+)?)\s*%/i)
+    || text.match(/(\d+(?:[.,]\d+)?)\s*%\s*(?:de\s+)?(?:abaixo[^\n%]{0,20})?\bstop\b/i);
+  const target = text.match(/\b(?:alvo|target|tp)\b(?:\s*(?:de|em)?|\s+)(\d+(?:[.,]\d+)?)\s*%/i)
+    || text.match(/(\d+(?:[.,]\d+)?)\s*%\s*(?:de\s+)?\b(?:alvo|target|tp)\b/i)
+    || text.match(/\bno alvo de\s+(\d+(?:[.,]\d+)?)\s*%/i);
+  if (stop) out.stopPct = Number(String(stop[1]).replace(',', '.'));
+  if (target) out.tpPct = Number(String(target[1]).replace(',', '.'));
+  if (out.stopPct > 0 && out.tpPct > 0) out.exitMode = 'manual';
+  return out;
 }
 
 function reasonBits(reason) {
@@ -1308,6 +1340,10 @@ function whyTone(text) {
   if (/stop|preju|negativ|ruim|halt|sl\b/.test(s)) return 'down';
   if (/excesso|lead|obi|ob\d|tape|verde|alta|compra/.test(s)) return 'up';
   return 'warn';
+}
+
+function askAnswersOnly(answers) {
+  return answers.map((item) => String(item || '').trim()).filter(Boolean).join('\n');
 }
 
 function AskSteps({ questions, busy, onDone, suggestions = [] }) {
@@ -1324,12 +1360,13 @@ function AskSteps({ questions, busy, onDone, suggestions = [] }) {
       setIndex(index + 1);
       return;
     }
-    onDone(questions.map((question, i) => `${question}\n${answers[i].trim()}`).join('\n\n'));
+    // Só a resposta — a thread já guarda o prompt original + a pergunta do assistente.
+    onDone(askAnswersOnly(answers));
   }
   function pickSuggestion(text) {
     const next = answers.map((item, i) => (i === index ? text : item));
     setAnswers(next);
-    if (last) onDone(questions.map((question, i) => `${question}\n${(i === index ? text : answers[i]).trim()}`).join('\n\n'));
+    if (last) onDone(askAnswersOnly(next));
   }
   return (
     <div className="steps ask-simple">
@@ -1809,48 +1846,53 @@ function AlarmsPage() {
 
   return (
     <div className="wrap">
-      <form className="panel composer-top" onSubmit={(e) => { e.preventDefault(); sendText(prompt); }} aria-busy={busy}>
+      <form className="panel composer-top" onSubmit={(e) => { e.preventDefault(); if (!steps) sendText(prompt); }} aria-busy={busy}>
         <h2>{t('alarmsT')}</h2>
-        <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhAlarm')} disabled={busy} />
-        <fieldset className="choice" disabled={busy}>
-          <legend>{t('optCh')}</legend>
-          <ChannelToggles
-            sound={channels.sound}
-            email={channels.email}
-            disabled={busy}
-            onToggle={(key) => {
-              setErr('');
-              setChannels((prev) => {
-                const next = { ...prev, [key]: !prev[key] };
-                if (key === 'sound' && next.sound) unlockAlarmSound();
-                return next;
-              });
-            }}
-          />
-          {!channels.sound && !channels.email && <p className="muted">{t('chNeed')}</p>}
-          {channels.sound && (
-            <SoundPick
-              kind={channels.soundKind}
-              volume={channels.volume}
-              onChange={(patch) => setChannels((prev) => ({ ...prev, ...patch }))}
-            />
-          )}
-          <p className="muted">{t('chHint')}</p>
-        </fieldset>
+        {!steps && (
+          <>
+            <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhAlarm')} disabled={busy} />
+            <fieldset className="choice" disabled={busy}>
+              <legend>{t('optCh')}</legend>
+              <ChannelToggles
+                sound={channels.sound}
+                email={channels.email}
+                disabled={busy}
+                onToggle={(key) => {
+                  setErr('');
+                  setChannels((prev) => {
+                    const next = { ...prev, [key]: !prev[key] };
+                    if (key === 'sound' && next.sound) unlockAlarmSound();
+                    return next;
+                  });
+                }}
+              />
+              {!channels.sound && !channels.email && <p className="muted">{t('chNeed')}</p>}
+              {channels.sound && (
+                <SoundPick
+                  kind={channels.soundKind}
+                  volume={channels.volume}
+                  onChange={(patch) => setChannels((prev) => ({ ...prev, ...patch }))}
+                />
+              )}
+              <p className="muted">{t('chHint')}</p>
+            </fieldset>
+          </>
+        )}
         {steps && (
           <AskSteps
             key={steps.id}
             questions={steps.questions}
             busy={busy}
             onDone={(answer) => {
-              setPrompt(answer);
               setSteps(null);
               sendText(answer);
             }}
           />
         )}
         <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} />
-        <button className="solid" disabled={busy || !prompt.trim()} type="submit">{busy ? t('working') : t('send')}</button>
+        {!steps && (
+          <button className="solid" disabled={busy || !prompt.trim()} type="submit">{busy ? t('working') : t('send')}</button>
+        )}
       </form>
       <section className="alarm-board">
         {!alarms.length && <p className="muted">{t('alarmEmpty')}</p>}
@@ -1858,93 +1900,6 @@ function AlarmsPage() {
           {alarms.map((alarm) => <AlarmCard key={alarm.id} alarm={alarm} />)}
         </div>
       </section>
-    </div>
-  );
-}
-
-function StrategyHelpBalloon({ strategies }) {
-  const { t, i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [strategyId, setStrategyId] = useState('');
-  const [sent, setSent] = useState(false);
-  const [err, setErr] = useState('');
-  const [sendHelp, { isLoading }] = useStrategyHelpMutation();
-
-  async function submit(e) {
-    e.preventDefault();
-    setErr('');
-    const text = message.trim();
-    if (text.length < 8) {
-      setErr(t('helpShort'));
-      return;
-    }
-    try {
-      await sendHelp({
-        message: text,
-        strategyId: strategyId || undefined,
-        locale: i18n.language,
-      }).unwrap();
-      setSent(true);
-      setMessage('');
-      setStrategyId('');
-    } catch (error) {
-      setErr(errText(error, t));
-    }
-  }
-
-  return (
-    <div className={`help-balloon ${open ? 'open' : ''}`}>
-      {!open && (
-        <button type="button" className="help-balloon-tab" onClick={() => { setOpen(true); setSent(false); setErr(''); }}>
-          <span className="help-balloon-dot" aria-hidden="true" />
-          <span>{t('helpTeaser')}</span>
-        </button>
-      )}
-      {open && (
-        <form className="help-balloon-panel" onSubmit={submit}>
-          <header>
-            <div>
-              <p className="help-balloon-kicker">{t('helpTitle')}</p>
-              <p className="help-balloon-lede">{t('helpLede')}</p>
-            </div>
-            <button type="button" className="help-balloon-close" aria-label={t('dialogBack')} onClick={() => setOpen(false)}>×</button>
-          </header>
-          {sent ? (
-            <p className="help-balloon-ok" role="status">{t('helpSent')}</p>
-          ) : (
-            <>
-              {strategies?.length > 0 && (
-                <label className="help-balloon-label">
-                  {t('helpStrategy')}
-                  <select value={strategyId} onChange={(e) => setStrategyId(e.target.value)} disabled={isLoading}>
-                    <option value="">{t('helpStrategyAny')}</option>
-                    {strategies.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <label className="help-balloon-label">
-                {t('helpMessage')}
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={t('helpPh')}
-                  rows={10}
-                  maxLength={20000}
-                  disabled={isLoading}
-                  required
-                />
-              </label>
-              {err && <p className="help-balloon-err" role="alert">{err}</p>}
-              <button className="solid" type="submit" disabled={isLoading || message.trim().length < 8}>
-                {isLoading ? t('working') : t('helpSend')}
-              </button>
-            </>
-          )}
-        </form>
-      )}
     </div>
   );
 }
@@ -2106,8 +2061,9 @@ function DeskHome() {
 
   function submitPrompt(e) {
     e.preventDefault();
-    if (!prompt.trim()) return;
-    sendText(prompt);
+    if (!prompt.trim() || askSteps) return;
+    const fromText = parsePromptOptions(prompt);
+    sendText(prompt, fromText);
   }
 
   const paths = [
@@ -2115,6 +2071,7 @@ function DeskHome() {
     { id: 'steps', badge: null, title: t('hubPathStepsT'), body: t('hubPathStepsB') },
     { id: 'prompt', badge: 'adv', title: t('hubPathPromptT'), body: t('hubPathPromptB') },
   ];
+  const hubHintKey = path === 'steps' ? 'hubHintSteps' : path === 'prompt' ? 'hubHintPrompt' : 'hubHint';
 
   if (phase === 'hub') {
     return (
@@ -2145,7 +2102,7 @@ function DeskHome() {
         </div>
         <div className={hubCss.ctaRow}>
           <button className={hubCss.cta} type="button" onClick={startPath}>{t('hubStart')}</button>
-          <p className={hubCss.hint}>{t('hubHint')}</p>
+          <p className={hubCss.hint}>{t(hubHintKey)}</p>
         </div>
       </div>
     );
@@ -2173,7 +2130,7 @@ function DeskHome() {
           <GuideFlow busy={busy} onCreate={(text, extra) => sendText(text, { guided: true, ...extra })} />
         )}
 
-        {phase === 'prompt' && (
+        {phase === 'prompt' && !askSteps && (
           <form onSubmit={submitPrompt}>
             <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={busy} />
             <p className="composer-hint muted" style={{ marginTop: 10 }}>
@@ -2196,7 +2153,6 @@ function DeskHome() {
             suggestions={askSteps.suggestions}
             busy={busy}
             onDone={(answer) => {
-              setPrompt(answer);
               setAskSteps(null);
               setErr('');
               sendPrompt({
@@ -2266,7 +2222,9 @@ function StrategyPage() {
           {(data?.messages || []).map((m) => <div key={m.id} className={`bubble ${m.role}`}>{m.content}</div>)}
         </div>
         <form onSubmit={submit} aria-busy={!!jobId}>
-          <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('replyPh')} disabled={!!jobId} />
+          {!steps && (
+            <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('replyPh')} disabled={!!jobId} />
+          )}
           {steps && (
             <AskSteps
               key={steps.id}
@@ -2282,7 +2240,9 @@ function StrategyPage() {
             />
           )}
           <PromptStatus busy={!!jobId} status={job.data?.job?.status} err={err} />
-          <button className="solid" type="submit" disabled={!!jobId || !prompt.trim()}>{(jobId) ? t('working') : t('send')}</button>
+          {!steps && (
+            <button className="solid" type="submit" disabled={!!jobId || !prompt.trim()}>{(jobId) ? t('working') : t('send')}</button>
+          )}
         </form>
       </article>
       {live?.position && (
