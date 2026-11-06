@@ -1,7 +1,7 @@
 import { Component, StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch, useSelector } from 'react-redux';
-import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createChart } from 'lightweight-charts';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1186,9 +1186,8 @@ function DeskGate({ children }) {
   return children;
 }
 
-function RequireDesk({ children, allowExpired = false }) {
+function RequireDesk({ allowExpired = false }) {
   const lng = useLang();
-  const location = useLocation();
   const token = useSelector((s) => s.auth.token);
   const { data, isLoading, isFetching, error, isError, refetch } = useMeQuery();
   const [waited, setWaited] = useState(false);
@@ -1198,7 +1197,9 @@ function RequireDesk({ children, allowExpired = false }) {
     return () => clearTimeout(timer);
   }, []);
   const known = ['trial', 'paper', 'pro', 'active', 'expired'].includes(data?.user?.desk);
-  const stillBooting = (isLoading || isFetching) && !known && !data?.user && !isError && !waited;
+  // Só bloqueia no boot inicial — isFetching em refocus/nav não pode esconder a rota atual.
+  const stillBooting = isLoading && !known && !data?.user && !isError && !waited;
+  void isFetching;
   if (stillBooting) {
     return (
       <div className="desk">
@@ -1218,11 +1219,13 @@ function RequireDesk({ children, allowExpired = false }) {
     <div className="desk">
       <DeskBar />
       <AlarmWatcher />
-      <div key={location.pathname} className="desk-route">
-        {children}
-      </div>
+      <Outlet />
     </div>
   );
+}
+
+function DeskGateOutlet() {
+  return <DeskGate><Outlet /></DeskGate>;
 }
 
 function cleanJobError(text, t) {
@@ -2974,22 +2977,26 @@ function App() {
             <Route path="/:lng/forgot-password" element={<Guard><ForgotPassword /></Guard>} />
             <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
             <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
-            <Route path="/:lng/app/onboarding" element={<Guard><RequireDesk><Onboarding /></RequireDesk></Guard>} />
-            <Route path="/:lng/app" element={<Guard><RequireDesk><DeskGate><DeskHome /></DeskGate></RequireDesk></Guard>} />
-            <Route path="/:lng/app/relatorios" element={<Guard><RequireDesk><DeskGate><ReportsPage /></DeskGate></RequireDesk></Guard>} />
-            <Route path="/:lng/app/alarmes" element={<Guard><RequireDesk><AlarmsPage /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/precos" element={<Guard><RequireDesk><DeskPrices /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/strategies/:id" element={<Guard><RequireDesk><StrategyPage /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/strategies/:id/producao" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/strategies/:id/operar" element={<Guard><RequireDesk><StrategyProduction /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/laboratorio" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/pesquisar" element={<Guard><RequireDesk><LabPage /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/historico" element={<Guard><RequireDesk><LabLegacyRedirect /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/info" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/ajuda" element={<Guard><RequireDesk><Info /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/account" element={<Guard><RequireDesk allowExpired><Account /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/checkout/return" element={<Guard><RequireDesk allowExpired><CheckoutReturn /></RequireDesk></Guard>} />
-            <Route path="/:lng/app/checkout" element={<Guard><RequireDesk allowExpired><Checkout /></RequireDesk></Guard>} />
+            <Route path="/:lng/app" element={<Guard><RequireDesk /></Guard>}>
+              <Route path="onboarding" element={<Onboarding />} />
+              <Route element={<DeskGateOutlet />}>
+                <Route index element={<DeskHome />} />
+                <Route path="relatorios" element={<ReportsPage />} />
+              </Route>
+              <Route path="alarmes" element={<AlarmsPage />} />
+              <Route path="precos" element={<DeskPrices />} />
+              <Route path="strategies/:id/producao" element={<StrategyProduction />} />
+              <Route path="strategies/:id/operar" element={<StrategyProduction />} />
+              <Route path="strategies/:id" element={<StrategyPage />} />
+              <Route path="laboratorio" element={<LabPage />} />
+              <Route path="pesquisar" element={<LabPage />} />
+              <Route path="historico" element={<LabLegacyRedirect />} />
+              <Route path="info" element={<Info />} />
+              <Route path="ajuda" element={<Info />} />
+              <Route path="account" element={<Account />} />
+              <Route path="checkout/return" element={<CheckoutReturn />} />
+              <Route path="checkout" element={<Checkout />} />
+            </Route>
             <Route path="*" element={<LangRedirect />} />
           </Routes>
         </SessionBoot>
