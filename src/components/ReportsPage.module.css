@@ -241,8 +241,11 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  padding-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
 }
 
 .tiny {
@@ -250,14 +253,15 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 34px;
-  padding: 7px 12px;
+  min-height: 32px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-soft);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
 }
@@ -265,10 +269,28 @@
 .tiny:hover { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
 .prod {
   margin-left: auto;
+  max-width: 100%;
+  padding: 6px 11px;
   border-color: var(--accent);
+  background: var(--accent-soft);
   color: var(--accent);
+  white-space: nowrap;
+}
+.prod:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
 }
 .danger { color: var(--down); border-color: color-mix(in srgb, var(--down) 40%, transparent); }
+
+@media (max-width: 520px) {
+  .prod {
+    margin-left: 0;
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
 
 .empty {
   padding: 40px 20px;

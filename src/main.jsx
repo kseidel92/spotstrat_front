@@ -2236,7 +2236,6 @@ function StrategyPage() {
     } else { setPrompt(''); setSteps(null); refetch(); }
   }, [job.data]);
   const ex = data?.strategy?.explanation;
-  const running = data?.strategy?.recipe?.plan?.kind === 'js' ? data.strategy.recipe.code : '';
   const assumed = data?.strategy?.recipe?.defaults || [];
   async function submit(e) {
     e.preventDefault();
@@ -2247,11 +2246,11 @@ function StrategyPage() {
     } catch (error) { setErr(errText(error, t)); }
   }
   return (
-    <div className="wrap">
-      <Link to={`/${lng}/app`}>{t('back')}</Link>
-      <div className="row">
+    <div className="wrap strategy-detail">
+      <Link className="strategy-back" to={`/${lng}/app/relatorios`}>{t('back')}</Link>
+      <div className="strategy-head">
         <h2>{data?.strategy?.name}</h2>
-        <Link className="solid" to={`/${lng}/app/strategies/${id}/producao`}>{t('toProd')}</Link>
+        <Link className="strategy-prod" to={`/${lng}/app/strategies/${id}/producao`}>{t('toProd')}</Link>
       </div>
       <article className="panel composer-top" style={{ marginTop: 12 }}>
         <h3>{t('thread')}</h3>
@@ -2285,12 +2284,8 @@ function StrategyPage() {
       {live?.position && (
         <p className="up">{t('inPos')}: {live.position.symbol} · {t('thEntry')} {live.position.entry}{live.position.stop > 0 ? ` · ${t('resStop')} ${Number(live.position.stop).toPrecision(6)}` : ''}{live.position.tp > 0 ? ` · ${t('resTarget')} ${Number(live.position.tp).toPrecision(6)}` : ''} · uPnL {money(live.position.upnl)}</p>
       )}
-      {running && (
-        <article className="panel" style={{ marginTop: 12 }}>
-          <h3>{t('runningCode')}</h3>
-          <pre className="strategy-code">{running}</pre>
-          {assumed.length > 0 && <p className="assumed">{t('assumed')} {assumed.map((item) => `${item.label}: ${item.value}`).join(' · ')}</p>}
-        </article>
+      {assumed.length > 0 && (
+        <p className="assumed strategy-assumed">{t('assumed')} {assumed.map((item) => `${item.label}: ${item.value}`).join(' · ')}</p>
       )}
       {ex && (
         <div className="split explain-grid">
