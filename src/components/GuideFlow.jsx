@@ -49,8 +49,10 @@ function detectKind(entry) {
 
 function Tip({ text }) {
   return (
-    <span className={css.tip} tabIndex={0} aria-label={text}>
-      <span className={css.tipMark} aria-hidden="true">?</span>
+    <span className={css.tip}>
+      <button type="button" className={css.tipMark} aria-label={text} title={text}>
+        <span aria-hidden="true">?</span>
+      </button>
       <span className={css.tipPop} role="tooltip">{text}</span>
     </span>
   );
@@ -379,14 +381,28 @@ export default function GuideFlow({ busy, onCreate }) {
               <dd>{summary.exit}</dd>
             </div>
           </dl>
-          <label className={css.field}>
-            {t('guideName')}
-            <input value={guide.name} onChange={(e) => patch({ name: e.target.value })} placeholder={t('guideNamePh')} />
-          </label>
-          <label className={css.field}>
-            <span>{t('wallet')} <Tip text={t('walletHint')} /></span>
-            <input inputMode="decimal" min="100" max="999000" value={guide.wallet} onChange={(e) => patch({ wallet: e.target.value })} />
-          </label>
+          <div className={css.reviewExtras}>
+            <label className={css.field}>
+              {t('guideName')}
+              <input value={guide.name} onChange={(e) => patch({ name: e.target.value })} placeholder={t('guideNamePh')} disabled={busy} />
+            </label>
+            <label className={css.field}>
+              <span className={css.fieldLabel}>
+                {t('wallet')}
+                <Tip text={t('walletHint')} />
+              </span>
+              <input
+                inputMode="decimal"
+                min="100"
+                max="999000"
+                value={guide.wallet}
+                onChange={(e) => patch({ wallet: e.target.value })}
+                disabled={busy}
+                aria-describedby="guide-wallet-hint"
+              />
+              <span id="guide-wallet-hint" className={css.fieldHint}>{t('walletHint')}</span>
+            </label>
+          </div>
           <p className={css.note}>{t('guideReviewNote')}</p>
         </section>
       )}
@@ -407,9 +423,6 @@ export default function GuideFlow({ busy, onCreate }) {
             className={css.solid}
             disabled={blocked || busy}
             onClick={() => {
-              if (current === 'trigger' && guide.exitKind === 'ai' && !aiNote) {
-                /* precompute exit when leaving trigger so review feels ready */
-              }
               if (current === 'timing' && guide.exitKind === 'ai') aiPickExit();
               setStep((s) => s + 1);
             }}

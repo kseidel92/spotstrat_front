@@ -123,7 +123,9 @@ function LangRedirect() {
 function Tip({ text }) {
   return (
     <span className="tip">
-      <button type="button" className="tip-mark" aria-label={text}>?</button>
+      <button type="button" className="tip-mark" aria-label={text} title={text}>
+        <span aria-hidden="true">?</span>
+      </button>
       <span className="tip-pop" role="tooltip">{text}</span>
     </span>
   );
@@ -1169,6 +1171,53 @@ function writeOnboarded(userId) {
   } catch { /* ignore */ }
 }
 
+function MoreNav({ app, onHelp, onLab, onPrices, onMore }) {
+  const { t } = useTranslation();
+  const path = useLocation().pathname;
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => { setOpen(false); }, [path]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className={`more-nav${onMore ? ' on' : ''}${open ? ' open' : ''}`} ref={rootRef}>
+      <button
+        type="button"
+        className="more-nav-trigger"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-current={onMore ? 'page' : undefined}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {t('moreNav')}
+      </button>
+      {open ? (
+        <div className="more-nav-panel" role="menu">
+          <Link role="menuitem" to={`${app}/info`} aria-current={onHelp ? 'page' : undefined} onClick={() => setOpen(false)}>{t('infoNav')}</Link>
+          <Link role="menuitem" to={`${app}/laboratorio`} aria-current={onLab ? 'page' : undefined} onClick={() => setOpen(false)}>{t('researchNav')}</Link>
+          <Link role="menuitem" to={`${app}/precos`} aria-current={onPrices ? 'page' : undefined} onClick={() => setOpen(false)}>{t('pricesNav')}</Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function DeskBar() {
   const { t } = useTranslation();
   const { lng } = useParams();
@@ -1193,14 +1242,7 @@ function DeskBar() {
         <Link to={`${app}/relatorios`} aria-current={onReports ? 'page' : undefined}>{t('reportsNav')}</Link>
         <Link to={`${app}/alarmes`} aria-current={onAlarms ? 'page' : undefined}>{t('alarmsT')}</Link>
         <Link to={`${app}/account`} aria-current={onAccount ? 'page' : undefined}>{t('account')}</Link>
-        <details className={`more-nav${onMore ? ' on' : ''}`} key={path}>
-          <summary aria-current={onMore ? 'page' : undefined}>{t('moreNav')}</summary>
-          <div className="more-nav-panel">
-            <Link to={`${app}/info`} aria-current={onHelp ? 'page' : undefined}>{t('infoNav')}</Link>
-            <Link to={`${app}/laboratorio`} aria-current={onLab ? 'page' : undefined}>{t('researchNav')}</Link>
-            <Link to={`${app}/precos`} aria-current={onPrices ? 'page' : undefined}>{t('pricesNav')}</Link>
-          </div>
-        </details>
+        <MoreNav app={app} onHelp={onHelp} onLab={onLab} onPrices={onPrices} onMore={onMore} />
       </nav>
       <div className="spacer" />
       <ThemeToggle />
@@ -1421,10 +1463,13 @@ function AskSteps({ questions, busy, onDone, suggestions = [] }) {
         onChange={(e) => setAnswers(answers.map((item, i) => (i === index ? e.target.value : item)))}
         onKeyDown={(e) => { if (e.key === 'Enter') submit(e); }}
         placeholder={t('aiDecide')}
+        disabled={busy}
         autoFocus
       />
       <div className="row step-actions">
-        <button className="solid" type="button" onClick={submit} disabled={busy || !answers[index].trim()}>{t('createNow')}</button>
+        <button className="solid" type="button" onClick={submit} disabled={busy || !answers[index].trim()}>
+          {busy ? t('working') : last ? t('askContinue') : t('nextStep')}
+        </button>
       </div>
     </div>
   );
@@ -1432,16 +1477,32 @@ function AskSteps({ questions, busy, onDone, suggestions = [] }) {
 
 function PromptStatus({ busy, status, note, err, detail }) {
   const { t } = useTranslation();
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!busy) {
+      setElapsed(0);
+      return undefined;
+    }
+    setElapsed(0);
+    const timer = setInterval(() => setElapsed((n) => n + 1), 1000);
+    return () => clearInterval(timer);
+  }, [busy]);
   if (busy) {
+    const stage = status === 'queued'
+      ? t('workingQueued')
+      : elapsed >= 25
+        ? t('workingLong')
+        : t('working');
     return (
       <div className="composer-status" role="status" aria-live="polite">
-        <strong>{status === 'queued' ? t('workingQueued') : t('working')}</strong>
+        <strong>{stage}</strong>
         <div className="composer-bar" aria-hidden="true"><i /></div>
         <span className="muted">{detail || t('workingSub')}</span>
+        {elapsed > 0 && <span className="muted composer-elapsed">{t('workingElapsed', { n: elapsed })}</span>}
       </div>
     );
   }
-  if (err) return <div className="error">{err}</div>;
+  if (err) return <div className="error" role="alert">{err}</div>;
   if (note) return <p className="ask">{note}</p>;
   return null;
 }
@@ -2145,6 +2206,9 @@ function DeskHome() {
     );
   }
 
+  const showWizard = !askSteps && !busy;
+  const jobStatus = job.data?.job?.status;
+
   return (
     <div className={hubCss.page}>
       <div className={hubCss.panel} aria-busy={busy}>
@@ -2155,32 +2219,39 @@ function DeskHome() {
           <button type="button" className={hubCss.back} onClick={backHub} disabled={busy}>{t('scratchBack')}</button>
         </div>
 
+        {/* Keep wizards mounted while busy so review state survives; hide to avoid dual CTAs. */}
         {phase === 'scratch' && (
-          <ScratchWizard
-            busy={busy}
-            onBack={backHub}
-            onCreate={(text, extra) => sendText(text, extra)}
-          />
+          <div hidden={!showWizard} aria-hidden={!showWizard}>
+            <ScratchWizard
+              busy={busy}
+              onBack={backHub}
+              onCreate={(text, extra) => sendText(text, extra)}
+            />
+          </div>
         )}
 
         {phase === 'steps' && (
-          <GuideFlow busy={busy} onCreate={(text, extra) => sendText(text, { guided: true, ...extra })} />
+          <div hidden={!showWizard} aria-hidden={!showWizard}>
+            <GuideFlow busy={busy} onCreate={(text, extra) => sendText(text, { guided: true, ...extra })} />
+          </div>
         )}
 
-        {phase === 'prompt' && !askSteps && (
-          <form onSubmit={submitPrompt}>
-            <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={busy} />
-            <p className="composer-hint muted" style={{ marginTop: 10 }}>
-              {t('hubPromptHint')}
-            </p>
-            <p className="composer-hint muted">
-              {t('alarmHint')}{' '}
-              <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
-            </p>
-            <button className="solid" style={{ marginTop: 14 }} disabled={busy || !prompt.trim()} type="submit">
-              {busy ? t('working') : t('send')}
-            </button>
-          </form>
+        {phase === 'prompt' && (
+          <div hidden={!showWizard} aria-hidden={!showWizard}>
+            <form onSubmit={submitPrompt}>
+              <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={busy} />
+              <p className="composer-hint muted" style={{ marginTop: 10 }}>
+                {t('hubPromptHint')}
+              </p>
+              <p className="composer-hint muted">
+                {t('alarmHint')}{' '}
+                <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
+              </p>
+              <button className="solid" style={{ marginTop: 14 }} disabled={busy || !prompt.trim()} type="submit">
+                {t('send')}
+              </button>
+            </form>
+          </div>
         )}
 
         {askSteps && (
@@ -2205,7 +2276,17 @@ function DeskHome() {
             }}
           />
         )}
-        <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} detail="" />
+
+        <PromptStatus busy={busy} status={jobStatus} note={note} err={err} detail="" />
+
+        {err && !busy && !askSteps && (
+          <div className={hubCss.retryRow}>
+            <button type="button" className={hubCss.cta} onClick={() => setErr('')}>
+              {t('createRetry')}
+            </button>
+            <button type="button" className={hubCss.back} onClick={backHub}>{t('scratchBack')}</button>
+          </div>
+        )}
       </div>
     </div>
   );

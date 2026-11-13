@@ -138,28 +138,43 @@
 .tip {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
   vertical-align: middle;
 }
 
 .tipMark {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 18px;
   height: 18px;
+  margin: 0;
   padding: 0;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--text-muted);
+  font: inherit;
   font-size: 11px;
-  line-height: 16px;
+  font-weight: 700;
+  line-height: 1;
   cursor: help;
+}
+
+.tipMark span {
+  display: block;
+  transform: translateY(0.5px);
 }
 
 .tipPop {
   display: none;
   position: absolute;
-  z-index: 20;
-  left: 0;
+  z-index: 40;
+  left: 50%;
   top: calc(100% + 8px);
+  transform: translateX(-50%);
   width: min(320px, 72vw);
   padding: 10px 12px;
   border-radius: 10px;
@@ -170,7 +185,10 @@
   font-size: 13px;
   line-height: 1.45;
   font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
   white-space: pre-line;
+  pointer-events: none;
 }
 
 .tip:hover .tipPop,
@@ -257,18 +275,36 @@
   font-weight: 550;
 }
 
+.reviewExtras {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, var(--surface-inset));
+}
+
 .field {
   display: grid;
   gap: 6px;
-  margin: 0 0 12px;
+  margin: 0;
   color: var(--text-soft);
   font-size: 0.92rem;
 }
 
-.field span {
+.fieldLabel {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.fieldHint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .field input {
