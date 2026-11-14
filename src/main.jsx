@@ -1989,7 +1989,7 @@ function AlarmsPage() {
         )}
         <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} />
         {!steps && (
-          <button className="solid" disabled={busy || !prompt.trim()} type="submit">{busy ? t('working') : t('send')}</button>
+          <button className="solid" disabled={busy || prompt.trim().length < 8} type="submit">{busy ? t('working') : t('send')}</button>
         )}
       </form>
       <section className="alarm-board">
@@ -2247,7 +2247,7 @@ function DeskHome() {
                 {t('alarmHint')}{' '}
                 <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
               </p>
-              <button className="solid" style={{ marginTop: 14 }} disabled={busy || !prompt.trim()} type="submit">
+              <button className="solid" style={{ marginTop: 14 }} disabled={busy || prompt.trim().length < 8} type="submit">
                 {t('send')}
               </button>
             </form>
@@ -2358,7 +2358,7 @@ function StrategyPage() {
           )}
           <PromptStatus busy={!!jobId} status={job.data?.job?.status} err={err} />
           {!steps && (
-            <button className="solid" type="submit" disabled={!!jobId || !prompt.trim()}>{(jobId) ? t('working') : t('send')}</button>
+            <button className="solid" type="submit" disabled={!!jobId || prompt.trim().length < 8}>{(jobId) ? t('working') : t('send')}</button>
           )}
         </form>
       </article>
