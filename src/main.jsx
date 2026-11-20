@@ -24,7 +24,6 @@ import auth from './components/AuthScreen.module.css';
 import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
 import LandingJourney from './components/LandingJourney';
-import Onboarding from './components/Onboarding';
 import ThemeToggle from './components/ThemeToggle';
 import LabPage from './components/Lab';
 import LaunchCountdown from './components/LaunchCountdown';
@@ -1154,24 +1153,6 @@ function Verify() {
   );
 }
 
-function onboardStorageKey(userId) {
-  return userId ? `spotstrat.onboarded.${userId}` : 'spotstrat.onboarded';
-}
-
-function readOnboarded(userId) {
-  try {
-    if (userId && localStorage.getItem(onboardStorageKey(userId)) === '1') return true;
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-function writeOnboarded(userId) {
-  try {
-    if (userId) localStorage.setItem(onboardStorageKey(userId), '1');
-  } catch { /* ignore */ }
-}
 
 function MoreNav({ app, onHelp, onLab, onPrices, onMore }) {
   const { t } = useTranslation();
@@ -1254,16 +1235,6 @@ function DeskBar() {
   );
 }
 
-function DeskGate({ children }) {
-  const { lng } = useParams();
-  const { data } = useMeQuery();
-  const userId = data?.user?.id;
-  // Wait for /me so we don't bounce a returning user to onboarding with a missing key.
-  if (!userId) return children;
-  if (!readOnboarded(userId)) return <Navigate to={`/${lng}/app/onboarding`} replace />;
-  return children;
-}
-
 function RequireDesk({ allowExpired = false }) {
   const lng = useLang();
   const token = useSelector((s) => s.auth.token);
@@ -1303,7 +1274,7 @@ function RequireDesk({ allowExpired = false }) {
 }
 
 function DeskGateOutlet() {
-  return <DeskGate><Outlet /></DeskGate>;
+  return <Outlet />;
 }
 
 function cleanJobError(text, t) {
@@ -3198,7 +3169,7 @@ function App() {
             <Route path="/:lng/register" element={<Guard><Register /></Guard>} />
             <Route path="/:lng/verify" element={<Guard><Verify /></Guard>} />
             <Route path="/:lng/app" element={<Guard><RequireDesk /></Guard>}>
-              <Route path="onboarding" element={<Onboarding />} />
+              <Route path="onboarding" element={<Navigate to=".." replace />} />
               <Route element={<DeskGateOutlet />}>
                 <Route index element={<DeskHome />} />
                 <Route path="relatorios" element={<ReportsPage />} />
