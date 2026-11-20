@@ -149,19 +149,23 @@ export default function GuideFlow({ busy, onCreate }) {
     if (aiBusy || busy) return;
     setAiBusy(true);
     setAiNote('');
-    const kind = detectKind(guide.entry);
+    let kind = guide.preset && GUIDE_SPEC[guide.preset] ? guide.preset : detectKind(guide.entry);
     let spec = { ...GUIDE_SPEC[kind] };
     try {
       const remote = await suggestGuide({
         step: 'exit',
         guide: {
+          preset: guide.preset || undefined,
           entry: guide.entry,
+          entryType: guide.preset || undefined,
           sources: guide.sources,
           list: guide.timing === 'confirm' ? 'yes' : 'no',
           listText: guide.timingText,
           exitKind: 'numbers',
         },
       }).unwrap();
+      const remoteKind = remote?.kind && GUIDE_SPEC[remote.kind] ? remote.kind : kind;
+      spec = { ...(GUIDE_SPEC[remoteKind] || spec) };
       if (remote?.stop || remote?.target) {
         spec = {
           ...spec,
@@ -170,6 +174,7 @@ export default function GuideFlow({ busy, onCreate }) {
           sources: Array.isArray(remote.sources) && remote.sources.length ? remote.sources : spec.sources,
         };
       }
+      kind = remoteKind;
     } catch { /* local catalog */ }
     patch({
       exitKind: 'ai',
