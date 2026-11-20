@@ -1989,10 +1989,12 @@ function AlarmsPage() {
           />
         )}
         <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} />
-        {!steps && (
-          {prompt.trim().length >= 8 && promptNeedsTrigger(prompt) && <p className="muted">{triggerHint(i18n.language)}</p>}
-          <button className="solid" disabled={busy || promptNeedsTrigger(prompt)} type="submit">{busy ? t('working') : t('send')}</button>
-        )}
+          {!steps && (
+            <>
+              {prompt.trim().length >= 8 && promptNeedsTrigger(prompt) && <p className="muted">{triggerHint(i18n.language)}</p>}
+              <button className="solid" disabled={busy || promptNeedsTrigger(prompt)} type="submit">{busy ? t('working') : t('send')}</button>
+            </>
+          )}
       </form>
       <section className="alarm-board">
         {!alarms.length && <p className="muted">{t('alarmEmpty')}</p>}
