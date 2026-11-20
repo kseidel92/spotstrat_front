@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSuggestGuideMutation } from '../store';
+import { parseLocaleNumber } from '../lib/number';
 import css from './GuideFlow.module.css';
 
 const GUIDE_SPEC = {
@@ -83,7 +84,7 @@ function briefOf(guide, t) {
 }
 
 export default function GuideFlow({ busy, onCreate }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [suggestGuide] = useSuggestGuideMutation();
   const [step, setStep] = useState(0);
   const [aiBusy, setAiBusy] = useState(false);
@@ -107,12 +108,17 @@ export default function GuideFlow({ busy, onCreate }) {
   const last = step === ids.length - 1;
   const patch = (partial) => setGuide((g) => ({ ...g, ...partial }));
 
+  const stopN = parseLocaleNumber(guide.stop, i18n.language);
+  const targetN = parseLocaleNumber(guide.target, i18n.language);
+  const walletN = parseLocaleNumber(guide.wallet, i18n.language);
+  const numsBroken = (guide.exitKind === 'numbers' || guide.exitKind === 'ai')
+    && ((String(guide.stop).trim() && !(stopN > 0)) || (String(guide.target).trim() && !(targetN > 0)));
   const blocked = (current === 'trigger' && !guide.entry.trim())
     || (current === 'watch' && !guide.sources.length)
     || (current === 'timing' && guide.timing === 'confirm' && !guide.timingText.trim())
-    || (current === 'exit' && (guide.exitKind === 'numbers' || guide.exitKind === 'ai') && !(Number(guide.stop) > 0 && Number(guide.target) > 0))
+    || (current === 'exit' && (guide.exitKind === 'numbers' || guide.exitKind === 'ai') && !(stopN > 0 && targetN > 0))
     || (current === 'exit' && guide.exitKind === 'describe' && !guide.exitText.trim())
-    || (current === 'review' && !(Number(guide.wallet) >= 100 && Number(guide.wallet) <= 999000));
+    || (current === 'review' && !(walletN >= 100 && walletN <= 999000));
 
   const summary = useMemo(() => ({
     entry: guide.entry.trim(),
@@ -189,9 +195,9 @@ export default function GuideFlow({ busy, onCreate }) {
   function create() {
     const kind = detectKind(guide.entry);
     const catalog = GUIDE_SPEC[kind] || GUIDE_SPEC.momentum;
-    const stop = guide.exitKind === 'ai' && !(Number(guide.stop) > 0) ? catalog.stop : guide.stop;
-    const target = guide.exitKind === 'ai' && !(Number(guide.target) > 0) ? catalog.target : guide.target;
-    const ready = { ...guide, stop, target };
+    const stop = guide.exitKind === 'ai' && !(stopN > 0) ? catalog.stop : stopN;
+    const target = guide.exitKind === 'ai' && !(targetN > 0) ? catalog.target : targetN;
+    const ready = { ...guide, stop, target, wallet: walletN };
     const brief = briefOf(ready, t);
     const manualExit = ready.exitKind === 'numbers' || ready.exitKind === 'ai';
     onCreate(brief, {
@@ -351,6 +357,7 @@ export default function GuideFlow({ busy, onCreate }) {
               )}
             </div>
           )}
+          {current === 'exit' && numsBroken && <p className={css.fieldHint}>{t('guideNumBad')}</p>}
           {aiNote && <p className={css.aiNote}>{aiNote}</p>}
           {guide.exitKind === 'describe' && (
             <textarea
