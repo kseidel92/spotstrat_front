@@ -110,6 +110,77 @@
   border: 1px solid var(--border);
 }
 
+.labNudge {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px 18px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: linear-gradient(
+    118deg,
+    color-mix(in srgb, var(--accent-soft) 75%, var(--bg-elevated)),
+    var(--bg-elevated) 52%
+  );
+  box-shadow: var(--shadow-soft);
+}
+
+.labIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-muted));
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.labCopy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.labKicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.labBody {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 52ch;
+}
+
+.labLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent);
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font-weight: 650;
+  font-size: 0.88rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.labLink:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
 .ctaRow {
   display: flex;
   flex-wrap: wrap;
@@ -181,4 +252,6 @@
   .path { grid-template-columns: 1fr; }
   .icon { width: 40px; height: 40px; }
   .badge { position: static; justify-self: start; }
+  .labNudge { grid-template-columns: auto 1fr; }
+  .labLink { grid-column: 1 / -1; justify-self: start; }
 }

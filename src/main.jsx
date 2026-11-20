@@ -2026,6 +2026,17 @@ function PathIcon({ kind }) {
   );
 }
 
+function LabNudgeIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+      <path d="M10 2v7.5L5.5 15A6.5 6.5 0 0 0 12 21.5h0A6.5 6.5 0 0 0 18.5 15L14 9.5V2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.5 2h7" strokeLinecap="round" />
+      <circle cx="9" cy="18" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="16.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function DeskHome() {
   const { t, i18n } = useTranslation();
   const { lng } = useParams();
@@ -2200,6 +2211,19 @@ function DeskHome() {
             </button>
           ))}
         </div>
+        <aside className={hubCss.labNudge} aria-label={t('hubLabAria')}>
+          <span className={hubCss.labIcon} aria-hidden="true">
+            <LabNudgeIcon />
+          </span>
+          <div className={hubCss.labCopy}>
+            <p className={hubCss.labKicker}>{t('hubLabKicker')}</p>
+            <p className={hubCss.labBody}>{t('hubLabBody')}</p>
+          </div>
+          <Link className={hubCss.labLink} to={`/${lng}/app/laboratorio`}>
+            {t('hubLabCta')}
+            <span aria-hidden="true">→</span>
+          </Link>
+        </aside>
         <div className={hubCss.ctaRow}>
           <button className={hubCss.cta} type="button" onClick={startPath}>{t('hubStart')}</button>
           <p className={hubCss.hint}>{t(hubHintKey)}</p>
