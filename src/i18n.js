@@ -490,7 +490,7 @@ const ptBR = {
   nextStep: 'Próximo',
   createNow: 'Criar estratégia',
   backStep: 'Voltar',
-  assumed: 'A IA usou estes padrões. Dá para ajustar na conversa.',
+  assumed: 'A IA usou estes padrões. Dá para ajustar nos relatórios.',
   guideSteps: 'Assistente passo a passo',
   guidePaste: 'Escrever livre',
   guideTf: 'Qual o tempo do candle?',
