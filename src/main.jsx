@@ -39,6 +39,7 @@ import GuideFlow from './components/GuideFlow';
 import hubCss from './components/CreateHub.module.css';
 import { legalFor } from './legal';
 import { promptNeedsTrigger, triggerHint } from './lib/feasibility';
+import { parseLocaleNumber } from './lib/number';
 import { initTheme } from './theme';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
@@ -1476,7 +1477,7 @@ function AskSteps({ questions, busy, onDone, suggestions = [] }) {
   );
 }
 
-function PromptStatus({ busy, status, note, err, detail }) {
+function PromptStatus({ busy, status, note, err, detail, action }) {
   const { t } = useTranslation();
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -1503,7 +1504,14 @@ function PromptStatus({ busy, status, note, err, detail }) {
       </div>
     );
   }
-  if (err) return <div className="error" role="alert">{err}</div>;
+  if (err) {
+    return (
+      <div className="error" role="alert">
+        <div>{err}</div>
+        {action}
+      </div>
+    );
+  }
   if (note) return <p className="ask">{note}</p>;
   return null;
 }
@@ -1890,6 +1898,8 @@ function AlarmCard({ alarm }) {
 
 function AlarmsPage() {
   const { t } = useTranslation();
+  const loc = useLocation();
+  const createdName = loc.state?.alarmCreated;
   const live = useSelector((s) => s.desk);
   const { data } = useDeskQuery(undefined, { pollingInterval: 5000 });
   const alarms = live.alarms ?? data?.alarms ?? [];
@@ -1945,6 +1955,7 @@ function AlarmsPage() {
 
   return (
     <div className="wrap">
+      {createdName && <p className="ask" role="status">{t('alarmCreated', { name: createdName === true ? '' : createdName })}</p>}
       <form className="panel composer-top" onSubmit={(e) => { e.preventDefault(); if (steps) return; if (promptNeedsTrigger(prompt)) { setErr(triggerHint(i18n.language)); return; } sendText(prompt); }} aria-busy={busy}>
         <h2>{t('alarmsT')}</h2>
         {!steps && (
@@ -2045,7 +2056,7 @@ function PathIcon({ kind }) {
 }
 
 function DeskHome() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { lng } = useParams();
   const nav = useNavigate();
   const [path, setPath] = useState('scratch');
@@ -2066,6 +2077,7 @@ function DeskHome() {
   const [err, setErr] = useState('');
   const [askSteps, setAskSteps] = useState(null);
   const [jobGuided, setJobGuided] = useState(false);
+  const [needPlan, setNeedPlan] = useState(false);
   const dispatch = useDispatch();
   const [sendPrompt, { isLoading }] = usePromptMutation();
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
@@ -2098,17 +2110,28 @@ function DeskHome() {
       setThreadId(job.data.job.thread_id || threadId);
     } else if (status === 'failed') setErr(cleanJobError(job.data.job.error, t));
     else {
+      const output = job.data.job.output || {};
       setAskSteps(null);
       setPrompt('');
       setThreadId(null);
       dispatch(api.util.invalidateTags(['Desk', 'Strategies']));
-      nav(`/${lng}/app/relatorios`);
+      if (output.mode === 'alarm' || output.alarmId) {
+        nav(`/${lng}/app/alarmes`, { state: { alarmCreated: output.name || true } });
+      } else {
+        nav(`/${lng}/app/relatorios`);
+      }
     }
     setJobId(null);
   }, [job.data]);
 
+  function failPrompt(error) {
+    setNeedPlan(error?.data?.error === 'trial_expired' || error?.status === 402);
+    setErr(errText(error, t));
+  }
+
   async function sendText(text, modeOrOpts = 'trade', maybeOpts) {
     setErr('');
+    setNeedPlan(false);
     setAskSteps(null);
     const mode = typeof modeOrOpts === 'string' ? modeOrOpts : 'trade';
     const extra = typeof modeOrOpts === 'object' ? modeOrOpts : (maybeOpts || {});
@@ -2117,7 +2140,7 @@ function DeskHome() {
     if (extra.stopPct) setStopPct(String(extra.stopPct));
     if (extra.tpPct) setTpPct(String(extra.tpPct));
     if (extra.wallet != null) setWallet(String(extra.wallet));
-    const walletN = Number(extra.wallet != null ? extra.wallet : wallet);
+    const walletN = parseLocaleNumber(extra.wallet != null ? extra.wallet : wallet, i18n.language);
     if (!(walletN >= 100 && walletN <= 999000)) {
       setErr(t('walletBad'));
       return;
@@ -2133,7 +2156,7 @@ function DeskHome() {
       }).unwrap();
       setThreadId(res.threadId);
       setJobId(res.jobId);
-    } catch (error) { setErr(errText(error, t)); }
+    } catch (error) { failPrompt(error); }
   }
 
   function resetJobState() {
@@ -2283,12 +2306,19 @@ function DeskHome() {
                 setThreadId(res.threadId);
                 setJobId(res.jobId);
                 setNote('');
-              }).catch((error) => setErr(errText(error, t)));
+              }).catch((error) => failPrompt(error));
             }}
           />
         )}
 
-        <PromptStatus busy={busy} status={jobStatus} note={note} err={err} detail="" />
+        <PromptStatus
+          busy={busy}
+          status={jobStatus}
+          note={note}
+          err={err}
+          detail=""
+          action={needPlan ? <Link to={`/${lng}/app/account`}>{t('choosePlan')}</Link> : null}
+        />
 
         {err && !busy && !askSteps && (
           <div className={hubCss.retryRow}>
