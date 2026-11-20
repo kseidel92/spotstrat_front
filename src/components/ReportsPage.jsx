@@ -93,6 +93,7 @@ export default function ReportsPage() {
   const [remove] = useRemoveMutation();
   const [restore, { isLoading: restoring }] = useRestoreMutation();
   const [restoreMsg, setRestoreMsg] = useState('');
+  const [query, setQuery] = useState('');
 
   const bestPnl = strategies.reduce((a, s) => (!a || Number(s.pnl) > Number(a.pnl) ? s : a), null);
   const worstPnl = strategies.reduce((a, s) => (!a || Number(s.pnl) < Number(a.pnl) ? s : a), null);
@@ -101,6 +102,15 @@ export default function ReportsPage() {
   const totalEquity = strategies.reduce((sum, s) => sum + Number(s.equity || 0), 0);
   const totalPnl = strategies.reduce((sum, s) => sum + Number(s.pnl || 0), 0);
   const totalTrades = strategies.reduce((sum, s) => sum + Number(s.nTrades || 0), 0);
+
+  const q = query.trim().toLowerCase();
+  const listed = [...strategies]
+    .sort((a, b) => {
+      const ta = Date.parse(a.createdAt || '') || 0;
+      const tb = Date.parse(b.createdAt || '') || 0;
+      return tb - ta;
+    })
+    .filter((s) => !q || String(s.name || '').toLowerCase().includes(q) || String(s.id || '').toLowerCase().includes(q));
 
   const chartItems = [...strategies]
     .sort((a, b) => Number(b.pnl) - Number(a.pnl))
@@ -205,6 +215,18 @@ export default function ReportsPage() {
       <section className={css.list}>
         <div className={css.listHead}>
           <h2>{t('reportsListT')}</h2>
+          {strategies.length > 0 && (
+            <label className={css.search}>
+              <span className={css.sr}>{t('reportsSearch')}</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('reportsSearchPh')}
+                aria-label={t('reportsSearch')}
+              />
+            </label>
+          )}
         </div>
         {!strategies.length && (
           <div className={css.empty}>
@@ -213,8 +235,9 @@ export default function ReportsPage() {
             <Link className={css.cta} to={`/${lng}/app`}>{t('reportsNew')}</Link>
           </div>
         )}
+        {strategies.length > 0 && !listed.length && <p className={css.muted}>{t('reportsSearchPh')}</p>}
         <div className={css.grid}>
-          {strategies.map((s) => (
+          {listed.map((s) => (
             <article className={css.card} key={s.id}>
               <header>
                 <div>
