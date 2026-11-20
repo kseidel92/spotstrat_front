@@ -38,6 +38,7 @@ import ReportsPage from './components/ReportsPage';
 import GuideFlow from './components/GuideFlow';
 import hubCss from './components/CreateHub.module.css';
 import { legalFor } from './legal';
+import { promptNeedsTrigger, triggerHint } from './lib/feasibility';
 import { initTheme } from './theme';
 import alertShot from './components/img_5.jpg';
 import deskShot from './components/img_6.jpg';
@@ -1944,7 +1945,7 @@ function AlarmsPage() {
 
   return (
     <div className="wrap">
-      <form className="panel composer-top" onSubmit={(e) => { e.preventDefault(); if (!steps) sendText(prompt); }} aria-busy={busy}>
+      <form className="panel composer-top" onSubmit={(e) => { e.preventDefault(); if (steps) return; if (promptNeedsTrigger(prompt)) { setErr(triggerHint(i18n.language)); return; } sendText(prompt); }} aria-busy={busy}>
         <h2>{t('alarmsT')}</h2>
         {!steps && (
           <>
@@ -1989,7 +1990,8 @@ function AlarmsPage() {
         )}
         <PromptStatus busy={busy} status={job.data?.job?.status} note={note} err={err} />
         {!steps && (
-          <button className="solid" disabled={busy || prompt.trim().length < 8} type="submit">{busy ? t('working') : t('send')}</button>
+          {prompt.trim().length >= 8 && promptNeedsTrigger(prompt) && <p className="muted">{triggerHint(i18n.language)}</p>}
+          <button className="solid" disabled={busy || promptNeedsTrigger(prompt)} type="submit">{busy ? t('working') : t('send')}</button>
         )}
       </form>
       <section className="alarm-board">
@@ -2160,6 +2162,10 @@ function DeskHome() {
   function submitPrompt(e) {
     e.preventDefault();
     if (!prompt.trim() || askSteps) return;
+    if (promptNeedsTrigger(prompt)) {
+      setErr(triggerHint(i18n.language));
+      return;
+    }
     const fromText = parsePromptOptions(prompt);
     sendText(prompt, fromText);
   }
@@ -2247,7 +2253,10 @@ function DeskHome() {
                 {t('alarmHint')}{' '}
                 <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
               </p>
-              <button className="solid" style={{ marginTop: 14 }} disabled={busy || prompt.trim().length < 8} type="submit">
+              {prompt.trim().length >= 8 && promptNeedsTrigger(prompt) && (
+                <p className="muted" style={{ marginTop: 10 }}>{triggerHint(i18n.language)}</p>
+              )}
+              <button className="solid" style={{ marginTop: 14 }} disabled={busy || promptNeedsTrigger(prompt)} type="submit">
                 {t('send')}
               </button>
             </form>
