@@ -37,6 +37,7 @@ import ReportsPage from './components/ReportsPage';
 import GuideFlow from './components/GuideFlow';
 import hubCss from './components/CreateHub.module.css';
 import { legalFor } from './legal';
+import { deskAllowed } from './lib/access';
 import { promptNeedsTrigger, triggerHint } from './lib/feasibility';
 import { parseLocaleNumber } from './lib/number';
 import { initTheme } from './theme';
@@ -804,8 +805,7 @@ function Register() {
 
 function routeForDesk(lng, user) {
   if (!user || user.desk === 'unverified' || user.desk === 'locked') return `/${lng}/verify`;
-  if (user.desk === 'expired') return `/${lng}/app/account`;
-  return `/${lng}/app`;
+  return deskAllowed(user) ? `/${lng}/app` : `/${lng}/app/account`;
 }
 
 function GoogleEntry() {
@@ -1274,6 +1274,25 @@ function RequireDesk({ allowExpired = false }) {
 }
 
 function DeskGateOutlet() {
+  const { t } = useTranslation();
+  const { lng } = useParams();
+  const { data, isLoading } = useMeQuery();
+  const user = data?.user;
+  if (isLoading && !user) return <p className="wrap boot-wait">{t('loadingApp')}</p>;
+  if (user?.desk === 'unverified' || user?.desk === 'locked') {
+    return <Navigate to={`/${lng}/verify`} replace />;
+  }
+  if (!deskAllowed(user)) {
+    return (
+      <div className="wrap">
+        <section className="panel">
+          <h1>{t('expired')}</h1>
+          <p>{t('payOff')}</p>
+          <Link className="solid" to={`/${lng}/app/account`}>{t('choosePlan')}</Link>
+        </section>
+      </div>
+    );
+  }
   return <Outlet />;
 }
 
@@ -3196,8 +3215,8 @@ function App() {
               <Route path="onboarding" element={<Navigate to=".." replace />} />
               <Route element={<DeskGateOutlet />}>
                 <Route index element={<DeskHome />} />
-                <Route path="relatorios" element={<ReportsPage />} />
               </Route>
+              <Route path="relatorios" element={<ReportsPage />} />
               <Route path="alarmes" element={<AlarmsPage />} />
               <Route path="precos" element={<DeskPrices />} />
               <Route path="strategies/:id/producao" element={<StrategyProduction />} />
