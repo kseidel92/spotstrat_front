@@ -30,14 +30,28 @@ const icon = {
 };
 
 function storageKey(userId) {
-  return userId ? `spotstrat.lab.threads.${userId}` : 'spotstrat.lab.threads';
+  if (!userId) return null;
+  return `spotstrat.lab.threads.${userId}`;
+}
+
+function isDemoSeedThread(thread) {
+  return /^lab_seed_/i.test(String(thread?.id || ''));
 }
 
 function readStore(userId) {
+  const key = storageKey(userId);
+  if (!key) return { threads: [], activeId: null };
   try {
-    const parsed = JSON.parse(localStorage.getItem(storageKey(userId)) || 'null');
+    const parsed = JSON.parse(localStorage.getItem(key) || 'null');
     if (!parsed || !Array.isArray(parsed.threads)) return { threads: [], activeId: null };
-    return { threads: parsed.threads, activeId: parsed.activeId || null };
+    const threads = parsed.threads.filter((thread) => !isDemoSeedThread(thread));
+    const activeId = threads.some((thread) => thread.id === parsed.activeId)
+      ? parsed.activeId
+      : (threads[0]?.id || null);
+    if (threads.length !== parsed.threads.length) {
+      try { localStorage.setItem(key, JSON.stringify({ threads, activeId })); } catch { /* private mode */ }
+    }
+    return { threads, activeId };
   } catch {
     return { threads: [], activeId: null };
   }
@@ -111,53 +125,22 @@ function reducer(state, action) {
   return state;
 }
 
-function seedFlag(userId) {
-  return userId ? `spotstrat.lab.seeded.${userId}` : 'spotstrat.lab.seeded';
-}
-
 function LabThreads({ userId, children }) {
   const [state, dispatch] = useReducer(reducer, userId, readStore);
-  const seeding = useRef(false);
   useEffect(() => {
     dispatch({ type: 'hydrate', state: readStore(userId) });
   }, [userId]);
   useEffect(() => {
-    if (!userId) return undefined;
-    let cancelled = false;
-    (async () => {
-      try {
-        const current = readStore(userId);
-        if (current.threads.length > 0) {
-          localStorage.setItem(seedFlag(userId), '1');
-          return;
-        }
-        seeding.current = true;
-        const res = await fetch(`/lab-seed.json?t=${Date.now()}`);
-        if (!res.ok) return;
-        const seed = await res.json();
-        const incoming = Array.isArray(seed?.threads) ? seed.threads : [];
-        if (!incoming.length || cancelled) return;
-        const next = {
-          threads: incoming,
-          activeId: incoming[0].id,
-        };
-        localStorage.setItem(storageKey(userId), JSON.stringify(next));
-        localStorage.setItem(seedFlag(userId), '1');
-        if (!cancelled) dispatch({ type: 'hydrate', state: next });
-      } catch { /* ignore */ }
-      finally { seeding.current = false; }
-    })();
-    return () => { cancelled = true; };
-  }, [userId]);
-  useEffect(() => {
-    if (seeding.current && state.threads.length === 0) return;
-    try { localStorage.setItem(storageKey(userId), JSON.stringify(state)); } catch { /* private mode */ }
+    const key = storageKey(userId);
+    if (!key) return;
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch { /* private mode */ }
   }, [state, userId]);
   const api = useMemo(() => ({
     threads: state.threads,
     activeId: state.activeId,
     active: state.threads.find((thread) => thread.id === state.activeId) || null,
     create: (title) => {
+      if (!userId) return null;
       const empty = state.threads.find((thread) => thread.messages.length === 0);
       if (empty) {
         dispatch({ type: 'select', id: empty.id });
@@ -171,7 +154,7 @@ function LabThreads({ userId, children }) {
     rename: (id, title) => dispatch({ type: 'rename', id, title }),
     remove: (id) => dispatch({ type: 'remove', id }),
     append: (id, message) => dispatch({ type: 'append', id, message }),
-  }), [state]);
+  }), [state, userId]);
   return <LabCtx.Provider value={api}>{children}</LabCtx.Provider>;
 }
 
@@ -498,8 +481,12 @@ function LabScreen() {
 
 export default function LabPage() {
   const me = useMeQuery();
+  const userId = me.data?.user?.id || '';
+  if (me.isLoading || !userId) {
+    return <div className={css.page} aria-busy="true" />;
+  }
   return (
-    <LabThreads userId={me.data?.user?.id || ''}>
+    <LabThreads userId={userId}>
       <LabScreen />
     </LabThreads>
   );
