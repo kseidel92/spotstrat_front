@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useDeskQuery, usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, api, ingest } from '../store';
@@ -80,6 +80,8 @@ function sparkFrom(s) {
 export default function ReportsPage() {
   const { t } = useTranslation();
   const { lng } = useParams();
+  const loc = useLocation();
+  const nav = useNavigate();
   const live = useSelector((s) => s.desk);
   const { data } = useDeskQuery(undefined, { pollingInterval: 5000 });
   const strategies = live.strategies.length ? live.strategies : (data?.strategies || []);
@@ -94,6 +96,17 @@ export default function ReportsPage() {
   const [restore, { isLoading: restoring }] = useRestoreMutation();
   const [restoreMsg, setRestoreMsg] = useState('');
   const [query, setQuery] = useState('');
+  const [createdToast, setCreatedToast] = useState(null);
+
+  useEffect(() => {
+    const raw = loc.state?.strategyCreated;
+    if (!raw) return undefined;
+    const name = raw === true ? '' : String(raw).trim();
+    setCreatedToast(name || t('strategyCreatedFallback'));
+    nav(loc.pathname, { replace: true, state: {} });
+    const timer = window.setTimeout(() => setCreatedToast(null), 5600);
+    return () => window.clearTimeout(timer);
+  }, [loc.state, loc.pathname, nav, t]);
 
   const bestPnl = strategies.reduce((a, s) => (!a || Number(s.pnl) > Number(a.pnl) ? s : a), null);
   const worstPnl = strategies.reduce((a, s) => (!a || Number(s.pnl) < Number(a.pnl) ? s : a), null);
@@ -137,6 +150,18 @@ export default function ReportsPage() {
 
   return (
     <div className={`wrap ${css.page}`}>
+      {createdToast && (
+        <div className={css.toast} role="status" aria-live="polite">
+          <span className={css.toastMark} aria-hidden="true">✓</span>
+          <div className={css.toastBody}>
+            <strong>{t('strategyCreatedTitle')}</strong>
+            <p>{t('strategyCreatedBody', { name: createdToast })}</p>
+          </div>
+          <button className={css.toastClose} type="button" aria-label={t('labClose')} onClick={() => setCreatedToast(null)}>
+            <IconX />
+          </button>
+        </div>
+      )}
       <header className={css.head}>
         <div>
           <p className={css.kicker}>{t('reportsNav')}</p>

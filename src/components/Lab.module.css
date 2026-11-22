@@ -184,18 +184,17 @@
 
 .empty {
   margin: auto;
-  max-width: 42ch;
+  max-width: 46ch;
   text-align: center;
   color: var(--text-soft);
   line-height: 1.6;
 }
 
-.emptyImg {
-  display: block;
-  width: min(160px, 42vw);
-  height: auto;
-  margin: 0 auto 14px;
-  opacity: 0.92;
+.emptyLead {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text);
+  line-height: 1.55;
 }
 
 .turn { display: flex; flex-direction: column; gap: 6px; }

@@ -2119,7 +2119,9 @@ function DeskHome() {
       if (output.mode === 'alarm' || output.alarmId) {
         nav(`/${lng}/app/alarmes`, { state: { alarmCreated: output.name || true } });
       } else {
-        nav(`/${lng}/app/relatorios`);
+        nav(`/${lng}/app/relatorios`, {
+          state: { strategyCreated: output.name || job.data.job.strategyName || true },
+        });
       }
     }
     setJobId(null);
@@ -2187,9 +2189,9 @@ function DeskHome() {
 
   function submitPrompt(e) {
     e.preventDefault();
-    if (!prompt.trim() || askSteps) return;
-    if (promptNeedsTrigger(prompt)) {
-      setErr(triggerHint(i18n.language));
+    if (askSteps) return;
+    if (prompt.trim().length < 30) {
+      setErr(t('hubPromptShort'));
       return;
     }
     const fromText = parsePromptOptions(prompt);
@@ -2292,10 +2294,7 @@ function DeskHome() {
                 {t('alarmHint')}{' '}
                 <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
               </p>
-              {prompt.trim().length >= 8 && promptNeedsTrigger(prompt) && (
-                <p className="muted" style={{ marginTop: 10 }}>{triggerHint(i18n.language)}</p>
-              )}
-              <button className="solid" style={{ marginTop: 14 }} disabled={busy || promptNeedsTrigger(prompt)} type="submit">
+              <button className="solid" style={{ marginTop: 14 }} disabled={busy || prompt.trim().length < 30} type="submit">
                 {t('send')}
               </button>
             </form>

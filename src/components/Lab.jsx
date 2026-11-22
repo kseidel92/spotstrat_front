@@ -398,8 +398,7 @@ function LabScreen() {
           <div className={css.stream}>
             {!messages.length && (
               <div className={css.empty}>
-                <img className={css.emptyImg} src="/robot.png" alt="" />
-                <p>{t('labEmptyChat')}</p>
+                <p className={css.emptyLead}>{t('labEmptyChat')}</p>
               </div>
             )}
             {messages.map((message, index) => (
