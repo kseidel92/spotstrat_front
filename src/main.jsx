@@ -25,6 +25,7 @@ import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
 import LandingJourney from './components/LandingJourney';
 import ThemeToggle from './components/ThemeToggle';
+import BrandLogo from './components/BrandLogo';
 import LabPage from './components/Lab';
 import LaunchCountdown from './components/LaunchCountdown';
 import Faq from './components/Faq';
@@ -94,7 +95,7 @@ function MarketTop({ cta = true }) {
   const registerTo = `/${lng}/register`;
   return (
     <header className="topbar market-top">
-      <Link className="brand" to={`/${lng}`}>SpotStrat</Link>
+      <Link className="brand" to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={28} /></Link>
       <div className="spacer" />
       <nav className="menu">
         <Link to={infoTo} aria-current={pathActive(pathname, infoTo) ? 'page' : undefined}>{t('howNav')}</Link>
@@ -283,8 +284,8 @@ function SiteFooter() {
   return (
     <footer className="site">
       <div className="foot-brand">
-        <Link className="brand" to={home} onClick={open(home)}>
-          SpotStrat
+        <Link className="brand" to={home} onClick={open(home)} aria-label="SpotStrat">
+          <BrandLogo height={32} />
         </Link>
         <p className="tag">{t('footerTag')}</p>
         <p className="copy">{t('footerCopy')}</p>
@@ -646,7 +647,7 @@ function AuthScreen({ children, social = false }) {
           <Flags />
         </header>
         <div className={auth.center}>
-          <Link className={auth.logo} to={`/${lng}`} aria-label="SpotStrat"><i />SpotStrat</Link>
+          <Link className={auth.logo} to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={36} /></Link>
           <div className={auth.card}>
             {social && (
               <>
@@ -1218,7 +1219,7 @@ function DeskBar() {
   const onMore = onHelp || onLab || onPrices;
   return (
     <header className="deskbar">
-      <Link className="brand" to={app}>SpotStrat</Link>
+      <Link className="brand" to={app} aria-label="SpotStrat"><BrandLogo height={26} /></Link>
       <nav className="menu">
         <Link to={app} aria-current={onStrategies ? 'page' : undefined}>{t('strategiesNav')}</Link>
         <Link to={`${app}/relatorios`} aria-current={onReports ? 'page' : undefined}>{t('reportsNav')}</Link>

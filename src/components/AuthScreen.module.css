@@ -90,10 +90,11 @@
   font-size: 22px;
   letter-spacing: -0.03em;
   text-decoration: none;
-  transition: color 0.2s ease;
+  line-height: 0;
+  transition: opacity 0.2s ease;
 }
 
-.logo:hover { color: var(--accent); }
+.logo:hover { opacity: 0.88; }
 
 .logo:focus-visible {
   outline: 2px solid var(--accent);
@@ -101,13 +102,15 @@
   border-radius: 4px;
 }
 
-.logo i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.16);
+.logo img {
+  display: block;
+  height: 36px;
+  width: auto;
+  max-width: min(220px, 70vw);
+  object-fit: contain;
 }
+
+.logo i { display: none; }
 
 .card {
   width: 100%;

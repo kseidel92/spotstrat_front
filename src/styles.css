@@ -52,15 +52,19 @@ button { cursor: pointer; }
   letter-spacing: -0.03em;
   font-size: 22px;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+.brand img {
+  display: block;
+  height: 28px;
+  width: auto;
+  max-width: min(168px, 42vw);
+  object-fit: contain;
 }
 .brand i {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  margin-right: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 4px rgba(15, 106, 78, 0.15);
+  display: none;
 }
 .spacer { flex: 1; }
 .flags { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -189,7 +193,8 @@ textarea { min-height: 90px; resize: vertical; }
 .desk .deskbar .menu a { white-space: nowrap; }
 .desk .deskbar .flags { flex-wrap: nowrap; gap: 4px; }
 .desk .deskbar .flags button { padding: 5px 7px; }
-.desk .brand i { background: var(--accent); box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.18); }
+.desk .brand i { display: none; }
+.desk .brand img { height: 26px; }
 .desk a { text-decoration: none; }
 .topbar .menu, .deskbar .menu {
   display: flex;
@@ -923,10 +928,8 @@ body:has(.landing) { background: var(--bg); }
 .landing .brand { font-family: var(--font); font-weight: 700; white-space: nowrap; letter-spacing: -0.03em; }
 .landing .topbar .brand,
 .landing .topbar .menu { flex: 0 0 auto; }
-.landing .brand i {
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
-}
+.landing .brand img { height: 28px; }
+.landing .brand i { display: none; }
 .landing .rail { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
 .landing .flags button, .landing .ghost {
   border-color: rgba(170, 205, 230, 0.28);
@@ -2000,6 +2003,7 @@ body:has(.landing) { background: var(--bg); }
   background: var(--bg);
   color: var(--text-muted);
 }
+.landing footer.site .brand img { height: 32px; }
 .landing footer.site .tag {
   margin: 12px 0 0;
   max-width: 28ch;

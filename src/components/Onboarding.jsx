@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMeQuery, usePromptMutation, useRestoreMutation } from '../store';
+import BrandLogo from './BrandLogo';
 import styles from './Onboarding.module.css';
 
 const CHIPS = [
@@ -67,7 +68,7 @@ export default function Onboarding() {
   return (
     <div className={`desk ${styles.page}`}>
       <div className={styles.card}>
-        <p className={styles.brand}>SpotStrat</p>
+        <p className={styles.brand}><BrandLogo height={28} /></p>
         <h1>{t('onboardingT')}</h1>
         <p className={styles.lede}>{t('onboardingL')}</p>
 

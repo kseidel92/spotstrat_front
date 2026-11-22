@@ -25,6 +25,15 @@
   font-size: 1.1rem;
   letter-spacing: -0.02em;
   color: var(--text);
+  line-height: 0;
+}
+
+.brand img {
+  display: block;
+  height: 28px;
+  width: auto;
+  max-width: min(180px, 70vw);
+  object-fit: contain;
 }
 
 .card h1 {
