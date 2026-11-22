@@ -13,7 +13,7 @@ const pt = {
         h: '2. Quais dados coletamos e por quê',
         p: [
           'Coletamos apenas o necessário para operar o serviço.',
-          'Dados de cadastro: nome, e-mail e telefone. Finalidade: criar sua conta, confirmar identidade e liberar o teste grátis.',
+          'Dados de cadastro: nome, e-mail e telefone. Finalidade: criar sua conta e confirmar identidade.',
           'Dados de uso: estratégias criadas, logs de acesso e interações com a IA. Finalidade: melhorar o produto e garantir a segurança.',
           'Dados de pagamento: processados por terceiros especializados. O Spotstrat não armazena números de cartão.',
           'Credenciais da Binance: o Spotstrat não coleta, não armazena e não tem acesso às suas chaves de API ou credenciais. A execução em produção ocorre exclusivamente na sua máquina.',
@@ -69,16 +69,16 @@ const pt = {
         ],
       },
       {
-        h: '2. Conta e dia grátis',
+        h: '2. Conta',
         p: [
-          'O cadastro pede nome, e-mail, senha e celular. Depois de confirmar o código enviado ao seu e-mail, você libera 1 dia grátis. Não pedimos cartão para começar.',
+          'O cadastro pede nome, e-mail, senha e celular. Depois de confirmar o código enviado ao seu e-mail, a conta fica liberada para escolher um plano.',
         ],
       },
       {
         h: '3. Assinatura',
         p: [
           'Há um plano, o Desk Completo. O preço, a moeda e o período aparecem na tela de preços antes da cobrança.',
-          'Você cancela quando quiser, direto no painel da conta. Devolvemos o dinheiro proporcional aos dias que ainda faltam no período pago. Não há multa e não há taxa. O reembolso não sai no instante do clique: o cancelamento fica solicitado e o valor dos dias restantes é enviado em breve.',
+          'Você cancela quando quiser, direto no painel da conta.',
         ],
       },
       {
@@ -206,16 +206,16 @@ const en = {
         ],
       },
       {
-        h: '2. Account and free day',
+        h: '2. Account',
         p: [
-          'Sign-up asks for name, email, password and phone. After you confirm the code sent to your email, you unlock 1 free day. We do not ask for a card to start.',
+          'Sign-up asks for name, email, password and phone. After you confirm the code sent to your email, the account is ready to choose a plan.',
         ],
       },
       {
         h: '3. Subscription',
         p: [
           'There is one plan, the Full Desk. Price, currency and period are shown on the pricing page before you are charged.',
-          'You can cancel anytime in the account panel. We refund the money for the days still left in the paid period. There is no penalty and no fee. The refund does not leave the moment you click: the cancellation is requested, and the amount for the remaining days is sent soon.',
+          'You can cancel anytime in the account panel.',
         ],
       },
       {
@@ -293,7 +293,7 @@ const es = {
     sections: [
       { h: '1. El servicio', p: ['Spotstrat sirve para describir estrategias en lenguaje natural, simularlas con velas de Binance y, si quieres, generar una versión de producción que corre en tu máquina.'] },
       { h: '2. Cuenta y día gratis', p: ['El registro pide nombre, correo, contraseña y teléfono. Al confirmar el código del correo, liberas 1 día gratis. No pedimos tarjeta para empezar.'] },
-      { h: '3. Suscripción', p: ['Hay un plan, el Desk Completo. El precio, la moneda y el período aparecen en la pantalla de precios antes del cobro.', 'Cancelas cuando quieras, en el panel de la cuenta. Devolvemos el dinero proporcional a los días que aún faltan del período pagado. No hay multa ni tarifa. El reembolso no sale en el instante del clic: la cancelación queda solicitada y el valor de los días restantes se envía pronto.'] },
+      { h: '3. Suscripción', p: ['Hay un plan, el Desk Completo. El precio, la moneda y el período aparecen en la pantalla de precios antes del cobro.', 'Cancelas cuando quieras, en el panel de la cuenta.'] },
       { h: '4. Credenciales de Binance', p: ['Spotstrat no recoge, no guarda y no accede a tus claves de API. La producción corre en tu máquina, sin intermediario.'] },
       { h: '5. Pago', p: ['El cobro lo hacen procesadores de pago. Spotstrat no guarda el número de la tarjeta.'] },
       { h: '6. Riesgo', p: ['Operar criptomonedas puede hacer perder dinero. Los resultados pasados, también en el simulador, no garantizan resultados futuros. El simulador no es el motor de la exchange. Spotstrat no es asesoría de inversión y no responde por pérdidas financieras.'] },
@@ -331,7 +331,7 @@ const fr = {
     updated: 'Dernière mise à jour : 21 octobre 2026',
     sections: [
       { h: '1. Le service', p: ['Spotstrat sert à décrire une stratégie en langage clair, à la simuler sur les bougies Binance et, si vous le voulez, à produire une version qui tourne sur votre machine.'] },
-      { h: '2. Compte et jour gratuit', p: ['L’inscription demande le nom, l’e-mail, le mot de passe et le téléphone. Après le code envoyé par e-mail, vous avez 1 jour gratuit. Pas de carte pour commencer.'] },
+      { h: '2. Compte', p: ['L’inscription demande le nom, l’e-mail, le mot de passe et le téléphone. Après le code envoyé par e-mail, le compte est prêt pour choisir un plan.'] },
       { h: '3. Abonnement', p: ['Un seul plan, le Desk complet. Le prix, la devise et la durée sont affichés avant le paiement.', 'Vous résiliez quand vous voulez, dans le compte. Nous remboursons la part des jours qui restent sur la période payée. Il n’y a ni pénalité ni frais. Le remboursement ne part pas à l’instant du clic : la résiliation est demandée et le montant des jours restants est envoyé bientôt.'] },
       { h: '4. Identifiants Binance', p: ['Spotstrat ne collecte pas, ne stocke pas et n’accède pas à vos clés d’API. La production tourne sur votre machine, sans intermédiaire.'] },
       { h: '5. Paiement', p: ['L’abonnement est encaissé par des prestataires de paiement. Spotstrat ne stocke pas le numéro de carte.'] },
@@ -356,7 +356,7 @@ const de = {
     updated: 'Zuletzt aktualisiert: 20. Oktober 2026',
     sections: [
       { h: '1. Verantwortlicher', p: ['Verantwortlicher für Ihre Daten ist Spotstrat. Datenschutzfragen gehen an support@spotstrat.com.'] },
-      { h: '2. Welche Daten und warum', p: ['Wir erheben nur, was der Dienst braucht.', 'Konto: Name, E-Mail und Telefon, um das Konto anzulegen, die Identität zu bestätigen und den Gratistag freizuschalten.', 'Nutzung: Strategien, Zugriffsprotokolle und Gespräche mit der KI, um das Produkt und die Sicherheit zu verbessern.', 'Zahlung: über spezialisierte Dritte. Spotstrat speichert keine Kartennummern.', 'Binance-Zugangsdaten: Spotstrat erhebt sie nicht, speichert sie nicht und hat keinen Zugriff. Die Produktion läuft nur auf Ihrem Rechner.'] },
+      { h: '2. Welche Daten und warum', p: ['Wir erheben nur, was der Dienst braucht.', 'Konto: Name, E-Mail und Telefon, um das Konto anzulegen und die Identität zu bestätigen.', 'Nutzung: Strategien, Zugriffsprotokolle und Gespräche mit der KI, um das Produkt und die Sicherheit zu verbessern.', 'Zahlung: über spezialisierte Dritte. Spotstrat speichert keine Kartennummern.', 'Binance-Zugangsdaten: Spotstrat erhebt sie nicht, speichert sie nicht und hat keinen Zugriff. Die Produktion läuft nur auf Ihrem Rechner.'] },
       { h: '3. Weitergabe', p: ['Wir verkaufen keine Daten. Weitergabe nur an Hosting, Zahlungsdienstleister und Behörden, wenn das Gesetz es verlangt.'] },
       { h: '4. Ihre Rechte', p: ['Sie können Auskunft, Berichtigung, Löschung (soweit keine Pflicht zur Aufbewahrung besteht) und Widerruf der Einwilligung verlangen.', 'Schreiben Sie an support@spotstrat.com.'] },
       { h: '5. Sicherheit', p: ['Wir schützen Daten mit technischen und organisatorischen Maßnahmen, einschließlich Verschlüsselung auf dem Transportweg und eingeschränktem Zugriff.'] },
@@ -370,7 +370,7 @@ const de = {
     updated: 'Zuletzt aktualisiert: 21. Oktober 2026',
     sections: [
       { h: '1. Der Dienst', p: ['Spotstrat beschreibt Strategien in Alltagssprache, simuliert sie an Binance-Kerzen und kann eine Produktionsversion erzeugen, die auf Ihrem Rechner läuft.'] },
-      { h: '2. Konto und Gratistag', p: ['Die Anmeldung fragt Name, E-Mail, Passwort und Telefon. Nach dem Code an Ihre E-Mail ist 1 Tag frei. Zum Start keine Karte.'] },
+      { h: '2. Konto', p: ['Die Anmeldung fragt Name, E-Mail, Passwort und Telefon. Nach dem Code an Ihre E-Mail ist das Konto bereit, einen Plan zu wählen.'] },
       { h: '3. Abo', p: ['Es gibt einen Plan, das komplette Desk. Preis, Währung und Laufzeit stehen auf der Preisseite vor der Zahlung.', 'Sie kündigen jederzeit im Konto. Wir erstatten den Anteil der Tage, die im bezahlten Zeitraum noch fehlen. Es gibt keine Strafe und keine Gebühr. Die Erstattung geht nicht im Moment des Klicks raus: die Kündigung wird beantragt und der Betrag der restlichen Tage wird in Kürze gesendet.'] },
       { h: '4. Binance-Zugangsdaten', p: ['Spotstrat erhebt, speichert und sieht Ihre API-Schlüssel nicht. Die Produktion läuft auf Ihrem Rechner, ohne Mittler.'] },
       { h: '5. Zahlung', p: ['Das Abo ziehen Zahlungsdienstleister ein. Spotstrat speichert die Kartennummer nicht.'] },

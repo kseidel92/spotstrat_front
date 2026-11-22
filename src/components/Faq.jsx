@@ -4,7 +4,6 @@ import styles from './Faq.module.css';
 const ITEMS = [
   ['faq1q', 'faq1a'],
   ['faq2q', 'faq2a'],
-  ['faq3q', 'faq3a'],
 ];
 
 export default function Faq() {

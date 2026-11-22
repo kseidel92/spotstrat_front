@@ -33,7 +33,6 @@ export default function LandingJourney({ examples = [] }) {
         )}
         <div className={styles.cta}>
           <Link className={styles.btn} to={`/${lng}/register`}>{t('freeCta')}</Link>
-          <p className={styles.note}>{t('freeNote')}</p>
         </div>
       </div>
     </section>

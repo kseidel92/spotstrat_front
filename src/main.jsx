@@ -509,8 +509,6 @@ function Landing() {
           <h2>{t('trialT')}</h2>
           <p className="lede">{t('trialB')}</p>
           <Link className="solid free" to={`/${lng}/register`} aria-label={t('finalCta')}>{t('finalCta')}</Link>
-          <p className="mono dim">{t('freeNote')}</p>
-          <p>{t('cancelHome')}</p>
         </div>
       </section>
       <SiteFooter />
@@ -1118,8 +1116,9 @@ function Verify() {
       let user;
       if (emailCode) user = (await verifyEmail({ code: emailCode }).unwrap()).user;
       if (user) dispatch(setSession({ token: store.getState().auth.token, user }));
-      if (user?.desk === 'trial' || user?.desk === 'active') nav(`/${lng}/app`);
-      else setErr(t('unverified'));
+      if (!user) return;
+      if (user.desk === 'unverified' || user.desk === 'locked') setErr(t('unverified'));
+      else nav(routeForDesk(lng, user));
     } catch (error) { setErr(errText(error, t)); }
   }
   async function resendChannel(channel) {
@@ -2579,18 +2578,17 @@ function Account() {
         <p className="muted">{t('paySim')}</p>
         <PlanPicker />
       </article>
-      <article className="panel" style={{ marginTop: 12 }}>
-        <h3>{t('cancelTitle')}</h3>
-        <p>{t('cancelPolicy')}</p>
-        {cancelPending ? <p className="ok">{t('cancelRequested')}</p> : paidOpen ? (
-          <button className="danger" type="button" disabled={canceling} onClick={requestCancel}>
-            {canceling ? t('canceling') : t('cancelCta')}
-          </button>
-        ) : (
-          <p className="muted">{t('cancelOnlyPaid')}</p>
-        )}
-        {cancelErr && <div className="error">{cancelErr}</div>}
-      </article>
+      {paidOpen || cancelPending ? (
+        <article className="panel" style={{ marginTop: 12 }}>
+          <h3>{t('cancelTitle')}</h3>
+          {cancelPending ? <p className="ok">{t('cancelRequested')}</p> : (
+            <button className="danger" type="button" disabled={canceling} onClick={requestCancel}>
+              {canceling ? t('canceling') : t('cancelCta')}
+            </button>
+          )}
+          {cancelErr && <div className="error">{cancelErr}</div>}
+        </article>
+      ) : null}
       <div className="row">
         <button className="danger" type="button" onClick={async () => {
           const ok = await ask({ title: t('delete'), body: t('deleteAsk'), confirmLabel: t('delete'), cancelLabel: t('dialogBack'), tone: 'danger', icon: 'trash' });
@@ -2631,7 +2629,6 @@ function Checkout() {
   return (
     <div className="wrap" style={{ maxWidth: 560 }}>
       <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('checkoutT')}</h2>
-      <p>{t('cancelPolicy')}</p>
       <p>{tier === 'pro' ? t('planPro') : t('planPaper')} · {label}</p>
       {quote && <p className="price-num">{localMoney(lng, quote.total)}</p>}
       <div className="panel">
@@ -3124,12 +3121,11 @@ function PricesBody({ showCta = false }) {
       <div className="price-split">
         <p><strong>{t('planIncludedLead')}</strong> {t('planIncludedBody')}</p>
         <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
-        <p><strong>{t('cancelTitle')}</strong> {t('cancelPolicy')}</p>
+        <p className="mono dim">{t('cancelAnytime')}</p>
       </div>
       {showCta && (
         <div className="prices-cta">
           <Link className="solid free" to={`/${lng}/register`}>{t('freeCta')}</Link>
-          <p className="mono dim">{t('freeNote')}</p>
         </div>
       )}
       <div className="price-grid">
@@ -3214,16 +3210,16 @@ function App() {
               <Route path="onboarding" element={<Navigate to=".." replace />} />
               <Route element={<DeskGateOutlet />}>
                 <Route index element={<DeskHome />} />
+                <Route path="relatorios" element={<ReportsPage />} />
+                <Route path="alarmes" element={<AlarmsPage />} />
+                <Route path="strategies/:id/producao" element={<StrategyProduction />} />
+                <Route path="strategies/:id/operar" element={<StrategyProduction />} />
+                <Route path="strategies/:id" element={<StrategyPage />} />
+                <Route path="laboratorio" element={<LabPage />} />
+                <Route path="pesquisar" element={<LabPage />} />
+                <Route path="historico" element={<LabLegacyRedirect />} />
               </Route>
-              <Route path="relatorios" element={<ReportsPage />} />
-              <Route path="alarmes" element={<AlarmsPage />} />
               <Route path="precos" element={<DeskPrices />} />
-              <Route path="strategies/:id/producao" element={<StrategyProduction />} />
-              <Route path="strategies/:id/operar" element={<StrategyProduction />} />
-              <Route path="strategies/:id" element={<StrategyPage />} />
-              <Route path="laboratorio" element={<LabPage />} />
-              <Route path="pesquisar" element={<LabPage />} />
-              <Route path="historico" element={<LabLegacyRedirect />} />
               <Route path="info" element={<Info />} />
               <Route path="ajuda" element={<Info />} />
               <Route path="account" element={<Account />} />

@@ -36,7 +36,6 @@ export default function Hero() {
           <p className={styles.subtitle}>{t('lede')}</p>
           <div className={styles.actions}>
             <Link className={styles.cta} to={`/${lng}/register`} aria-label={t('freeCta')}>{t('freeCta')}</Link>
-            <p className={styles.note}>{t('freeNote')}</p>
           </div>
           <ol className={styles.rail}>
             <li><span>1</span>{t('stepCreateT')}</li>
