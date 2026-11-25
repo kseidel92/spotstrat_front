@@ -6,7 +6,7 @@ function readTheme() {
 }
 
 /** Horizontal SpotStrat lockup; swaps for light / dark theme. */
-export default function BrandLogo({ className = '', height = 28 }) {
+export default function BrandLogo({ className = '', height = 39 }) {
   const [theme, setTheme] = useState(readTheme);
 
   useEffect(() => {

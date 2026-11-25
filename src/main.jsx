@@ -97,7 +97,7 @@ function MarketTop({ cta = true }) {
   const registerTo = `/${lng}/register`;
   return (
     <header className="topbar market-top">
-      <Link className="brand" to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={28} /></Link>
+      <Link className="brand" to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={39} /></Link>
       <div className="spacer" />
       <nav className="menu">
         <Link to={infoTo} aria-current={pathActive(pathname, infoTo) ? 'page' : undefined}>{t('howNav')}</Link>
@@ -105,7 +105,7 @@ function MarketTop({ cta = true }) {
         <Link to={loginTo} aria-current={pathActive(pathname, loginTo, { end: true }) ? 'page' : undefined}>{t('enter')}</Link>
         {cta && <Link className="solid" to={registerTo} aria-current={pathActive(pathname, registerTo, { end: true }) ? 'page' : undefined}>{t('lCta')}</Link>}
       </nav>
-      <ThemeToggle />
+      <ThemeToggle className="topbar-theme" />
       <Flags />
     </header>
   );

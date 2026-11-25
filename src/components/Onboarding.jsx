@@ -68,7 +68,7 @@ export default function Onboarding() {
   return (
     <div className={`desk ${styles.page}`}>
       <div className={styles.card}>
-        <p className={styles.brand}><BrandLogo height={28} /></p>
+        <p className={styles.brand}><BrandLogo height={39} /></p>
         <h1>{t('onboardingT')}</h1>
         <p className={styles.lede}>{t('onboardingL')}</p>
 
