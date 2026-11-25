@@ -1,0 +1,133 @@
+.root {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.root > * { pointer-events: auto; }
+
+.fab {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: 650 14px/1 var(--font);
+  letter-spacing: -0.02em;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.fab:hover { background: var(--accent-hover); }
+
+.panel {
+  width: min(340px, calc(100vw - 28px));
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 14px 0;
+}
+
+.title {
+  margin: 0;
+  font: 700 15px/1.25 var(--font);
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.close {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+}
+
+.form label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.form input,
+.form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 9px 10px;
+  font: 500 13px/1.35 var(--font);
+  resize: vertical;
+}
+
+.form input:focus,
+.form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.send {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: 650 13px/1 var(--font);
+  cursor: pointer;
+}
+
+.send:disabled { opacity: 0.65; cursor: wait; }
+
+.err {
+  margin: 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.ok {
+  margin: 0;
+  padding: 14px;
+  color: var(--up);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .root {
+    right: 12px;
+    bottom: 12px;
+  }
+}

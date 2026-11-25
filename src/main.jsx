@@ -26,8 +26,9 @@ import Hero from './components/Hero';
 import LandingJourney from './components/LandingJourney';
 import ThemeToggle from './components/ThemeToggle';
 import BrandLogo from './components/BrandLogo';
+import HelpWidget from './components/HelpWidget';
 import LabPage from './components/Lab';
-import LaunchCountdown from './components/LaunchCountdown';
+import LaunchCountdown, { salesOpen } from './components/LaunchCountdown';
 import Faq from './components/Faq';
 import { ConfirmProvider, useConfirm } from './confirm';
 import LaunchPrice from './components/LaunchPrice';
@@ -2485,6 +2486,7 @@ function PlanPicker({ showBody = true, startPath = 'checkout' }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const { data } = usePlansQuery();
+  const canBuy = salesOpen();
   const terms = data?.terms || [
     { months: 1, off: 0, paper: { total: 93.33, monthly: 93.33 }, pro: { total: 139.99, monthly: 139.99 } },
     { months: 3, off: 0.1, paper: { total: 251.99, monthly: 84 }, pro: { total: 377.97, monthly: 125.99 } },
@@ -2497,12 +2499,23 @@ function PlanPicker({ showBody = true, startPath = 'checkout' }) {
         <article key={tier} className={tier}>
           <h3>{t('planPaper')}</h3>
           {showBody && <p>{t('planPaperBody')}</p>}
+          {!canBuy && <p className="mono dim">{t('payBeforeLaunch')}</p>}
           {terms.map((term) => {
             const quote = term.paper;
             const label = term.months === 12 ? t('termYear') : term.months === 1 ? t('termMonth') : t('termMonths', { n: term.months });
             const to = startPath === 'register'
               ? `/${lng}/register`
               : `/${lng}/app/checkout?tier=${tier}&months=${term.months}`;
+            if (!canBuy && startPath !== 'register') {
+              return (
+                <button key={term.months} type="button" className="term term-locked" disabled aria-disabled="true">
+                  <strong>{label}</strong>
+                  <span>{localMoney(lng, quote.monthly)} {t('perMonth')}</span>
+                  <b>{localMoney(lng, quote.total)}</b>
+                  {term.off > 0 && <em>{t('offLabel', { off: Math.round(term.off * 100) })}</em>}
+                </button>
+              );
+            }
             return (
               <Link key={term.months} className="term" to={to}>
                 <strong>{label}</strong>
@@ -2614,8 +2627,13 @@ function Checkout() {
   const [startCheckout, { isLoading }] = useCheckoutMutation();
   const [err, setErr] = useState('');
   const [session, setSessionCheckout] = useState(null);
+  const canBuy = salesOpen();
   const quote = data?.terms?.find((term) => term.months === months)?.[tier];
   async function openPay() {
+    if (!canBuy) {
+      setErr(t('payBeforeLaunch'));
+      return;
+    }
     setErr('');
     try {
       const res = await startCheckout({ tier, months, locale: lng, kind: 'plan' }).unwrap();
@@ -2634,8 +2652,8 @@ function Checkout() {
       {quote && <p className="price-num">{localMoney(lng, quote.total)}</p>}
       <div className="panel">
         {err && <div className="error">{err}</div>}
-        <p className="muted">{t('payStripeHint')}</p>
-        <button className="solid" disabled={isLoading} type="button" onClick={openPay}>
+        <p className="muted">{canBuy ? t('payStripeHint') : t('payBeforeLaunch')}</p>
+        <button className="solid" disabled={isLoading || !canBuy} type="button" onClick={openPay}>
           {isLoading ? t('payConfirming') : t('payActivate')}
         </button>
       </div>
@@ -2728,7 +2746,12 @@ function StrategyProduction() {
   const shown = quote
     ? new Intl.NumberFormat(PRICE_FX[lng]?.locale || 'en-US', { style: 'currency', currency: quote.currency }).format(quote.localAmount)
     : '';
+  const canBuy = salesOpen();
   async function openPay() {
+    if (!canBuy) {
+      setErr(t('payBeforeLaunch'));
+      return;
+    }
     setErr('');
     try {
       const res = await buy({ id, locale: lng }).unwrap();
@@ -2766,9 +2789,11 @@ function StrategyProduction() {
         <div className="panel">
           <p className="price-num">{shown}</p>
           {lng !== 'pt-BR' && quote && <p className="muted">{t('prodEq', { brl: brlMoney(quote.amountBrl) })}</p>}
-          <p className="muted">{t('payStripeHint')}</p>
+          <p className="muted">{t('prodOnceNote')}</p>
+          <p className="muted">{t('prodMaintenanceNote')}</p>
+          <p className="muted">{canBuy ? t('payStripeHint') : t('payBeforeLaunch')}</p>
           {err && <div className="error">{err}</div>}
-          <button className="solid" disabled={isLoading || !quote} type="button" onClick={openPay}>
+          <button className="solid" disabled={isLoading || !quote || !canBuy} type="button" onClick={openPay}>
             {isLoading ? t('payConfirming') : `${t('buyProd')} · ${shown}`}
           </button>
         </div>
@@ -3229,6 +3254,7 @@ function App() {
             </Route>
             <Route path="*" element={<LangRedirect />} />
           </Routes>
+          <HelpWidget />
         </SessionBoot>
       </AppErrorBoundary>
     </BrowserRouter>

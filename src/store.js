@@ -173,6 +173,9 @@ export const api = createApi({
       query: ({ id, locale }) => ({ url: `/strategies/${id}/production?locale=${locale}`, method: 'POST', body: { locale } }),
       invalidatesTags: ['Production'],
     }),
+    contact: build.mutation({
+      query: (body) => ({ url: '/contact', method: 'POST', body }),
+    }),
   }),
 });
 
@@ -184,6 +187,7 @@ export const {
   useRemoveMutation, useRestoreMutation, usePatchStrategyMutation, useJobQuery, useDeskQuery,
   useManifestQuery, useSymbolsQuery, useKlinesQuery, useArtifactsQuery, useLabQueryMutation,
   useConfigQuery, useSiteQuery, useBillingQuery, usePlansQuery, useCheckoutMutation, useConfirmSessionMutation, useCancelPlanMutation, useStrategyProductionQuery, useBuyProductionMutation,
+  useContactMutation,
 } = api;
 
 const deskSlice = createSlice({
