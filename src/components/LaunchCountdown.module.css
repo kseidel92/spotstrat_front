@@ -1,7 +1,7 @@
 .wrap {
   width: 100%;
   margin: 0;
-  padding: 8px max(var(--gutter), calc((100% - var(--page)) / 2)) 0;
+  padding: 0;
 }
 
 .card {

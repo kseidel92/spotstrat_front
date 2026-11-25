@@ -1872,7 +1872,7 @@ body:has(.landing) { background: var(--bg); }
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 8px max(var(--gutter), calc((100% - var(--page)) / 2)) 36px;
+  padding: 0;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 16px;
@@ -2605,6 +2605,13 @@ body:has(.landing) { background: var(--bg); }
   border-top: 1px solid var(--border);
   display: grid;
   gap: 28px;
+  align-content: start;
+}
+.proof-band > section {
+  width: 100%;
+  max-width: var(--page);
+  margin: 0;
+  justify-self: start;
 }
 .proof-grid {
   display: grid;
