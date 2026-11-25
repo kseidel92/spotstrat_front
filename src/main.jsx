@@ -460,13 +460,7 @@ function PathShow() {
         </div>
       </div>
       <div className="path-visual">
-        {i === 0 && (
-          <div className="path-chat">
-            <p>{t('ex1')}</p>
-            <p>{t('ex2')}</p>
-            <p>{t('ex4')}</p>
-          </div>
-        )}
+        {i === 0 && <img className="path-shot frame" src={deskShot} alt={t('path1t')} />}
         {i === 1 && <CandleChart title={t('chartEngulf')} bars={ENGULF_BARS} mark={6} markPrev={5} showEma={false} />}
         {i === 2 && <img className="path-shot frame" src={tradesShot} alt={t('path3t')} />}
         {i === 3 && <AlertVisual src={alertShot} alt={t('path4t')} />}
@@ -484,7 +478,7 @@ function Landing() {
     <div className="landing landing-v2">
       <MarketTop />
       <Hero />
-      <LandingJourney examples={[t('ex1'), t('ex2'), t('ex4')]} />
+      <LandingJourney />
       <section className="proof-band">
         <LaunchCountdown />
         <ShieldNote />
