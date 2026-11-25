@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# App autenticado — não precisa indexar
+Disallow: /*/app/
+Disallow: /*/login
+Disallow: /*/register
+Disallow: /*/verify
+Disallow: /*/forgot-password
+
+Sitemap: https://www.spotstrat.com/sitemap.xml

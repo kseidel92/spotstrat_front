@@ -27,6 +27,7 @@ import LandingJourney from './components/LandingJourney';
 import ThemeToggle from './components/ThemeToggle';
 import BrandLogo from './components/BrandLogo';
 import HelpWidget from './components/HelpWidget';
+import Seo from './components/Seo';
 import LabPage from './components/Lab';
 import LaunchCountdown, { salesOpen } from './components/LaunchCountdown';
 import Faq from './components/Faq';
@@ -3217,6 +3218,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <Seo />
       <AppErrorBoundary>
         <SessionBoot>
           <Routes>
