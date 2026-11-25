@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSiteQuery } from '../store';
+import { useConfigQuery, useSiteQuery } from '../store';
 import styles from './LaunchCountdown.module.css';
 
 /** 3 Dez 2026, 15:00 Brasília (GMT−3). O instante é absoluto; a exibição usa o fuso do aparelho. */
 export const LAUNCH_AT = Date.UTC(2026, 11, 3, 18, 0, 0);
 
-/** Compras (plano / produção) só depois do lançamento. */
-export function salesOpen(now = Date.now()) {
+/** Compras (plano / produção) só depois do lançamento, salvo API com vendas liberadas. */
+export function salesOpen(now = Date.now(), { apiSalesOpen } = {}) {
+  if (apiSalesOpen === true) return true;
+  if (import.meta.env.VITE_SALES_OPEN === 'true') return true;
   return now >= LAUNCH_AT;
+}
+
+export function useCanBuySales() {
+  const { data: config } = useConfigQuery(undefined, { pollingInterval: 60000 });
+  return salesOpen(Date.now(), { apiSalesOpen: config?.salesOpen });
 }
 
 function partsOf(ms) {

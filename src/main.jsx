@@ -29,7 +29,7 @@ import BrandLogo from './components/BrandLogo';
 import HelpWidget from './components/HelpWidget';
 import Seo from './components/Seo';
 import LabPage from './components/Lab';
-import LaunchCountdown, { salesOpen } from './components/LaunchCountdown';
+import LaunchCountdown, { useCanBuySales } from './components/LaunchCountdown';
 import Faq from './components/Faq';
 import { ConfirmProvider, useConfirm } from './confirm';
 import LaunchPrice from './components/LaunchPrice';
@@ -2481,7 +2481,7 @@ function PlanPicker({ showBody = true, startPath = 'checkout' }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const { data } = usePlansQuery();
-  const canBuy = salesOpen();
+  const canBuy = useCanBuySales();
   const terms = data?.terms || [
     { months: 1, off: 0, paper: { total: 93.33, monthly: 93.33 }, pro: { total: 139.99, monthly: 139.99 } },
     { months: 3, off: 0.1, paper: { total: 251.99, monthly: 84 }, pro: { total: 377.97, monthly: 125.99 } },
@@ -2622,7 +2622,7 @@ function Checkout() {
   const [startCheckout, { isLoading }] = useCheckoutMutation();
   const [err, setErr] = useState('');
   const [session, setSessionCheckout] = useState(null);
-  const canBuy = salesOpen();
+  const canBuy = useCanBuySales();
   const quote = data?.terms?.find((term) => term.months === months)?.[tier];
   async function openPay() {
     if (!canBuy) {
@@ -2741,7 +2741,7 @@ function StrategyProduction() {
   const shown = quote
     ? new Intl.NumberFormat(PRICE_FX[lng]?.locale || 'en-US', { style: 'currency', currency: quote.currency }).format(quote.localAmount)
     : '';
-  const canBuy = salesOpen();
+  const canBuy = useCanBuySales();
   async function openPay() {
     if (!canBuy) {
       setErr(t('payBeforeLaunch'));
