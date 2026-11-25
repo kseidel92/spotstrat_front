@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useSiteQuery } from '../store';
 import styles from './LaunchCountdown.module.css';
 
-/** 28 Nov 2026, 15:00 Brasília (GMT−3). O instante é absoluto; a exibição usa o fuso do aparelho. */
-export const LAUNCH_AT = Date.UTC(2026, 10, 28, 18, 0, 0);
+/** 3 Dez 2026, 15:00 Brasília (GMT−3). O instante é absoluto; a exibição usa o fuso do aparelho. */
+export const LAUNCH_AT = Date.UTC(2026, 11, 3, 18, 0, 0);
 
 /** Compras (plano / produção) só depois do lançamento. */
 export function salesOpen(now = Date.now()) {
