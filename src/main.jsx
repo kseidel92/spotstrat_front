@@ -3141,7 +3141,6 @@ function PricesBody({ showCta = false }) {
       <h1>{t('pricesT')}</h1>
       <div className="price-split">
         <p><strong>{t('planIncludedLead')}</strong> {t('planIncludedBody')}</p>
-        <p><strong>{t('planOptionalLead')}</strong> {t('planOptionalBody')}</p>
         <p className="mono dim">{t('cancelAnytime')}</p>
       </div>
       {showCta && (
