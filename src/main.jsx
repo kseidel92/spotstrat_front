@@ -2742,9 +2742,14 @@ function StrategyProduction() {
     ? new Intl.NumberFormat(PRICE_FX[lng]?.locale || 'en-US', { style: 'currency', currency: quote.currency }).format(quote.localAmount)
     : '';
   const canBuy = useCanBuySales();
+  const stripeReady = prod.data?.stripeReady !== false;
   async function openPay() {
     if (!canBuy) {
       setErr(t('payBeforeLaunch'));
+      return;
+    }
+    if (!stripeReady) {
+      setErr(t('payOff'));
       return;
     }
     setErr('');
@@ -2786,9 +2791,11 @@ function StrategyProduction() {
           {lng !== 'pt-BR' && quote && <p className="muted">{t('prodEq', { brl: brlMoney(quote.amountBrl) })}</p>}
           <p className="muted">{t('prodOnceNote')}</p>
           <p className="muted">{t('prodMaintenanceNote')}</p>
-          <p className="muted">{canBuy ? t('payStripeHint') : t('payBeforeLaunch')}</p>
+          <p className="muted">
+            {!stripeReady ? t('payOff') : canBuy ? t('payStripeHint') : t('payBeforeLaunch')}
+          </p>
           {err && <div className="error">{err}</div>}
-          <button className="solid" disabled={isLoading || !quote || !canBuy} type="button" onClick={openPay}>
+          <button className="solid" disabled={isLoading || !quote || !canBuy || !stripeReady} type="button" onClick={openPay}>
             {isLoading ? t('payConfirming') : `${t('buyProd')} · ${shown}`}
           </button>
         </div>
