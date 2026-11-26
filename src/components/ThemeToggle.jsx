@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { applyTheme, preferredTheme, toggleTheme } from '../theme';
 import styles from './ThemeToggle.module.css';
 
 export default function ThemeToggle({ className = '' }) {
+  const { t } = useTranslation();
   const [theme, setTheme] = useState(() => (
     typeof document !== 'undefined'
       ? (document.documentElement.getAttribute('data-theme') || preferredTheme())
@@ -23,8 +25,8 @@ export default function ThemeToggle({ className = '' }) {
       type="button"
       className={`${styles.toggle} ${className}`}
       onClick={onToggle}
-      aria-label={light ? 'Ativar modo escuro' : 'Ativar modo claro'}
-      title={light ? 'Modo escuro' : 'Modo claro'}
+      aria-label={light ? t('themeDark') : t('themeLight')}
+      title={light ? t('themeDarkShort') : t('themeLightShort')}
     >
       {light ? (
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">

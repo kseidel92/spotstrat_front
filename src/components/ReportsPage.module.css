@@ -36,6 +36,13 @@
   gap: 16px;
 }
 
+.paperNote {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 .kicker {
   margin: 0 0 6px;
   font-family: var(--font-mono);

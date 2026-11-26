@@ -95,8 +95,9 @@ export default function LaunchCountdown() {
           <h2 id="launch-title">{t('launchDone', { when })}</h2>
         ) : (
           <>
-            <p className={styles.kicker}>{t('launchTestEnds')}</p>
-            <h2 id="launch-title">{t('launchOfficial', { when })}</h2>
+            <p className={styles.kicker}>{t('launchEarlyKicker')}</p>
+            <h2 id="launch-title">{t('launchEarlyTitle')}</h2>
+            <p className={styles.salesWhen}>{t('launchSalesWhen', { when })}</p>
             <dl className={styles.clock} aria-live="polite">
               {units.map(([value, key]) => (
                 <div key={key}>
@@ -107,8 +108,11 @@ export default function LaunchCountdown() {
             </dl>
           </>
         )}
+        {!launched && <p className={styles.trialNote}>{t('launchTrialNote')}</p>}
         <p className={styles.accounts}>
-          <strong>{accounts == null ? '…' : accounts}</strong>
+          <strong className={accounts == null ? styles.accountsSkeleton : undefined}>
+            {accounts == null ? '—' : accounts}
+          </strong>
           <span>{t('launchAccounts')}</span>
         </p>
       </article>

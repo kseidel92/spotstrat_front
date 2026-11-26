@@ -21,6 +21,14 @@
   line-height: 1.45;
 }
 
+.salesWhen {
+  margin: 0 0 14px;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 42ch;
+}
+
 .card h2 {
   margin: 0 0 16px;
   font-family: var(--font);
@@ -84,6 +92,25 @@
   letter-spacing: -0.04em;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  min-width: 2.4ch;
+}
+
+.accountsSkeleton {
+  color: var(--text-muted);
+  opacity: 0.45;
+  animation: launchAccountsPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes launchAccountsPulse {
+  50% { opacity: 0.72; }
+}
+
+.trialNote {
+  margin: 0 0 12px;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 46ch;
 }
 
 @media (max-width: 640px) {

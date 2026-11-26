@@ -118,13 +118,123 @@ function upsertLink(rel, href, extra = {}) {
   el.setAttribute('href', href);
 }
 
+const AUTH_PAGES = {
+  login: {
+    title: {
+      'pt-BR': 'Entrar | SpotStrat',
+      en: 'Log in | SpotStrat',
+      es: 'Entrar | SpotStrat',
+      'es-MX': 'Entrar | SpotStrat',
+      fr: 'Connexion | SpotStrat',
+      de: 'Anmelden | SpotStrat',
+      ja: 'ログイン | SpotStrat',
+    },
+    description: {
+      'pt-BR': 'Entre na sua conta SpotStrat e continue de onde parou.',
+      en: 'Log in to SpotStrat and pick up where you left off.',
+      es: 'Entra en SpotStrat y sigue donde lo dejaste.',
+      'es-MX': 'Entra en SpotStrat y sigue donde lo dejaste.',
+      fr: 'Connectez-vous à SpotStrat et reprenez où vous en étiez.',
+      de: 'Bei SpotStrat anmelden und dort weitermachen, wo Sie aufgehört haben.',
+      ja: 'SpotStratにログインして続きから。',
+    },
+  },
+  register: {
+    title: {
+      'pt-BR': 'Criar conta | SpotStrat',
+      en: 'Create account | SpotStrat',
+      es: 'Crear cuenta | SpotStrat',
+      'es-MX': 'Crear cuenta | SpotStrat',
+      fr: 'Créer un compte | SpotStrat',
+      de: 'Konto erstellen | SpotStrat',
+      ja: 'アカウント作成 | SpotStrat',
+    },
+    description: {
+      'pt-BR': 'Crie sua conta e teste estratégias com IA no simulador Binance.',
+      en: 'Create your account and test AI strategies on the Binance simulator.',
+      es: 'Crea tu cuenta y prueba estrategias con IA en el simulador Binance.',
+      'es-MX': 'Crea tu cuenta y prueba estrategias con IA en el simulador Binance.',
+      fr: 'Créez votre compte et testez des stratégies IA sur le simulateur Binance.',
+      de: 'Konto erstellen und KI-Strategien im Binance-Simulator testen.',
+      ja: 'アカウントを作り、BinanceシミュレーターでAI戦略を試す。',
+    },
+  },
+  verify: {
+    title: {
+      'pt-BR': 'Confirmar e-mail | SpotStrat',
+      en: 'Verify email | SpotStrat',
+      es: 'Confirmar correo | SpotStrat',
+      'es-MX': 'Confirmar correo | SpotStrat',
+      fr: 'Confirmer l’e-mail | SpotStrat',
+      de: 'E-Mail bestätigen | SpotStrat',
+      ja: 'メール確認 | SpotStrat',
+    },
+    description: {
+      'pt-BR': 'Digite o código enviado ao seu e-mail para ativar o SpotStrat.',
+      en: 'Enter the code sent to your email to activate SpotStrat.',
+      es: 'Introduce el código enviado a tu correo para activar SpotStrat.',
+      'es-MX': 'Introduce el código enviado a tu correo para activar SpotStrat.',
+      fr: 'Saisissez le code envoyé par e-mail pour activer SpotStrat.',
+      de: 'Geben Sie den per E-Mail gesendeten Code ein, um SpotStrat zu aktivieren.',
+      ja: 'メールのコードを入力してSpotStratを有効化。',
+    },
+  },
+  'forgot-password': {
+    title: {
+      'pt-BR': 'Recuperar senha | SpotStrat',
+      en: 'Reset password | SpotStrat',
+      es: 'Recuperar contraseña | SpotStrat',
+      'es-MX': 'Recuperar contraseña | SpotStrat',
+      fr: 'Mot de passe oublié | SpotStrat',
+      de: 'Passwort zurücksetzen | SpotStrat',
+      ja: 'パスワード再設定 | SpotStrat',
+    },
+    description: {
+      'pt-BR': 'Receba um código por e-mail para definir uma nova senha.',
+      en: 'Get a code by email to set a new password.',
+      es: 'Recibe un código por correo para una nueva contraseña.',
+      'es-MX': 'Recibe un código por correo para una nueva contraseña.',
+      fr: 'Recevez un code par e-mail pour un nouveau mot de passe.',
+      de: 'Code per E-Mail erhalten, um ein neues Passwort zu setzen.',
+      ja: 'メールのコードで新しいパスワードを設定。',
+    },
+  },
+  app: {
+    title: {
+      'pt-BR': 'Painel | SpotStrat',
+      en: 'Dashboard | SpotStrat',
+      es: 'Panel | SpotStrat',
+      'es-MX': 'Panel | SpotStrat',
+      fr: 'Tableau de bord | SpotStrat',
+      de: 'Dashboard | SpotStrat',
+      ja: 'ダッシュボード | SpotStrat',
+    },
+    description: {
+      'pt-BR': 'Crie, simule e acompanhe estratégias de crypto com IA.',
+      en: 'Create, simulate and track crypto strategies with AI.',
+      es: 'Crea, simula y sigue estrategias crypto con IA.',
+      'es-MX': 'Crea, simula y sigue estrategias crypto con IA.',
+      fr: 'Créez, simulez et suivez des stratégies crypto avec l’IA.',
+      de: 'Krypto-Strategien mit KI erstellen, simulieren und verfolgen.',
+      ja: 'AIで暗号戦略を作成・シミュレート・追跡。',
+    },
+  },
+};
+
+function authPageKey(pathname) {
+  if (/\/login(\/|$)/.test(pathname)) return 'login';
+  if (/\/register(\/|$)/.test(pathname)) return 'register';
+  if (/\/verify(\/|$)/.test(pathname)) return 'verify';
+  if (/\/forgot-password(\/|$)/.test(pathname)) return 'forgot-password';
+  if (/\/app(\/|$)/.test(pathname)) return 'app';
+  return '';
+}
+
 function pageKey(pathname) {
   if (/\/(precos)(\/|$)/.test(pathname)) return 'prices';
   if (/\/(info|ajuda)(\/|$)/.test(pathname)) return 'info';
   if (/\/(termos|terms|privacy|cookies)(\/|$)/.test(pathname)) return 'legal';
-  if (/\/app(\/|$)/.test(pathname) || /\/(login|register|verify|forgot-password)(\/|$)/.test(pathname)) {
-    return 'private';
-  }
+  if (authPageKey(pathname)) return 'auth';
   return 'home';
 }
 
@@ -139,13 +249,15 @@ export default function Seo() {
 
   useEffect(() => {
     const key = pageKey(pathname);
-    const privatePage = key === 'private';
+    const authKey = authPageKey(pathname);
+    const privatePage = key === 'auth';
+    const authPack = authKey ? AUTH_PAGES[authKey] : null;
     const pack = PAGE[key] || PAGE.home;
-    const title = privatePage
-      ? 'SpotStrat'
+    const title = authPack
+      ? pick(authPack.title, lng)
       : pick(pack.title, lng);
-    const description = privatePage
-      ? pick(PAGE.home.description, lng)
+    const description = authPack
+      ? pick(authPack.description, lng)
       : pick(pack.description, lng);
     const path = pathname === '/' ? `/${lng}` : pathname;
     const url = `${SITE}${path.startsWith('/') ? path : `/${path}`}`;

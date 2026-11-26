@@ -33,6 +33,9 @@ import LaunchCountdown, { useCanBuySales } from './components/LaunchCountdown';
 import Faq from './components/Faq';
 import { ConfirmProvider, useConfirm } from './confirm';
 import LaunchPrice from './components/LaunchPrice';
+import BootSplash from './components/BootSplash';
+import { IconDiscord, IconInstagram } from './components/SocialIcons';
+import { formatLocaleDateTime, formatPaperMoney } from './lib/localeFormat';
 import GoogleButton, { resolveGoogleClientId } from './components/GoogleButton';
 import Badge from './components/Badge';
 import ScratchWizard from './components/ScratchWizard';
@@ -56,16 +59,17 @@ function lngOf(pathname) {
 }
 
 function Flags() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const currentId = lngOf(pathname) || i18n.language;
   const current = LOCALES.find((l) => l.id === currentId) || LOCALES[0];
   return (
     <label className="lang-select">
-      <span className="sr-only">Idioma</span>
+      <span className="sr-only">{t('langLabel')}</span>
       <select
         value={current.id}
-        aria-label="Idioma"
+        aria-label={t('langLabel')}
         onChange={(e) => {
           const id = e.target.value;
           setLocaleCookie(id);
@@ -91,22 +95,36 @@ function MarketTop({ cta = true }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const { pathname } = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const infoTo = `/${lng}/info`;
   const pricesTo = `/${lng}/precos`;
   const loginTo = `/${lng}/login`;
   const registerTo = `/${lng}/register`;
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
   return (
     <header className="topbar market-top">
-      <Link className="brand" to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={39} /></Link>
+      <Link className="brand" to={`/${lng}`} aria-label="SpotStrat" onClick={() => setMenuOpen(false)}><BrandLogo height={39} /></Link>
       <div className="spacer" />
-      <nav className="menu">
-        <Link to={infoTo} aria-current={pathActive(pathname, infoTo) ? 'page' : undefined}>{t('howNav')}</Link>
-        <Link to={pricesTo} aria-current={pathActive(pathname, pricesTo, { end: true }) ? 'page' : undefined}>{t('pricesNav')}</Link>
-        <Link to={loginTo} aria-current={pathActive(pathname, loginTo, { end: true }) ? 'page' : undefined}>{t('enter')}</Link>
-        {cta && <Link className="solid" to={registerTo} aria-current={pathActive(pathname, registerTo, { end: true }) ? 'page' : undefined}>{t('lCta')}</Link>}
+      <button
+        type="button"
+        className="nav-toggle"
+        aria-expanded={menuOpen}
+        aria-controls="market-nav"
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        {menuOpen ? t('navClose') : t('navOpen')}
+      </button>
+      <nav id="market-nav" className={`menu market-menu ${menuOpen ? 'is-open' : ''}`}>
+        <Link to={infoTo} aria-current={pathActive(pathname, infoTo) ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('howNav')}</Link>
+        <Link to={pricesTo} aria-current={pathActive(pathname, pricesTo, { end: true }) ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('pricesNav')}</Link>
+        <Link to={loginTo} aria-current={pathActive(pathname, loginTo, { end: true }) ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('enter')}</Link>
+        {cta && <Link className="solid" to={registerTo} aria-current={pathActive(pathname, registerTo, { end: true }) ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('lCta')}</Link>}
       </nav>
       <ThemeToggle className="topbar-theme" />
       <Flags />
+      {menuOpen && <button type="button" className="nav-backdrop" aria-label={t('navClose')} onClick={() => setMenuOpen(false)} />}
     </header>
   );
 }
@@ -176,11 +194,7 @@ function SessionBoot({ children }) {
     return () => { cancel = true; clearTimeout(timer); ctrl.abort(); };
   }, [dispatch, token]);
   if (!ready) {
-    return (
-      <div className="boot-shell">
-        <p className="wrap boot-wait">{i18n.t('loadingApp')}</p>
-      </div>
-    );
+    return <BootSplash />;
   }
   return (
     <>
@@ -299,11 +313,13 @@ function SiteFooter() {
       </nav>
       <div className="foot-contact">
         <nav className="foot-social" aria-label={t('footerSocial')}>
-          <a href="https://www.instagram.com/spotstrat" target="_blank" rel="noopener noreferrer">
-            {t('footerInstagram')}
+          <a className="foot-social-link" href="https://www.instagram.com/spotstrat" target="_blank" rel="noopener noreferrer">
+            <IconInstagram />
+            <span>{t('footerInstagram')}</span>
           </a>
-          <a href="https://discord.gg/TmytNbTZn" target="_blank" rel="noopener noreferrer">
-            {t('footerDiscord')}
+          <a className="foot-social-link" href="https://discord.gg/TmytNbTZn" target="_blank" rel="noopener noreferrer">
+            <IconDiscord />
+            <span>{t('footerDiscord')}</span>
           </a>
         </nav>
         <a href="mailto:support@spotstrat.com">{t('footerMail')}</a>
@@ -486,7 +502,7 @@ function Landing() {
     <div className="landing landing-v2">
       <MarketTop />
       <Hero />
-      <LandingJourney />
+      <LandingJourney examples={[t('journeyEx1'), t('journeyEx2'), t('journeyEx3')]} />
       <section className="proof-band">
         <LaunchCountdown />
         <ShieldNote />
@@ -516,6 +532,7 @@ function Landing() {
           <Link className="solid free" to={`/${lng}/register`} aria-label={t('finalCta')}>{t('finalCta')}</Link>
         </div>
       </section>
+      <Link className="landing-sticky-cta solid free" to={`/${lng}/register`} aria-label={t('finalCta')}>{t('finalCta')}</Link>
       <SiteFooter />
     </div>
   );
@@ -632,7 +649,7 @@ function ConsentLine({ lng }) {
   return (
     <p className={auth.legal}>
       {parts.map((part, i) => {
-        if (part === '{terms}') return <Link key={i} to={`/${lng}/terms`}>{t('footerTerms')}</Link>;
+        if (part === '{terms}') return <Link key={i} to={`/${lng}/termos`}>{t('footerTerms')}</Link>;
         if (part === '{privacy}') return <Link key={i} to={`/${lng}/privacy`}>{t('footerPrivacy')}</Link>;
         return <span key={i}>{part}</span>;
       })}
@@ -841,10 +858,12 @@ function GoogleEntry() {
           onCredential={(credential) => onToken.current(credential)}
           onFail={() => setErr(t('errGoogle'))}
         />
+      ) : config.isLoading ? (
+        <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t('loadingApp')}</p>
       ) : (
         <div className="gsi" />
       )}
-      {config.isSuccess && !clientId && <div className="error">{t('errGoogleOff')}</div>}
+      {config.isSuccess && !clientId && !config.isLoading && <div className="error">{t('errGoogleOff')}</div>}
       {err && <div className="error">{err}</div>}
     </div>
   );
@@ -1095,9 +1114,17 @@ function Verify() {
   const [err, setErr] = useState('');
   const [login] = useLoginMutation();
   const [verifyEmail] = useVerifyEmailMutation();
-  const [resend] = useResendMutation();
+  const [resend, { isLoading: resending }] = useResendMutation();
   const { data } = useMeQuery(undefined, { skip: !token });
   const swapping = useRef(false);
+  const [resendSec, setResendSec] = useState(0);
+  const [resendOk, setResendOk] = useState(false);
+
+  useEffect(() => {
+    if (resendSec <= 0) return undefined;
+    const id = window.setInterval(() => setResendSec((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearInterval(id);
+  }, [resendSec]);
 
   useEffect(() => {
     const email = loc.state?.email;
@@ -1127,10 +1154,14 @@ function Verify() {
     } catch (error) { setErr(errText(error, t)); }
   }
   async function resendChannel(channel) {
+    if (resendSec > 0) return;
     setErr('');
+    setResendOk(false);
     try {
       const res = await resend({ channel }).unwrap();
       setCodes((prev) => ({ ...(prev || {}), emailCode: res.code }));
+      setResendOk(true);
+      setResendSec(60);
     } catch (error) { setErr(errText(error, t)); }
   }
   return (
@@ -1138,6 +1169,7 @@ function Verify() {
       <form className={auth.form} onSubmit={confirm}>
         <h1 className={auth.title}>{t('verifyT')}</h1>
         <p className={auth.lead}>{t('verifyLead')}</p>
+        <p className={auth.hint}>{t('verifySpam')}</p>
         {codes?.emailCode && (
           <div className={auth.codes}>
             <div>{t('localNote')}</div>
@@ -1147,10 +1179,22 @@ function Verify() {
         {err && <div className={auth.banner} role="alert">{err}</div>}
         <div className={auth.field}>
           <label htmlFor="verify-email">{t('emailCode')}</label>
-          <input id="verify-email" className={auth.input} inputMode="numeric" autoComplete="one-time-code" value={emailCode} onChange={(e) => setEmailCode(e.target.value)} />
+          <input
+            id="verify-email"
+            className={auth.input}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={8}
+            pattern="[0-9]*"
+            value={emailCode}
+            onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+          />
         </div>
         <button className={auth.submit} type="submit" disabled={!token || (!!loc.state?.password && data?.user?.email !== loc.state?.email)}>{t('confirm')}</button>
-        <button className={auth.ghost} type="button" onClick={() => resendChannel('email')}>{t('resendEmail')}</button>
+        <button className={auth.ghost} type="button" disabled={resending || resendSec > 0} onClick={() => resendChannel('email')}>
+          {resendSec > 0 ? t('resendWait', { s: resendSec }) : t('resendEmail')}
+        </button>
+        {resendOk && <p className={auth.note} role="status">{t('resendOk')}</p>}
         <p className={auth.hint}>{data?.user?.email}</p>
       </form>
     </AuthScreen>
@@ -1211,6 +1255,7 @@ function DeskBar() {
   const location = useLocation();
   const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const path = location.pathname;
   const app = `/${lng}/app`;
   const onStrategies = pathActive(path, app, { end: true });
@@ -1221,20 +1266,33 @@ function DeskBar() {
   const onLab = pathActive(path, `${app}/laboratorio`);
   const onPrices = pathActive(path, `${app}/precos`);
   const onMore = onHelp || onLab || onPrices;
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [path]);
   return (
     <header className="deskbar">
-      <Link className="brand" to={app} aria-label="SpotStrat"><BrandLogo height={26} /></Link>
-      <nav className="menu">
-        <Link to={app} aria-current={onStrategies ? 'page' : undefined}>{t('strategiesNav')}</Link>
-        <Link to={`${app}/relatorios`} aria-current={onReports ? 'page' : undefined}>{t('reportsNav')}</Link>
-        <Link to={`${app}/alarmes`} aria-current={onAlarms ? 'page' : undefined}>{t('alarmsT')}</Link>
-        <Link to={`${app}/account`} aria-current={onAccount ? 'page' : undefined}>{t('account')}</Link>
+      <Link className="brand" to={app} aria-label="SpotStrat" onClick={() => setMenuOpen(false)}><BrandLogo height={26} /></Link>
+      <button
+        type="button"
+        className="nav-toggle desk-nav-toggle"
+        aria-expanded={menuOpen}
+        aria-controls="desk-nav"
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        {menuOpen ? t('navClose') : t('navOpen')}
+      </button>
+      <nav id="desk-nav" className={`menu desk-menu ${menuOpen ? 'is-open' : ''}`}>
+        <Link to={app} aria-current={onStrategies ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('strategiesNav')}</Link>
+        <Link to={`${app}/relatorios`} aria-current={onReports ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('reportsNav')}</Link>
+        <Link to={`${app}/alarmes`} aria-current={onAlarms ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('alarmsT')}</Link>
+        <Link to={`${app}/account`} aria-current={onAccount ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('account')}</Link>
         <MoreNav app={app} onHelp={onHelp} onLab={onLab} onPrices={onPrices} onMore={onMore} />
       </nav>
       <div className="spacer" />
       <ThemeToggle />
       <Flags />
-      <button className="tiny" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
+      <button className="tiny desk-logout" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
+      {menuOpen && <button type="button" className="nav-backdrop" aria-label={t('navClose')} onClick={() => setMenuOpen(false)} />}
     </header>
   );
 }
@@ -1257,7 +1315,7 @@ function RequireDesk({ allowExpired = false }) {
     return (
       <div className="desk">
         <DeskBar />
-        <p className="wrap boot-wait">{i18n.t('loadingApp')}</p>
+        <BootSplash compact />
       </div>
     );
   }
@@ -1282,7 +1340,7 @@ function DeskGateOutlet() {
   const { lng } = useParams();
   const { data, isLoading } = useMeQuery();
   const user = data?.user;
-  if (isLoading && !user) return <p className="wrap boot-wait">{t('loadingApp')}</p>;
+  if (isLoading && !user) return <BootSplash compact />;
   if (user?.desk === 'unverified' || user?.desk === 'locked') {
     return <Navigate to={`/${lng}/verify`} replace />;
   }
@@ -1997,7 +2055,7 @@ function AlarmsPage() {
           {!steps && (
             <>
               {prompt.trim().length >= 8 && promptNeedsTrigger(prompt) && <p className="muted">{triggerHint(i18n.language)}</p>}
-              <button className="solid" disabled={busy || promptNeedsTrigger(prompt)} type="submit">{busy ? t('working') : t('send')}</button>
+              <button className="solid" disabled={busy || promptNeedsTrigger(prompt)} type="submit">{busy ? t('working') : t('alarmSend')}</button>
             </>
           )}
       </form>
@@ -2299,7 +2357,7 @@ function DeskHome() {
                 <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
               </p>
               <button className="solid" style={{ marginTop: 14 }} disabled={busy || prompt.trim().length < 30} type="submit">
-                {t('send')}
+                {t('hubPromptSend')}
               </button>
             </form>
           </div>
@@ -2416,7 +2474,7 @@ function StrategyPage() {
           )}
           <PromptStatus busy={!!jobId} status={job.data?.job?.status} err={err} />
           {!steps && (
-            <button className="solid" type="submit" disabled={!!jobId || prompt.trim().length < 8}>{(jobId) ? t('working') : t('send')}</button>
+            <button className="solid" type="submit" disabled={!!jobId || prompt.trim().length < 8}>{(jobId) ? t('working') : t('applyAdjust')}</button>
           )}
         </form>
       </article>
@@ -2580,7 +2638,7 @@ function Account() {
     <div className="wrap account-page">
       <h2>{t('account')}</h2>
       <p>{user?.email}</p>
-      <p className="plan-chip">{statusLabel(user, t)} · {t('accessUntil')} {ends ? new Date(ends).toLocaleString() : '—'} · {user?.daysLeft === 1 ? t('dayLeft') : t('daysLeft', { n: user?.daysLeft || 0 })}</p>
+      <p className="plan-chip">{statusLabel(user, t)} · {t('accessUntil')} {ends ? formatLocaleDateTime(ends, lng) : '—'} · {user?.daysLeft === 1 ? t('dayLeft') : t('daysLeft', { n: user?.daysLeft || 0 })}</p>
       {user?.expiring && <div className="warn">{t('expiring', { n: user.daysLeft })}</div>}
       {user?.desk === 'expired' && !cancelPending && <div className="error">{t('expired')}</div>}
       <form className="panel" onSubmit={save}>
@@ -2650,7 +2708,7 @@ function Checkout() {
   const label = months === 12 ? t('termYear') : months === 1 ? t('termMonth') : t('termMonths', { n: months });
   return (
     <div className="wrap" style={{ maxWidth: 560 }}>
-      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('checkoutT')}</h2>
+      <h2 className="checkout-title">{t('checkoutT')}</h2>
       <p>{tier === 'pro' ? t('planPro') : t('planPaper')} · {label}</p>
       {quote && <p className="price-num">{localMoney(lng, quote.total)}</p>}
       <div className="panel">
@@ -2704,7 +2762,7 @@ function CheckoutReturn() {
   }, [params, confirmSession, dispatch, lng, nav, t]);
   return (
     <div className="wrap" style={{ maxWidth: 560 }}>
-      <h2 style={{ fontFamily: 'Fraunces, serif' }}>{t('checkoutT')}</h2>
+      <h2 className="checkout-title">{t('checkoutT')}</h2>
       {err ? <div className="error">{err}</div> : (
         <p className="ok">{done ? t('payDone') : t('payConfirming')}</p>
       )}
@@ -2778,7 +2836,7 @@ function StrategyProduction() {
       <ol className="prod-steps-rail">
         <li className={!order ? 'on' : ''}>1. {t('stepLiveT')}</li>
         <li className={order ? 'on' : ''}>2. {t('prodPrepare')}</li>
-        <li>3. Download</li>
+        <li>3. {t('stepDownload')}</li>
       </ol>
       <article className="panel warn-panel">
         <p>{t('prodAvg')}</p>
@@ -2790,8 +2848,14 @@ function StrategyProduction() {
       {order ? (
         <div className="panel ok-panel">
           <p className="ok">{t('prodPaid')}</p>
-          <p className="muted">{new Date(order.readyBy).toLocaleDateString()}</p>
-          <p className="muted">Status: {order.status || 'queued'}</p>
+          <p className="muted">{formatLocaleDateTime(order.readyBy, lng, { month: 'long' })}</p>
+          <p className="muted">
+            {t('prodStatus')}: {
+              order.status === 'ready' ? t('prodOrderReady')
+                : order.status === 'building' ? t('prodOrderBuilding')
+                  : t('prodOrderQueued')
+            }
+          </p>
         </div>
       ) : (
         <div className="panel">

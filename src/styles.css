@@ -935,6 +935,75 @@ body:has(.landing) { background: var(--bg); }
   max-height: 39px;
   max-width: min(234px, 58vw);
 }
+
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(11, 14, 20, 0.42);
+  cursor: pointer;
+}
+
+.landing footer.site .foot-social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.landing footer.site .foot-social-link svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.checkout-title {
+  margin: 0 0 12px;
+  font-family: var(--font);
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.landing-sticky-cta {
+  display: none;
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 45;
+  justify-content: center;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 720px) {
+  .landing-sticky-cta { display: inline-flex; }
+  .landing:has(.landing-sticky-cta) footer.site { padding-bottom: 84px; }
+}
 .landing .brand i { display: none; }
 .landing .rail { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
 .landing .flags button, .landing .ghost {
@@ -1713,24 +1782,67 @@ body:has(.landing) { background: var(--bg); }
     max-width: 100%;
     padding-right: 26px;
   }
-  header.topbar.market-top .menu {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 10px;
-    width: 100%;
-    min-width: 0;
-    flex: none;
+  .nav-toggle { display: inline-flex; }
+  header.topbar.market-top {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
   }
-  header.topbar.market-top .menu a {
-    padding: 8px 6px;
-    font-size: 13px;
-    line-height: 1.25;
-    text-align: center;
-    white-space: normal;
-    justify-self: stretch;
+  header.topbar.market-top .nav-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
+  header.topbar.market-top .topbar-theme {
+    grid-column: 3;
+  }
+  header.topbar.market-top .lang-select {
+    grid-column: 4;
+  }
+  header.topbar.market-top .market-menu {
+    display: none;
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    top: 72px;
+    z-index: 70;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow);
+  }
+  header.topbar.market-top .market-menu.is-open { display: flex; }
+  header.topbar.market-top .market-menu a {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 15px;
+    border-radius: var(--radius-sm);
+  }
+  .nav-backdrop { display: block; }
+  .desk .deskbar .desk-nav-toggle { display: inline-flex; order: 2; margin-left: auto; }
+  .desk .deskbar .desk-menu {
+    display: none;
+    position: fixed;
+    left: 14px;
+    right: 14px;
+    top: 64px;
+    z-index: 70;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow);
+    order: 10;
+    flex: 1 1 100%;
+  }
+  .desk .deskbar .desk-menu.is-open { display: flex; }
+  .desk .deskbar .desk-menu a { padding: 10px 12px; border-radius: var(--radius-sm); }
+  .desk .deskbar .desk-logout { order: 3; }
   .landing .topbar .flags {
     flex: 1 1 auto;
     min-width: 72px;
@@ -2088,10 +2200,11 @@ body:has(.landing) { background: var(--bg); }
   gap: 10px;
   margin: 0;
 }
-.landing footer.site .foot-social {
+.landing footer.site .foot-contact .foot-social {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 12px 20px;
+  margin: 0 0 14px;
 }
 .landing footer.site a { color: var(--text); text-decoration: none; }
 .landing footer.site a:hover { color: var(--accent); }

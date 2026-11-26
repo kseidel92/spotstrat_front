@@ -67,6 +67,20 @@
   padding: 0 2px;
 }
 
+.okBlock {
+  padding: 14px 16px 16px;
+}
+
+.discord {
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
+.discord a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .form {
   display: grid;
   gap: 10px;

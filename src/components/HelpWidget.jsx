@@ -74,7 +74,12 @@ export default function HelpWidget() {
             </button>
           </header>
           {ok ? (
-            <p className={styles.ok}>{t('helpOk')}</p>
+            <div className={styles.okBlock}>
+              <p className={styles.ok}>{t('helpOk')}</p>
+              <p className={styles.discord}>
+                <a href="https://discord.gg/TmytNbTZn" target="_blank" rel="noopener noreferrer">{t('footerDiscord')}</a>
+              </p>
+            </div>
           ) : (
             <form className={styles.form} onSubmit={onSubmit}>
               <label>
@@ -112,15 +117,16 @@ export default function HelpWidget() {
           )}
         </section>
       ) : null}
-      <button
-        type="button"
-        className={styles.fab}
-        aria-expanded={open}
-        aria-controls={open ? titleId : undefined}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {open ? t('helpClose') : t('helpFab')}
-      </button>
+      {!open ? (
+        <button
+          type="button"
+          className={styles.fab}
+          aria-expanded={false}
+          onClick={() => setOpen(true)}
+        >
+          {t('helpFab')}
+        </button>
+      ) : null}
     </div>
   );
 }

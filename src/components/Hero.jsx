@@ -9,11 +9,16 @@ function Title({ text, accent }) {
   const mark = String(accent || '').trim();
   const index = mark ? text.toLowerCase().indexOf(mark.toLowerCase()) : -1;
   if (index < 0) return text;
+  let end = index + mark.length;
+  if (text[end] === '.') end += 1;
+  const head = text.slice(0, index);
+  const accentChunk = text.slice(index, end);
+  const tail = text.slice(end).trimStart();
   return (
     <>
-      {text.slice(0, index)}
-      <span className={styles.accent}>{text.slice(index, index + mark.length)}</span>
-      {text.slice(index + mark.length)}
+      {head}
+      <span className={styles.accent}>{accentChunk}</span>
+      {tail ? ` ${tail}` : null}
     </>
   );
 }
@@ -25,7 +30,7 @@ export default function Hero() {
 
   return (
     <section className={styles.hero}>
-      <img className={styles.bg} src={img3} alt="" />
+      <img className={styles.bg} src={img3} alt="" aria-hidden="true" />
       <div className={styles.overlay} />
       <div className={styles.grid}>
         <div className={styles.copy}>
@@ -46,7 +51,7 @@ export default function Hero() {
         <div className={styles.visual}>
           <img className={styles.glow} src={img1} alt="" />
           <div className={styles.frame}>
-            <img className={styles.panel} src={img4} alt="" />
+            <img className={styles.panel} src={img4} alt={t('heroShotAlt')} />
           </div>
         </div>
       </div>

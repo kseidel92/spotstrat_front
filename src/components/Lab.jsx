@@ -6,6 +6,7 @@ import {
 } from '../store';
 import css from './Lab.module.css';
 import { useConfirm } from '../confirm';
+import { humanizeArtifactName } from '../lib/localeFormat';
 
 const LabCtx = createContext(null);
 
@@ -470,7 +471,11 @@ function LabScreen() {
           <Candle symbol={symbol} />
           <h3>{t('sweeps')}</h3>
           {(artifacts.data?.artifacts || []).slice(0, 12).map((item) => (
-            <p key={item.id}><strong>{item.name}</strong><br /><span className="muted">{item.summary}</span></p>
+            <p key={item.id}>
+              <strong>{humanizeArtifactName(item.name)}</strong>
+              <br />
+              <span className="muted">{item.summary}</span>
+            </p>
           ))}
         </details>
       </div>

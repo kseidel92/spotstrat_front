@@ -5,12 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useDeskQuery, usePauseMutation, useResumeMutation, useResetMutation, useRemoveMutation, useRestoreMutation, api, ingest } from '../store';
 import { useConfirm } from '../confirm';
 import StrategyHelpBalloon from './StrategyHelpBalloon';
+import { formatPaperMoney } from '../lib/localeFormat';
 import css from './ReportsPage.module.css';
 
-function money(n) {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return '—';
-  return v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+function money(n, lng) {
+  return formatPaperMoney(n, lng);
 }
 
 function pct(n) {
@@ -38,7 +37,7 @@ function Spark({ values, up }) {
   );
 }
 
-function BarCompare({ items }) {
+function BarCompare({ items, lng }) {
   const max = Math.max(...items.map((i) => Math.abs(i.value)), 1);
   return (
     <div className={css.bars} role="img" aria-label="PnL">
@@ -51,7 +50,7 @@ function BarCompare({ items }) {
               style={{ width: `${Math.max(6, (Math.abs(item.value) / max) * 100)}%` }}
             />
           </div>
-          <b className={item.value >= 0 ? css.up : css.down}>{money(item.value)}</b>
+          <b className={item.value >= 0 ? css.up : css.down}>{money(item.value, lng)}</b>
         </div>
       ))}
     </div>
@@ -167,6 +166,7 @@ export default function ReportsPage() {
           <p className={css.kicker}>{t('reportsNav')}</p>
           <h1>{t('reportsT')}</h1>
           <p className={css.lede}>{t('reportsL')}</p>
+          <p className={css.paperNote}>{t('reportsPaperNote')}</p>
         </div>
         <Link className={css.cta} to={`/${lng}/app`}>{t('reportsNew')}</Link>
       </header>
@@ -174,7 +174,10 @@ export default function ReportsPage() {
       <div className={css.live}>
         <span className={css.pill}>{t('marketLive')}</span>
         <span className={css.pill}>{t('moodMarket')}: {mare ? `${mareLabel} · ${mare.upPct}%` : '…'}</span>
-        <span className={`${css.conn} ${connection === 'live' ? css.liveOk : css.liveDown}`}>
+        <span
+          className={`${css.conn} ${connection === 'live' ? css.liveOk : css.liveDown}`}
+          title={t('connectionHint')}
+        >
           <i />{t('connection')}: {connection || '…'}
         </span>
       </div>
@@ -182,11 +185,11 @@ export default function ReportsPage() {
       <section className={css.kpis}>
         <article>
           <span>{t('reportsKpiEquity')}</span>
-          <strong>{money(totalEquity)}</strong>
+          <strong>{money(totalEquity, lng)}</strong>
         </article>
         <article>
           <span>{t('reportsKpiPnl')}</span>
-          <strong className={totalPnl >= 0 ? css.up : css.down}>{money(totalPnl)}</strong>
+          <strong className={totalPnl >= 0 ? css.up : css.down}>{money(totalPnl, lng)}</strong>
         </article>
         <article>
           <span>{t('reportsKpiTrades')}</span>
@@ -203,13 +206,13 @@ export default function ReportsPage() {
           <article>
             <span>{t('reportsBestPnl')}</span>
             <strong>{bestPnl?.name || '—'}</strong>
-            <b className={css.up}>{bestPnl ? money(bestPnl.pnl) : '—'}</b>
+            <b className={css.up}>{bestPnl ? money(bestPnl.pnl, lng) : '—'}</b>
             {bestPnl && <Spark values={sparkFrom(bestPnl)} up={Number(bestPnl.pnl) >= 0} />}
           </article>
           <article>
             <span>{t('reportsWorstPnl')}</span>
             <strong>{worstPnl?.name || '—'}</strong>
-            <b className={css.down}>{worstPnl ? money(worstPnl.pnl) : '—'}</b>
+            <b className={css.down}>{worstPnl ? money(worstPnl.pnl, lng) : '—'}</b>
             {worstPnl && <Spark values={sparkFrom(worstPnl)} up={Number(worstPnl.pnl) >= 0} />}
           </article>
           <article>
@@ -233,7 +236,7 @@ export default function ReportsPage() {
             <h2>{t('reportsChartT')}</h2>
             <p>{t('reportsChartL')}</p>
           </div>
-          <BarCompare items={chartItems} />
+          <BarCompare items={chartItems} lng={lng} />
         </section>
       )}
 
@@ -272,8 +275,8 @@ export default function ReportsPage() {
                 <Spark values={sparkFrom(s)} up={Number(s.pnl) >= 0} />
               </header>
               <div className={css.kpi}>
-                <span>{t('equity')} <b>{money(s.equity)}</b></span>
-                <span className={Number(s.pnl) > 0 ? css.up : Number(s.pnl) < 0 ? css.down : ''}>{t('pnl')} <b>{money(s.pnl)}</b></span>
+                <span>{t('equity')} <b>{money(s.equity, lng)}</b></span>
+                <span className={Number(s.pnl) > 0 ? css.up : Number(s.pnl) < 0 ? css.down : ''}>{t('pnl')} <b>{money(s.pnl, lng)}</b></span>
                 <span>{t('trades')} <b>{s.nTrades}</b></span>
                 <span>{t('wr')} <b>{pct(s.winRate)}</b></span>
               </div>

@@ -1,0 +1,54 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text-muted);
+  padding: 24px;
+}
+
+.shell.compact {
+  min-height: 40vh;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: min(280px, 100%);
+}
+
+.logo {
+  opacity: 0.95;
+}
+
+.bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  animation: bootSlide 1.1s ease-in-out infinite;
+}
+
+@keyframes bootSlide {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
+.line {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-muted);
+}
