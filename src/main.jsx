@@ -297,15 +297,15 @@ function SiteFooter() {
         <Link to={`/${lng}/privacy`} onClick={open(`/${lng}/privacy`)}>{t('footerPrivacy')}</Link>
         <Link to={`/${lng}/cookies`} onClick={open(`/${lng}/cookies`)}>{t('footerCookies')}</Link>
       </nav>
-      <nav className="foot-social" aria-label={t('footerSocial')}>
-        <a href="https://www.instagram.com/spotstrat" target="_blank" rel="noopener noreferrer">
-          {t('footerInstagram')}
-        </a>
-        <a href="https://discord.gg/TmytNbTZn" target="_blank" rel="noopener noreferrer">
-          {t('footerDiscord')}
-        </a>
-      </nav>
       <div className="foot-contact">
+        <nav className="foot-social" aria-label={t('footerSocial')}>
+          <a href="https://www.instagram.com/spotstrat" target="_blank" rel="noopener noreferrer">
+            {t('footerInstagram')}
+          </a>
+          <a href="https://discord.gg/TmytNbTZn" target="_blank" rel="noopener noreferrer">
+            {t('footerDiscord')}
+          </a>
+        </nav>
         <a href="mailto:support@spotstrat.com">{t('footerMail')}</a>
         <p className="risk">{t('footerRisk')}</p>
       </div>
