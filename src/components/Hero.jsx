@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styles from './Hero.module.css';
 import img1 from './img_1.jpg';
 import img3 from './img_3.jpg';
-import img4 from './img_4.png';
+import HeroPanel from './HeroPanel';
 
 function Title({ text, accent }) {
   const mark = String(accent || '').trim();
@@ -49,9 +49,10 @@ export default function Hero() {
           </ol>
         </div>
         <div className={styles.visual}>
-          <img className={styles.glow} src={img1} alt="" />
+          <span className={styles.visualGlow} aria-hidden="true" />
+          <img className={styles.glow} src={img1} alt="" aria-hidden="true" />
           <div className={styles.frame}>
-            <img className={styles.panel} src={img4} alt={t('heroShotAlt')} />
+            <HeroPanel />
           </div>
         </div>
       </div>
