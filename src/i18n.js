@@ -3852,21 +3852,6 @@ const ja = {
   agree: '口座を作ると、{terms}と{privacy}に同意したことになります。',
 };
 
-i18n.use(initReactI18next).init({
-  resources: {
-    'pt-BR': pack(ptBR),
-    en: pack(en),
-    es: pack(es),
-    'es-MX': pack(esMX),
-    fr: pack(fr),
-    de: pack(de),
-    ja: pack(ja),
-  },
-  lng: 'pt-BR',
-  fallbackLng: 'en',
-  interpolation: { escapeValue: false },
-});
-
 export function detectLocale() {
   const saved = document.cookie.split('; ').find((row) => row.startsWith('lng='));
   if (saved) {
@@ -3885,6 +3870,21 @@ export function detectLocale() {
   if (short === 'en') return 'en';
   return 'en';
 }
+
+i18n.use(initReactI18next).init({
+  resources: {
+    'pt-BR': pack(ptBR),
+    en: pack(en),
+    es: pack(es),
+    'es-MX': pack(esMX),
+    fr: pack(fr),
+    de: pack(de),
+    ja: pack(ja),
+  },
+  lng: detectLocale(),
+  fallbackLng: 'en',
+  interpolation: { escapeValue: false },
+});
 
 export function setLocaleCookie(lng) {
   document.cookie = `lng=${lng}; path=/; max-age=31536000`;

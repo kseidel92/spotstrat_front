@@ -1,4 +1,4 @@
-import { Component, StrictMode, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, StrictMode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -133,7 +133,7 @@ function MarketTop({ cta = true }) {
 function useLang() {
   const { lng } = useParams();
   const { i18n: inst } = useTranslation();
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (LOCALES.some((l) => l.id === lng) && inst.language !== lng) inst.changeLanguage(lng);
   }, [lng, inst]);
   return lng;
@@ -302,32 +302,33 @@ function SiteFooter() {
   const nav = useNavigate();
   const open = (to) => goFromFooter(nav, pathname, to);
   const home = `/${lng}`;
+  const copy = (key) => t(key, lng ? { lng } : undefined);
   return (
     <footer className="site">
       <div className="foot-brand">
         <Link className="brand" to={home} onClick={open(home)} aria-label="SpotStrat">
           <BrandLogo height={32} />
         </Link>
-        <p className="tag">{t('footerTag')}</p>
-        <p className="copy">{t('footerCopy')}</p>
+        <p className="tag">{copy('footerTag')}</p>
+        <p className="copy">{copy('footerCopy')}</p>
       </div>
-      <nav className="foot-legal" aria-label={t('footerLegal')}>
-        <Link to={`/${lng}/termos`} onClick={open(`/${lng}/termos`)}>{t('footerTerms')}</Link>
-        <Link to={`/${lng}/privacy`} onClick={open(`/${lng}/privacy`)}>{t('footerPrivacy')}</Link>
-        <Link to={`/${lng}/cookies`} onClick={open(`/${lng}/cookies`)}>{t('footerCookies')}</Link>
+      <nav className="foot-legal" aria-label={copy('footerLegal')}>
+        <Link to={`/${lng}/termos`} onClick={open(`/${lng}/termos`)}>{copy('footerTerms')}</Link>
+        <Link to={`/${lng}/privacy`} onClick={open(`/${lng}/privacy`)}>{copy('footerPrivacy')}</Link>
+        <Link to={`/${lng}/cookies`} onClick={open(`/${lng}/cookies`)}>{copy('footerCookies')}</Link>
       </nav>
       <div className="foot-contact">
-        <nav className="foot-social" aria-label={t('footerSocial')}>
+        <nav className="foot-social" aria-label={copy('footerSocial')}>
           <a className="foot-social-link" href="https://www.instagram.com/spotstrat" target="_blank" rel="noopener noreferrer">
             <IconInstagram />
-            <span>{t('footerInstagram')}</span>
+            <span>{copy('footerInstagram')}</span>
           </a>
           <a className="foot-social-link" href="https://discord.gg/TmytNbTZn" target="_blank" rel="noopener noreferrer">
             <IconDiscord />
-            <span>{t('footerDiscord')}</span>
+            <span>{copy('footerDiscord')}</span>
           </a>
         </nav>
-        <a href="mailto:support@spotstrat.com">{t('footerMail')}</a>
+        <a href="mailto:support@spotstrat.com">{copy('footerMail')}</a>
       </div>
     </footer>
   );
