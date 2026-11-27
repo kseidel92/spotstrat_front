@@ -40,6 +40,11 @@ export default function HeroPanel() {
 
   return (
     <div className={styles.panelShell}>
+      <ul className={styles.panelSteps} aria-label={t('idealT')}>
+        <li>{t('stepCreateT')}</li>
+        <li>{t('stepSimT')}</li>
+        <li>{t('stepLiveT')}</li>
+      </ul>
       {usePosterOnly ? (
         <img
           className={styles.panel}

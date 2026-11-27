@@ -166,10 +166,10 @@
 .frame {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: 520px;
-  padding: 10px;
-  border-radius: 18px;
+  width: min(100%, 340px);
+  margin-inline: auto;
+  padding: 6px;
+  border-radius: 14px;
   border: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
   box-shadow: var(--shadow);
@@ -186,9 +186,45 @@
 .panelShell {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #0b0e14;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.panelSteps {
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  pointer-events: none;
+}
+
+.panelSteps li {
+  padding: 6px 4px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(8, 12, 20, 0.82);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+:global([data-theme="light"]) .panelSteps li {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(6, 10, 18, 0.88);
 }
 
 :global([data-theme="light"]) .panelShell {
@@ -201,11 +237,13 @@
 .panel {
   display: block;
   width: 100%;
+  max-height: min(58vw, 320px);
   height: auto;
   vertical-align: top;
   border: 0;
   object-fit: cover;
-  aspect-ratio: 832 / 1104;
+  object-position: center 28%;
+  aspect-ratio: 5 / 6;
 }
 
 :global([data-theme="light"]) .panel {
@@ -230,23 +268,32 @@
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-6px); }
 }
 
 @media (min-width: 900px) {
   .grid {
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 40px;
+    grid-template-columns: 1.12fr 0.88fr;
+    gap: 32px;
     padding-top: 64px;
     padding-bottom: 64px;
+  }
+
+  .frame {
+    width: min(100%, 360px);
+  }
+
+  .panel {
+    max-height: 340px;
+    aspect-ratio: 4 / 5;
   }
 
   .visualGlow {
     display: block;
     position: absolute;
     z-index: 0;
-    width: min(420px, 90%);
-    height: 62%;
+    width: min(300px, 80%);
+    height: 52%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -48%);
