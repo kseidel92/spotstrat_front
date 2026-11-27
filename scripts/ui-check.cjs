@@ -172,7 +172,7 @@ async function main() {
   await new Promise((r) => setTimeout(r, 200));
   const phAlarm = await cdp.eval('document.querySelector("textarea").placeholder');
   check('placeholder alarme', /avise/i.test(phAlarm) && ph.startsWith('Ex'));
-  check('maré ou mercado', /BOA|RUIM|NEUTRA|mercado/.test(text));
+  check('maré ou mercado', /BOA|RUIM|NEUTRA|mercado|neutro|neutral/.test(text));
   await cdp.eval(`[...document.querySelectorAll('.modes button')].find(b => b.textContent.includes('paper')).click()`);
   await new Promise((r) => setTimeout(r, 150));
 

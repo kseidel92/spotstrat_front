@@ -1315,9 +1315,11 @@ function DeskBar() {
 
 function RequireDesk({ allowExpired = false }) {
   const lng = useLang();
+  const location = useLocation();
   const token = useSelector((s) => s.auth.token);
   const { data, isLoading, isFetching, error, isError, refetch } = useMeQuery();
   const [waited, setWaited] = useState(false);
+  const staticDesk = /\/app\/(info|ajuda|precos)(\/|$)/.test(location.pathname);
   useEffect(() => { connectStream(); }, []);
   useEffect(() => {
     const timer = setTimeout(() => setWaited(true), 3000);
@@ -1326,7 +1328,7 @@ function RequireDesk({ allowExpired = false }) {
   const known = ['trial', 'paper', 'pro', 'active', 'expired'].includes(data?.user?.desk);
   const booted = useRef(false);
   if (data?.user || isError) booted.current = true;
-  const stillBooting = !booted.current && isLoading && !known && !data?.user && !isError && !waited;
+  const stillBooting = !staticDesk && !booted.current && isLoading && !known && !data?.user && !isError && !waited;
   void isFetching;
   if (stillBooting) {
     return (
@@ -1444,14 +1446,14 @@ function Stepper({ count, index }) {
   );
 }
 
-function DeskArea({ value, onChange, placeholder, disabled }) {
+function DeskArea({ value, onChange, placeholder, disabled, ...rest }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const text = String(value || '');
   const long = text.length > 160 || text.split('\n').length > 4;
   return (
     <div className={`field-box${open ? ' expanded' : ''}${long ? ' has-expand' : ''}`}>
-      <textarea value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} />
+      <textarea value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} {...rest} />
       {long && (
         <button className="expand" type="button" disabled={disabled} onClick={() => setOpen((v) => !v)}>
           {open ? t('collapseField') : t('expandField')}
@@ -1559,16 +1561,44 @@ function PromptStatus({ busy, status, note, err, detail, action }) {
     return () => clearInterval(timer);
   }, [busy]);
   if (busy) {
+    const stages = [
+      { id: 'queued', key: 'workingQueued', from: 0 },
+      { id: 'validate', key: 'workingStageValidate', from: 0 },
+      { id: 'recipe', key: 'workingStageRecipe', from: 8 },
+      { id: 'sim', key: 'workingStageSim', from: 18 },
+    ];
+    const current = status === 'queued'
+      ? 'queued'
+      : elapsed >= 18
+        ? 'sim'
+        : elapsed >= 8
+          ? 'recipe'
+          : 'validate';
     const stage = status === 'queued'
       ? t('workingQueued')
       : elapsed >= 25
         ? t('workingLong')
-        : t('working');
+        : t(stages.find((item) => item.id === current)?.key || 'working');
     return (
       <div className="composer-status" role="status" aria-live="polite">
         <strong>{stage}</strong>
         <div className="composer-bar" aria-hidden="true"><i /></div>
-        <span className="muted">{detail || t('workingSub')}</span>
+        <ol className="composer-stages">
+          {stages.map((item) => {
+            const done = item.id === 'queued'
+              ? status !== 'queued'
+              : item.id === 'validate'
+                ? elapsed >= 8 && status !== 'queued'
+                : item.id === 'recipe'
+                  ? elapsed >= 18
+                  : false;
+            const on = item.id === current;
+            return (
+              <li key={item.id} className={on ? 'on' : done ? 'done' : ''}>{t(item.key)}</li>
+            );
+          })}
+        </ol>
+        <span className="muted">{detail || t('workingAvg')}</span>
         {elapsed > 0 && <span className="muted composer-elapsed">{t('workingElapsed', { n: elapsed })}</span>}
       </div>
     );
@@ -1618,6 +1648,7 @@ function resultLabel(key, t) {
 
 function TradeBook({ trades, position }) {
   const { t } = useTranslation();
+  const { lng } = useParams();
   const [filter, setFilter] = useState('');
   const openRow = position ? [{
     id: 'open-live',
@@ -1634,10 +1665,22 @@ function TradeBook({ trades, position }) {
   const closed = (trades || []).filter((tr) => tr.closed_at);
   const rows = [...openRow, ...closed];
   const shown = rows.filter((tr) => !filter || resultKey(tr) === filter);
+  if (!rows.length) {
+    return (
+      <div className="book-empty" role="status">
+        <p>{t('emptyTradesScan')}</p>
+        <p>
+          <a href="#scan">{t('emptyTradesScanLink')}</a>
+          {' · '}
+          <Link to={`/${lng}/app/info#trades`}>{t('emptyTradesHelpLink')}</Link>
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="book">
       <div className="book-meta">
-        <span>{shown.length ? t('nTrades', { n: shown.length }) : t('noTradesYet')}</span>
+        <span>{shown.length ? t('nTrades', { n: shown.length }) : t('noTradesFilter')}</span>
         <label className="result-filter">
           <span>{t('thResult')}</span>
           <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={t('thResult')}>
@@ -1666,7 +1709,7 @@ function TradeBook({ trades, position }) {
             </tr>
           </thead>
           <tbody>
-            {!shown.length && <tr><td className="empty" colSpan={10}>{t('emptyTrades')}</td></tr>}
+            {!shown.length && <tr><td className="empty" colSpan={10}>{t('noTradesFilter')}</td></tr>}
             {shown.map((tr) => {
               const key = resultKey(tr);
               const raw = tr.raw || {};
@@ -2160,11 +2203,15 @@ function DeskHome() {
   const [needPlan, setNeedPlan] = useState(false);
   const dispatch = useDispatch();
   const [sendPrompt, { isLoading }] = usePromptMutation();
+  const me = useMeQuery();
   const job = useJobQuery(jobId, { skip: !jobId, pollingInterval: jobId ? 700 : 0 });
   const busy = isLoading || !!jobId;
+  const trialUser = me.data?.user;
+  const trialLimit = trialUser?.desk === 'trial' ? Number(trialUser.promptLimit || 10) : null;
+  const trialUsed = trialLimit != null ? Number(trialUser.promptsUsed || 0) : null;
 
   const opts = (extra = {}) => tradeOptions({
-    exitMode: extra.exitMode || exitMode,
+    exitMode: extra.exitMode || ((extra.guided ?? (phase === 'scratch' || phase === 'steps')) ? 'manual' : exitMode),
     stopPct: extra.stopPct || stopPct,
     tpPct: extra.tpPct || tpPct,
     timeExit,
@@ -2290,20 +2337,24 @@ function DeskHome() {
         <div className={hubCss.intro}>
           <h1>{t('hubT')}</h1>
           <p>{t('hubL')}</p>
+          {trialLimit != null && (
+            <p className="trial-meter">{t('trialPromptsLeft', { used: trialUsed, limit: trialLimit })}</p>
+          )}
         </div>
-        <div className={hubCss.paths} role="radiogroup" aria-label={t('hubT')}>
+        <div className={hubCss.paths} role="radiogroup" aria-label={t('hubPathsAria')}>
           {paths.map((item) => (
             <button
               key={item.id}
               type="button"
               role="radio"
               aria-checked={path === item.id}
+              aria-labelledby={`hub-path-${item.id}`}
               className={`${hubCss.path} ${path === item.id ? hubCss.on : ''}`}
               onClick={() => setPath(item.id)}
             >
               <span className={hubCss.icon}><PathIcon kind={item.id} /></span>
               <span className={hubCss.copy}>
-                <strong>{item.title}</strong>
+                <strong id={`hub-path-${item.id}`}>{item.title}</strong>
                 <span>{item.body}</span>
               </span>
               {item.badge === 'rec' && <span className={`${hubCss.badge} ${hubCss.badgeRec}`}>{t('hubBadgeRec')}</span>}
@@ -2365,15 +2416,27 @@ function DeskHome() {
         {phase === 'prompt' && (
           <div hidden={!showWizard} aria-hidden={!showWizard}>
             <form onSubmit={submitPrompt}>
-              <DeskArea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('promptPhTrade')} disabled={busy} />
-              <p className="composer-hint muted" style={{ marginTop: 10 }}>
-                {t('hubPromptHint')}
+              <DeskArea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={t('promptPhTrade')}
+                disabled={busy}
+                aria-describedby="hub-prompt-req"
+              />
+              <p id="hub-prompt-req" className="composer-hint muted composer-count" style={{ marginTop: 10 }}>
+                {t('hubPromptHint')} {t('hubPromptCount', { n: prompt.trim().length, min: 30 })}
               </p>
               <p className="composer-hint muted">
                 {t('alarmHint')}{' '}
                 <Link to={`/${lng}/app/alarmes`}>{t('alarmsT')}</Link>
               </p>
-              <button className="solid" style={{ marginTop: 14 }} disabled={busy || prompt.trim().length < 30} type="submit">
+              <button
+                className="solid"
+                style={{ marginTop: 14 }}
+                disabled={busy || prompt.trim().length < 30}
+                type="submit"
+                aria-describedby="hub-prompt-req"
+              >
                 {t('hubPromptSend')}
               </button>
             </form>
@@ -2408,7 +2471,7 @@ function DeskHome() {
           status={jobStatus}
           note={note}
           err={err}
-          detail=""
+          detail={busy ? t('workingAvg') : ''}
           action={needPlan ? <Link to={`/${lng}/app/account`}>{t('choosePlan')}</Link> : null}
         />
 
@@ -2463,9 +2526,10 @@ function StrategyPage() {
     <div className="wrap strategy-detail">
       <Link className="strategy-back" to={`/${lng}/app`}>{t('back')}</Link>
       <div className="strategy-head">
-        <h2>{presetLabel(data?.strategy?.name, lng)}</h2>
+        <h1>{presetLabel(data?.strategy?.name, lng)}</h1>
         <Link className="strategy-prod" to={`/${lng}/app/strategies/${id}/producao`}>{t('toProd')}</Link>
       </div>
+      {ex?.thesis && <p className="strategy-thesis">{ex.thesis}</p>}
       <article className="panel composer-top" style={{ marginTop: 12 }}>
         <h3>{t('thread')}</h3>
         <div className="thread">
@@ -2514,7 +2578,7 @@ function StrategyPage() {
           </details>
         </article>
       )}
-      <article className="panel" style={{ marginTop: 12 }}>
+      <article className="panel" style={{ marginTop: 12 }} id="scan">
         <h3>{t('scan')}</h3>
         {(scan?.rows || []).length ? (
           <table className="scan">
@@ -2659,6 +2723,9 @@ function Account() {
       {loc.state?.paid && <div className="ok" role="status">{t('payDone')}</div>}
       <p>{user?.email}</p>
       <p className="plan-chip">{statusLabel(user, t)} · {t('accessUntil')} {ends ? formatLocaleDateTime(ends, lng) : '—'} · {user?.daysLeft === 1 ? t('dayLeft') : t('daysLeft', { n: user?.daysLeft || 0 })}</p>
+      {user?.desk === 'trial' && user?.promptLimit != null && (
+        <p className="trial-meter">{t('trialPromptsLeft', { used: user.promptsUsed || 0, limit: user.promptLimit })}</p>
+      )}
       {user?.expiring && <div className="warn">{t('expiring', { n: user.daysLeft })}</div>}
       {user?.desk === 'expired' && !cancelPending && <div className="error">{t('expired')}</div>}
       <form className="panel" onSubmit={save}>
@@ -3002,13 +3069,16 @@ const INFO_PATH = {
 };
 
 function Info() {
-  useLang();
+  const lng = useLang();
   const { t } = useTranslation();
-  const { data } = useDeskQuery(undefined, { pollingInterval: 15000 });
+  const token = useSelector((s) => s.auth.token);
+  const { data } = useDeskQuery(undefined, { skip: !token, pollingInterval: 15000 });
   const n = (data?.prices || []).length;
   const [query, setQuery] = useState('');
   const [active, setActive] = useState('como');
   const [opened, setOpened] = useState({});
+  const [showTop, setShowTop] = useState(false);
+  const createTo = token ? `/${lng}/app/criar` : `/${lng}/register`;
   const lockRef = useRef(null);
   const jumpTimerRef = useRef(0);
   const needle = foldText(query.trim());
@@ -3119,9 +3189,12 @@ function Info() {
 
   useEffect(() => () => window.clearTimeout(jumpTimerRef.current), []);
 
-  function Top() {
-    return <button className="info-top" type="button" onClick={scrollPageTop}>{t('infoTop')}</button>;
-  }
+  useEffect(() => {
+    const markTop = () => setShowTop(window.scrollY > 360);
+    markTop();
+    window.addEventListener('scroll', markTop, { passive: true });
+    return () => window.removeEventListener('scroll', markTop);
+  }, []);
 
   return (
     <div className="wrap info-wiki">
@@ -3160,18 +3233,24 @@ function Info() {
               </div>
               <div className="info-ways-grid">
                 {ways.map(([kind, title, body, badge]) => (
-                  <article key={kind} className={`info-way${badge === 'rec' ? ' rec' : ''}`}>
-                    <span className="info-way-icon"><PathIcon kind={kind} /></span>
-                    <div>
-                      <strong>
-                        {t(title)}
-                        {badge === 'rec' && <em>{t('hubBadgeRec')}</em>}
-                        {badge === 'adv' && <em className="adv">{t('hubBadgeAdv')}</em>}
-                      </strong>
-                      <p>{t(body)}</p>
-                    </div>
-                  </article>
+                  <Link key={kind} className="info-way-link" to={createTo} aria-label={t(title)}>
+                    <article className={`info-way${badge === 'rec' ? ' rec' : ''}`}>
+                      <span className="info-way-icon"><PathIcon kind={kind} /></span>
+                      <div>
+                        <strong>
+                          {t(title)}
+                          {badge === 'rec' && <em>{t('hubBadgeRec')}</em>}
+                          {badge === 'adv' && <em className="adv">{t('hubBadgeAdv')}</em>}
+                        </strong>
+                        <p>{t(body)}</p>
+                      </div>
+                    </article>
+                  </Link>
                 ))}
+              </div>
+              <div className="info-ways-cta">
+                <Link className="solid" to={createTo}>{token ? t('infoCtaCreate') : t('infoCtaRegister')}</Link>
+                {!token && <Link className="ghost" to={`/${lng}/login`}>{t('infoCtaLogin')}</Link>}
               </div>
             </div>
             <div className="info-chart">
@@ -3180,9 +3259,9 @@ function Info() {
                 <p className="kicker">{t('infoHowK')}</p>
                 <h3>{t('infoHowT')}</h3>
                 <p>{t('infoHow')}</p>
+                <p>{t('infoHowHistory')}</p>
               </article>
             </div>
-            <Top />
           </section>
         )}
         {show('pares') && (
@@ -3204,7 +3283,6 @@ function Info() {
                 </ul>
               </article>
             </div>
-            <Top />
           </section>
         )}
         {openCards.map(([id, icon, key]) => show(id) && (
@@ -3214,7 +3292,6 @@ function Info() {
               <div>
                 <h2>{t(`${key}T`)}</h2>
                 <p>{t(key)}</p>
-                <Top />
               </div>
             </article>
           </section>
@@ -3230,15 +3307,17 @@ function Info() {
                 <i className={expanded ? 'open' : ''} />
               </button>
               {expanded && (
-                <>
-                  <p>{t(key)}</p>
-                  <Top />
-                </>
+                <p>{t(key)}</p>
               )}
             </section>
           );
         })}
       </div>
+      {showTop && (
+        <button className="info-top info-top-float" type="button" onClick={scrollPageTop}>
+          {t('infoTop')}
+        </button>
+      )}
     </div>
   );
 }
@@ -3357,7 +3436,7 @@ function App() {
               </Route>
               <Route path="precos" element={<DeskPrices />} />
               <Route path="info" element={<Info />} />
-              <Route path="ajuda" element={<Info />} />
+              <Route path="ajuda" element={<Navigate to="../info" replace />} />
               <Route path="account" element={<Account />} />
               <Route path="checkout/return" element={<CheckoutReturn />} />
               <Route path="checkout" element={<Checkout />} />

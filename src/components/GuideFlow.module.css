@@ -324,6 +324,31 @@
   line-height: 1.45;
 }
 
+.warn {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--warn, #d97706) 45%, var(--border));
+  background: color-mix(in srgb, var(--warn, #d97706) 10%, transparent);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.ack {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.ack input {
+  margin-top: 3px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

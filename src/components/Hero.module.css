@@ -322,6 +322,10 @@
   }
 }
 
+@media (max-width: 720px) {
+  .actions { display: none; }
+}
+
 @media (max-width: 640px) {
   .hero { min-height: auto; }
   .grid { padding-top: 36px; padding-bottom: 40px; }

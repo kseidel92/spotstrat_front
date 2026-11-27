@@ -55,7 +55,7 @@ export default function StrategyHelpBalloon({ strategies }) {
             <button type="button" className="help-balloon-close" aria-label={t('dialogBack')} onClick={() => setOpen(false)}>×</button>
           </header>
           {sent ? (
-            <p className="help-balloon-ok" role="status">{t('helpSent')}</p>
+            <p className="help-balloon-ok" role="status">{t('helpSentSla')}</p>
           ) : (
             <>
               {strategies?.length > 0 && (

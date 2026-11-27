@@ -81,16 +81,18 @@ export default function ScratchWizard({ busy, onCreate }) {
                 className={`${css.card} ${style === id ? css.selected : ''}`}
                 onClick={() => setStyle(id)}
                 disabled={busy}
+                aria-labelledby={`scratch-style-${id}-t`}
+                aria-describedby={`scratch-style-${id}-d`}
               >
                 {id === 'safe' && <span className={css.badge}>{t('scratchRecommended')}</span>}
-                <strong>{t(`scratchStyle_${id}_t`)}</strong>
-                <span>{t(`scratchStyle_${id}_b`)}</span>
-                <em>{t(`scratchStyle_${id}_note`)}</em>
-                <ul className={css.pros}>
+                <strong id={`scratch-style-${id}-t`}>{t(`scratchStyle_${id}_t`)}</strong>
+                <span id={`scratch-style-${id}-d`}>{t(`scratchStyle_${id}_b`)}</span>
+                <em aria-hidden="true">{t(`scratchStyle_${id}_note`)}</em>
+                <ul className={css.pros} aria-hidden="true">
                   <li>{t(`scratchStyle_${id}_pro1`)}</li>
                   <li>{t(`scratchStyle_${id}_pro2`)}</li>
                 </ul>
-                <ul className={css.cons}>
+                <ul className={css.cons} aria-hidden="true">
                   <li>{t(`scratchStyle_${id}_con1`)}</li>
                 </ul>
               </button>
@@ -111,10 +113,12 @@ export default function ScratchWizard({ busy, onCreate }) {
                 className={`${css.card} ${tempo === id ? css.selected : ''}`}
                 onClick={() => setTempo(id)}
                 disabled={busy}
+                aria-labelledby={`scratch-tempo-${id}-t`}
+                aria-describedby={`scratch-tempo-${id}-d`}
               >
-                <strong>{t(`scratchTempo_${id}_t`)}</strong>
-                <span>{t(`scratchTempo_${id}_b`)}</span>
-                <em>{t(`scratchTempo_${id}_note`)}</em>
+                <strong id={`scratch-tempo-${id}-t`}>{t(`scratchTempo_${id}_t`)}</strong>
+                <span id={`scratch-tempo-${id}-d`}>{t(`scratchTempo_${id}_b`)}</span>
+                <em aria-hidden="true">{t(`scratchTempo_${id}_note`)}</em>
               </button>
             ))}
           </div>
@@ -133,11 +137,13 @@ export default function ScratchWizard({ busy, onCreate }) {
                 className={`${css.card} ${mare === id ? css.selected : ''}`}
                 onClick={() => setMare(id)}
                 disabled={busy}
+                aria-labelledby={`scratch-mare-${id}-t`}
+                aria-describedby={`scratch-mare-${id}-d`}
               >
                 {id === 'good' && <span className={css.badge}>{t('scratchSafer')}</span>}
-                <strong>{t(`scratchMare_${id}_t`)}</strong>
-                <span>{t(`scratchMare_${id}_b`)}</span>
-                <em>{t(`scratchMare_${id}_note`)}</em>
+                <strong id={`scratch-mare-${id}-t`}>{t(`scratchMare_${id}_t`)}</strong>
+                <span id={`scratch-mare-${id}-d`}>{t(`scratchMare_${id}_b`)}</span>
+                <em aria-hidden="true">{t(`scratchMare_${id}_note`)}</em>
               </button>
             ))}
           </div>
@@ -156,10 +162,12 @@ export default function ScratchWizard({ busy, onCreate }) {
                 className={`${css.card} ${exit === id ? css.selected : ''}`}
                 onClick={() => setExit(id)}
                 disabled={busy}
+                aria-labelledby={`scratch-exit-${id}-t`}
+                aria-describedby={`scratch-exit-${id}-d`}
               >
-                <strong>{t(`scratchExit_${id}_t`)}</strong>
-                <span>{t(`scratchExit_${id}_b`)}</span>
-                <em>{t(`scratchExit_${id}_note`)}</em>
+                <strong id={`scratch-exit-${id}-t`}>{t(`scratchExit_${id}_t`)}</strong>
+                <span id={`scratch-exit-${id}-d`}>{t(`scratchExit_${id}_b`)}</span>
+                <em aria-hidden="true">{t(`scratchExit_${id}_note`)}</em>
               </button>
             ))}
           </div>

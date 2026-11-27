@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSuggestGuideMutation } from '../store';
 import { parseLocaleNumber } from '../lib/number';
@@ -85,10 +86,12 @@ function briefOf(guide, t) {
 
 export default function GuideFlow({ busy, onCreate }) {
   const { t, i18n } = useTranslation();
+  const { lng } = useParams();
   const [suggestGuide] = useSuggestGuideMutation();
   const [step, setStep] = useState(0);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiNote, setAiNote] = useState('');
+  const [historyAck, setHistoryAck] = useState(false);
   const [guide, setGuide] = useState({
     entry: '',
     preset: '',
@@ -118,7 +121,8 @@ export default function GuideFlow({ busy, onCreate }) {
     || (current === 'timing' && guide.timing === 'confirm' && !guide.timingText.trim())
     || (current === 'exit' && (guide.exitKind === 'numbers' || guide.exitKind === 'ai') && !(stopN > 0 && targetN > 0))
     || (current === 'exit' && guide.exitKind === 'describe' && !guide.exitText.trim())
-    || (current === 'review' && !(walletN >= 100 && walletN <= 999000));
+    || (current === 'review' && !(walletN >= 100 && walletN <= 999000))
+    || (current === 'review' && guide.exitKind === 'describe' && !historyAck);
 
   const summary = useMemo(() => ({
     entry: guide.entry.trim(),
@@ -360,13 +364,20 @@ export default function GuideFlow({ busy, onCreate }) {
           {current === 'exit' && numsBroken && <p className={css.fieldHint}>{t('guideNumBad')}</p>}
           {aiNote && <p className={css.aiNote}>{aiNote}</p>}
           {guide.exitKind === 'describe' && (
-            <textarea
-              className={css.area}
-              value={guide.exitText}
-              onChange={(e) => patch({ exitText: e.target.value })}
-              placeholder={t('guideExitPh')}
-              rows={2}
-            />
+            <>
+              <p className={css.warn}>{t('guideExitHistoryWarn')}</p>
+              <p className={css.note}>
+                {t('guideExitNote')}{' '}
+                <Link to={`/${lng}/app/info#como`}>{t('guideExitHistoryLink')}</Link>
+              </p>
+              <textarea
+                className={css.area}
+                value={guide.exitText}
+                onChange={(e) => patch({ exitText: e.target.value })}
+                placeholder={t('guideExitPh')}
+                rows={2}
+              />
+            </>
           )}
         </section>
       )}
@@ -415,6 +426,16 @@ export default function GuideFlow({ busy, onCreate }) {
               <span id="guide-wallet-hint" className={css.fieldHint}>{t('walletHint')}</span>
             </label>
           </div>
+          {guide.exitKind === 'describe' && (
+            <label className={css.ack}>
+              <input
+                type="checkbox"
+                checked={historyAck}
+                onChange={(e) => setHistoryAck(e.target.checked)}
+              />
+              <span>{t('guideExitHistoryAck')}</span>
+            </label>
+          )}
           <p className={css.note}>{t('guideReviewNote')}</p>
         </section>
       )}

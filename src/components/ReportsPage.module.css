@@ -1,3 +1,62 @@
+.listTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter, .filterOn {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+.filterOn {
+  background: var(--bg-muted);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.scanNote {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.skeleton i {
+  display: block;
+  height: 148px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--bg-muted), color-mix(in srgb, var(--bg-elevated) 40%, var(--bg-muted)), var(--bg-muted));
+  background-size: 200% 100%;
+  animation: reports-skel 1.2s ease-in-out infinite;
+}
+@keyframes reports-skel {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 .search {
   display: flex;
   align-items: center;
@@ -77,6 +136,9 @@
   color: var(--accent-contrast);
   font-weight: 650;
   text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .live {
