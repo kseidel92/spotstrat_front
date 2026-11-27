@@ -2567,10 +2567,10 @@ function PlanPicker({ showBody = true, startPath = 'checkout' }) {
   const canBuy = useCanBuySales();
   const { isSuccess: salesKnown } = useConfigQuery();
   const terms = data?.terms || [
-    { months: 1, off: 0, paper: { total: 93.33, monthly: 93.33 }, pro: { total: 139.99, monthly: 139.99 } },
-    { months: 3, off: 0.1, paper: { total: 252, monthly: 84 }, pro: { total: 377.97, monthly: 125.99 } },
-    { months: 6, off: 0.18, paper: { total: 459.18, monthly: 76.53 }, pro: { total: 688.75, monthly: 114.79 } },
-    { months: 12, off: 0.28, paper: { total: 806.4, monthly: 67.2 }, pro: { total: 1209.51, monthly: 100.79 } },
+    { months: 1, off: 0, paper: { total: 97, monthly: 97 }, pro: { total: 139.99, monthly: 139.99 } },
+    { months: 3, off: 0.1, paper: { total: 261.9, monthly: 87.3 }, pro: { total: 377.97, monthly: 125.99 } },
+    { months: 6, off: 0.18, paper: { total: 477.24, monthly: 79.54 }, pro: { total: 688.75, monthly: 114.79 } },
+    { months: 12, off: 2 / 12, paper: { total: 970, monthly: 80.83 }, pro: { total: 1209.51, monthly: 100.79 } },
   ];
   return (
     <div className="plan-board single">
@@ -3247,7 +3247,7 @@ function PricesBody({ showCta = false }) {
   const { t } = useTranslation();
   const { lng } = useParams();
   const plans = [
-    { key: 'paper', amount: 93.33, title: t('planPaper') },
+    { key: 'paper', amount: 97, title: t('planPaper') },
   ];
   return (
     <section className="band prices">
