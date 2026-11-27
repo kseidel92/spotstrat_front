@@ -61,7 +61,7 @@ export default function HelpWidget() {
   }
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root}${/^\/[^/]+\/?$/.test(pathname) ? ` ${styles.onLanding}` : ''}`}>
       {open ? (
         <section className={styles.panel} role="dialog" aria-labelledby={titleId}>
           <header className={styles.head}>

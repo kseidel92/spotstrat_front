@@ -6,6 +6,7 @@ import { useDeskQuery, usePauseMutation, useResumeMutation, useResetMutation, us
 import { useConfirm } from '../confirm';
 import StrategyHelpBalloon from './StrategyHelpBalloon';
 import { formatPaperMoney } from '../lib/localeFormat';
+import { presetLabel } from '../presetNames';
 import css from './ReportsPage.module.css';
 
 function money(n, lng) {
@@ -96,6 +97,7 @@ export default function ReportsPage() {
   const [restoreMsg, setRestoreMsg] = useState('');
   const [query, setQuery] = useState('');
   const [createdToast, setCreatedToast] = useState(null);
+  const [verifiedToast, setVerifiedToast] = useState(Boolean(loc.state?.justVerified));
 
   useEffect(() => {
     const raw = loc.state?.strategyCreated;
@@ -129,9 +131,13 @@ export default function ReportsPage() {
     .slice(0, 6)
     .map((s) => ({ id: s.id, name: s.name, value: Number(s.pnl || 0) }));
 
-  const mareLabel = mare?.label === 'BOA' ? t('mareGood')
-    : mare?.label === 'RUIM' ? t('mareNotBad')
-      : (mare?.label || '…');
+  const mareLabel = mare?.label === 'BOA' ? t('mareStatusGood')
+    : mare?.label === 'RUIM' ? t('mareStatusBad')
+      : mare?.label === 'NEUTRA' ? t('mareStatusNeutral')
+        : (mare?.label || '…');
+  const connLabel = connection === 'live' ? t('connLive')
+    : connection ? t('connDown')
+      : '…';
 
   async function onRestore() {
     setRestoreMsg('');
@@ -168,7 +174,7 @@ export default function ReportsPage() {
           <p className={css.lede}>{t('reportsL')}</p>
           <p className={css.paperNote}>{t('reportsPaperNote')}</p>
         </div>
-        <Link className={css.cta} to={`/${lng}/app`}>{t('reportsNew')}</Link>
+        <Link className={css.cta} to={`/${lng}/app/criar`}>{t('reportsNew')}</Link>
       </header>
 
       <div className={css.live}>
@@ -178,7 +184,7 @@ export default function ReportsPage() {
           className={`${css.conn} ${connection === 'live' ? css.liveOk : css.liveDown}`}
           title={t('connectionHint')}
         >
-          <i />{t('connection')}: {connection || '…'}
+          <i />{t('connection')}: {connLabel}
         </span>
       </div>
 
@@ -201,36 +207,47 @@ export default function ReportsPage() {
         </article>
       </section>
 
-      {strategies.length > 0 && (
+      {verifiedToast && (
+        <div className={css.toast} role="status" aria-live="polite">
+          <span className={css.toastMark} aria-hidden="true">✓</span>
+          <div className={css.toastBody}>
+            <strong>{t('justVerified')}</strong>
+          </div>
+          <button className={css.toastClose} type="button" aria-label={t('labClose')} onClick={() => setVerifiedToast(false)}>
+            <IconX />
+          </button>
+        </div>
+      )}
+      {strategies.length > 0 && totalTrades > 0 && (
         <section className={css.highlights}>
           <article>
             <span>{t('reportsBestPnl')}</span>
-            <strong>{bestPnl?.name || '—'}</strong>
+            <strong>{bestPnl ? presetLabel(bestPnl.name, lng) : '—'}</strong>
             <b className={css.up}>{bestPnl ? money(bestPnl.pnl, lng) : '—'}</b>
             {bestPnl && <Spark values={sparkFrom(bestPnl)} up={Number(bestPnl.pnl) >= 0} />}
           </article>
           <article>
             <span>{t('reportsWorstPnl')}</span>
-            <strong>{worstPnl?.name || '—'}</strong>
+            <strong>{worstPnl ? presetLabel(worstPnl.name, lng) : '—'}</strong>
             <b className={css.down}>{worstPnl ? money(worstPnl.pnl, lng) : '—'}</b>
             {worstPnl && <Spark values={sparkFrom(worstPnl)} up={Number(worstPnl.pnl) >= 0} />}
           </article>
           <article>
             <span>{t('reportsMostTrades')}</span>
-            <strong>{mostTrades?.name || '—'}</strong>
+            <strong>{mostTrades ? presetLabel(mostTrades.name, lng) : '—'}</strong>
             <b>{mostTrades ? mostTrades.nTrades : '—'}</b>
             {mostTrades && <Spark values={sparkFrom(mostTrades)} up={Number(mostTrades.pnl) >= 0} />}
           </article>
           <article>
             <span>{t('reportsBestWr')}</span>
-            <strong>{bestWr?.name || '—'}</strong>
+            <strong>{bestWr ? presetLabel(bestWr.name, lng) : '—'}</strong>
             <b className={css.up}>{bestWr ? pct(bestWr.winRate) : '—'}</b>
             {bestWr && <Spark values={sparkFrom(bestWr)} up />}
           </article>
         </section>
       )}
 
-      {chartItems.length > 0 && (
+      {chartItems.length > 0 && totalTrades > 0 && (
         <section className={css.chartCard}>
           <div className={css.chartHead}>
             <h2>{t('reportsChartT')}</h2>
@@ -260,7 +277,7 @@ export default function ReportsPage() {
           <div className={css.empty}>
             <h3>{t('emptyStrategies')}</h3>
             <p>{t('emptyStrategiesB')}</p>
-            <Link className={css.cta} to={`/${lng}/app`}>{t('reportsNew')}</Link>
+            <Link className={css.cta} to={`/${lng}/app/criar`}>{t('reportsNew')}</Link>
           </div>
         )}
         {strategies.length > 0 && !listed.length && <p className={css.muted}>{t('reportsSearchPh')}</p>}
@@ -270,7 +287,7 @@ export default function ReportsPage() {
               <header>
                 <div>
                   <p className={css.kind}>{s.type === 'recipe' ? t('recipe') : t('preset')}</p>
-                  <h3><Link to={`/${lng}/app/strategies/${s.id}`}>{s.name}</Link></h3>
+                  <h3><Link to={`/${lng}/app/strategies/${s.id}`}>{presetLabel(s.name, lng)}</Link></h3>
                 </div>
                 <Spark values={sparkFrom(s)} up={Number(s.pnl) >= 0} />
               </header>
@@ -278,7 +295,7 @@ export default function ReportsPage() {
                 <span>{t('equity')} <b>{money(s.equity, lng)}</b></span>
                 <span className={Number(s.pnl) > 0 ? css.up : Number(s.pnl) < 0 ? css.down : ''}>{t('pnl')} <b>{money(s.pnl, lng)}</b></span>
                 <span>{t('trades')} <b>{s.nTrades}</b></span>
-                <span>{t('wr')} <b>{pct(s.winRate)}</b></span>
+                <span>{t('wr')} <b>{Number(s.nTrades) > 0 ? pct(s.winRate) : '—'}</b></span>
               </div>
               <div className={css.state}>
                 {s.halted && <span className={`${css.pill} ${css.bad}`}>{t('halt')}</span>}

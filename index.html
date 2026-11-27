@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SpotStrat — Robô de crypto com IA | Simulador Binance</title>
+    <title>SpotStrat — Robô de crypto com IA | Simulador</title>
     <meta
       name="description"
-      content="Crie estratégias de trading de criptomoedas com assistentes de IA, teste no simulador com dados reais da Binance sem gastar dinheiro e opere na sua máquina — a chave fica com você."
+      content="Crie estratégias de trading de criptomoedas com assistentes de IA, teste no simulador com dados reais de mercado sem gastar dinheiro e opere na sua máquina — suas credenciais ficam com você."
     />
     <meta
       name="keywords"
@@ -37,7 +37,7 @@
     <meta property="og:title" content="SpotStrat — Robô de crypto com IA" />
     <meta
       property="og:description"
-      content="Descreva a estratégia, a IA monta. Simule com dados reais da Binance sem gastar. Quando fizer sentido, rode na sua máquina — a chave não passa por nós."
+      content="Descreva a estratégia, a IA monta. Simule com dados reais de mercado sem gastar. Quando fizer sentido, rode na sua máquina — suas credenciais ficam com você."
     />
     <meta property="og:image" content="https://www.spotstrat.com/og.png" />
     <meta property="og:image:width" content="1200" />
@@ -48,7 +48,7 @@
     <meta name="twitter:title" content="SpotStrat — Robô de crypto com IA" />
     <meta
       name="twitter:description"
-      content="Crie, simule e opere estratégias de crypto com IA. Dados reais da Binance. Chave na sua máquina."
+      content="Crie, simule e opere estratégias de crypto com IA. Dados reais de mercado. Credenciais na sua máquina."
     />
     <meta name="twitter:image" content="https://www.spotstrat.com/og.png" />
 
@@ -86,7 +86,7 @@
             "applicationCategory": "FinanceApplication",
             "operatingSystem": "Web",
             "url": "https://www.spotstrat.com/",
-            "description": "Plataforma com assistentes de IA para criar estratégias de trading de criptomoedas, simular com dados reais da Binance e gerar versão de produção que roda na máquina do usuário.",
+            "description": "Plataforma com assistentes de IA para criar estratégias de trading de criptomoedas, simular com dados reais de mercado e gerar versão de produção que roda na máquina do usuário.",
             "offers": {
               "@type": "Offer",
               "priceCurrency": "BRL",
@@ -103,9 +103,7 @@
       (function () {
         try {
           var saved = localStorage.getItem('spotstrat.theme');
-          var theme = saved === 'light' || saved === 'dark'
-            ? saved
-            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          var theme = saved === 'light' ? 'light' : 'dark';
           document.documentElement.setAttribute('data-theme', theme);
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark');

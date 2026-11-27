@@ -65,6 +65,7 @@ function formatLaunch(lang, { withTime }) {
 export default function LaunchCountdown() {
   const { t, i18n } = useTranslation();
   const { data } = useSiteQuery(undefined, { pollingInterval: 60000 });
+  const { isSuccess: salesKnown } = useConfigQuery(undefined, { pollingInterval: 60000 });
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function LaunchCountdown() {
     return () => window.clearInterval(id);
   }, []);
 
+  const canBuy = useCanBuySales();
   const left = LAUNCH_AT - now;
   const launched = left <= 0;
   const parts = partsOf(left);
@@ -108,13 +110,15 @@ export default function LaunchCountdown() {
             </dl>
           </>
         )}
-        {!launched && <p className={styles.trialNote}>{t('launchTrialNote')}</p>}
-        <p className={styles.accounts}>
-          <strong className={accounts == null ? styles.accountsSkeleton : undefined}>
-            {accounts == null ? '—' : accounts}
-          </strong>
-          <span>{t('launchAccounts')}</span>
-        </p>
+        {!launched && salesKnown && (
+          <p className={styles.trialNote}>{t(canBuy ? 'launchTrialNoteOpen' : 'launchTrialNote')}</p>
+        )}
+        {accounts != null && (
+          <p className={styles.accounts}>
+            <strong>{accounts}</strong>
+            <span>{t('launchAccounts')}</span>
+          </p>
+        )}
       </article>
     </section>
   );

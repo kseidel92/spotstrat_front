@@ -173,7 +173,7 @@ function friendlyWhen(iso, locale, t) {
   yesterday.setDate(today.getDate() - 1);
   if (date.toDateString() === today.toDateString()) return t('labToday', { time });
   if (date.toDateString() === yesterday.toDateString()) return t('labYesterday', { time });
-  const day = date.toLocaleDateString(locale, { day: '2-digit', month: 'short' });
+  const day = date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
   return `${day} · ${time}`;
 }
 
@@ -385,6 +385,7 @@ function LabScreen() {
               {when ? t('labUpdated', { when }) : t('labNote')}
               {pairs ? ` · ${t('labPairs', { n: pairs })}` : ''}
             </p>
+            <p className={css.meta}>{t('labFileCaveat')}</p>
           </div>
           <button className={css.newBtn} type="button" onClick={() => { lab.create(t('labNew')); if (window.matchMedia('(max-width: 860px)').matches) setSidebarOpen(false); }}>
             <Icon d={icon.plus} />

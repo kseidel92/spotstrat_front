@@ -23,6 +23,7 @@ import './styles.css';
 import auth from './components/AuthScreen.module.css';
 import authPanel from './components/img_3.jpg';
 import Hero from './components/Hero';
+import { presetLabel } from './presetNames';
 import LandingJourney from './components/LandingJourney';
 import ThemeToggle from './components/ThemeToggle';
 import BrandLogo from './components/BrandLogo';
@@ -159,7 +160,10 @@ function SessionBoot({ children }) {
   const token = useSelector((s) => s.auth.token);
   const [ready, setReady] = useState(!!token);
   useEffect(() => {
-    if (token) return undefined;
+    if (token) {
+      setReady(true);
+      return undefined;
+    }
     let cancel = false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => {
@@ -263,6 +267,7 @@ function errText(error, t) {
     stripe_off: t('payOff'),
     nothing_to_cancel: t('cancelOnlyPaid'),
     google_off: t('errGoogleOff'),
+    home_offline: t('errUpstream'),
     upstream_fail: t('errUpstream'),
     invalid_body: error?.data?.message || t('errGeneric'),
     invalid_message: error?.data?.message || t('errGeneric'),
@@ -323,7 +328,6 @@ function SiteFooter() {
           </a>
         </nav>
         <a href="mailto:support@spotstrat.com">{t('footerMail')}</a>
-        <p className="risk">{t('footerRisk')}</p>
       </div>
     </footer>
   );
@@ -519,13 +523,9 @@ function Landing() {
               <li>{t('v3')}</li>
             </ul>
           </div>
-          <figure className="proof-shot">
-            <img src={deskShot} alt="" />
-          </figure>
         </div>
       </section>
       <section className="trial-band">
-        <img src="/robot-desk.png" alt="" />
         <div>
           <h2>{t('trialT')}</h2>
           <p className="lede">{t('trialB')}</p>
@@ -668,7 +668,7 @@ function AuthScreen({ children, social = false }) {
           <Flags />
         </header>
         <div className={auth.center}>
-          <Link className={auth.logo} to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={36} /></Link>
+          <Link className={auth.logo} to={`/${lng}`} aria-label="SpotStrat"><BrandLogo height={36} onDark /></Link>
           <div className={auth.card}>
             {social && (
               <>
@@ -695,6 +695,7 @@ function Register() {
   const nav = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '', password2: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [err, setErr] = useState('');
   const [register, { isLoading }] = useRegisterMutation();
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -707,7 +708,7 @@ function Register() {
   async function submit(e) {
     e.preventDefault();
     setErr('');
-    if (!EMAIL_RE.test(form.email.trim()) || form.password !== form.password2) return;
+    if (!EMAIL_RE.test(form.email.trim()) || form.password !== form.password2 || !consent) return;
     try {
       const res = await register({
         name: form.name,
@@ -792,6 +793,7 @@ function Register() {
               <p className={`${auth.pwLabel} ${strength}`} id="reg-pw-strength">{t(strengthKey[strength])}</p>
             </>
           )}
+          <p className={auth.hint}>{t('pwHint')}</p>
         </div>
         <div className={auth.field}>
           <label htmlFor="reg-password2">{t('password2')}</label>
@@ -812,11 +814,14 @@ function Register() {
           </div>
           {mismatch && <p className={auth.fieldError} id="reg-pw2-error" role="alert">{t('passwordMismatch')}</p>}
         </div>
-        <button className={auth.submit} disabled={isLoading} type="submit" aria-busy={isLoading}>
+        <label className={auth.remember} htmlFor="reg-consent">
+          <input id="reg-consent" type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+          <ConsentLine lng={lng} />
+        </label>
+        <button className={auth.submit} disabled={isLoading || !consent} type="submit" aria-busy={isLoading}>
           {isLoading && <span className={auth.spin} aria-hidden="true" />}
           {isLoading ? t('creatingAccount') : t('registerCta')}
         </button>
-        <ConsentLine lng={lng} />
         <p className={auth.alt}><Link to={`/${lng}/login`}>{t('hasAccount')}</Link></p>
       </form>
     </AuthScreen>
@@ -877,6 +882,7 @@ function Login() {
   const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(rememberOn);
   const [err, setErr] = useState('');
   const loc = useLocation();
@@ -918,7 +924,16 @@ function Login() {
           <label htmlFor="login-password">{t('password')}</label>
           <div className={auth.control}>
             <span className={auth.leadIcon}><LockIcon /></span>
-            <input id="login-password" className={`${auth.input} ${auth.withIcon}`} type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input id="login-password" className={`${auth.input} ${auth.withIcon} ${auth.withToggle}`} type={showPassword ? 'text' : 'password'} required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button
+              className={auth.pwToggle}
+              type="button"
+              aria-label={showPassword ? t('pwHide') : t('pwShow')}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((open) => !open)}
+            >
+              <EyeIcon off={showPassword} />
+            </button>
           </div>
         </div>
         <p className={auth.forgot}>
@@ -1150,7 +1165,7 @@ function Verify() {
       if (user) dispatch(setSession({ token: store.getState().auth.token, user }));
       if (!user) return;
       if (user.desk === 'unverified' || user.desk === 'locked') setErr(t('unverified'));
-      else nav(routeForDesk(lng, user));
+      else nav(routeForDesk(lng, user), { state: { justVerified: true } });
     } catch (error) { setErr(errText(error, t)); }
   }
   async function resendChannel(channel) {
@@ -1190,7 +1205,7 @@ function Verify() {
             onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
           />
         </div>
-        <button className={auth.submit} type="submit" disabled={!token || (!!loc.state?.password && data?.user?.email !== loc.state?.email)}>{t('confirm')}</button>
+        <button className={auth.submit} type="submit" disabled={!/^\d{6}$/.test(emailCode) || !token || (!!loc.state?.password && data?.user?.email !== loc.state?.email)}>{t('confirm')}</button>
         <button className={auth.ghost} type="button" disabled={resending || resendSec > 0} onClick={() => resendChannel('email')}>
           {resendSec > 0 ? t('resendWait', { s: resendSec }) : t('resendEmail')}
         </button>
@@ -1202,7 +1217,7 @@ function Verify() {
 }
 
 
-function MoreNav({ app, onHelp, onLab, onPrices, onMore }) {
+function MoreNav({ app, onHelp, onPrices, onMore }) {
   const { t } = useTranslation();
   const path = useLocation().pathname;
   const [open, setOpen] = useState(false);
@@ -1241,7 +1256,6 @@ function MoreNav({ app, onHelp, onLab, onPrices, onMore }) {
       {open ? (
         <div className="more-nav-panel" role="menu">
           <Link role="menuitem" to={`${app}/info`} aria-current={onHelp ? 'page' : undefined} onClick={() => setOpen(false)}>{t('infoNav')}</Link>
-          <Link role="menuitem" to={`${app}/laboratorio`} aria-current={onLab ? 'page' : undefined} onClick={() => setOpen(false)}>{t('researchNav')}</Link>
           <Link role="menuitem" to={`${app}/precos`} aria-current={onPrices ? 'page' : undefined} onClick={() => setOpen(false)}>{t('pricesNav')}</Link>
         </div>
       ) : null}
@@ -1258,14 +1272,14 @@ function DeskBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const path = location.pathname;
   const app = `/${lng}/app`;
-  const onStrategies = pathActive(path, app, { end: true });
-  const onReports = pathActive(path, `${app}/relatorios`);
+  const onSim = pathActive(path, app, { end: true }) || pathActive(path, `${app}/relatorios`);
+  const onCreate = pathActive(path, `${app}/criar`);
   const onAlarms = pathActive(path, `${app}/alarmes`);
   const onAccount = pathActive(path, `${app}/account`);
   const onHelp = pathActive(path, `${app}/info`) || pathActive(path, `${app}/ajuda`);
   const onLab = pathActive(path, `${app}/laboratorio`);
   const onPrices = pathActive(path, `${app}/precos`);
-  const onMore = onHelp || onLab || onPrices;
+  const onMore = onHelp || onPrices;
   useEffect(() => {
     setMenuOpen(false);
   }, [path]);
@@ -1282,16 +1296,18 @@ function DeskBar() {
         {menuOpen ? t('navClose') : t('navOpen')}
       </button>
       <nav id="desk-nav" className={`menu desk-menu ${menuOpen ? 'is-open' : ''}`}>
-        <Link to={app} aria-current={onStrategies ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('strategiesNav')}</Link>
-        <Link to={`${app}/relatorios`} aria-current={onReports ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('reportsNav')}</Link>
+        <Link to={app} aria-current={onSim ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('simNav')}</Link>
+        <Link to={`${app}/criar`} aria-current={onCreate ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('createNav')}</Link>
+        <Link to={`${app}/laboratorio`} aria-current={onLab ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('researchNav')}</Link>
         <Link to={`${app}/alarmes`} aria-current={onAlarms ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('alarmsT')}</Link>
         <Link to={`${app}/account`} aria-current={onAccount ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{t('account')}</Link>
-        <MoreNav app={app} onHelp={onHelp} onLab={onLab} onPrices={onPrices} onMore={onMore} />
+        <MoreNav app={app} onHelp={onHelp} onPrices={onPrices} onMore={onMore} />
+        <div className="desk-tools">
+          <ThemeToggle />
+          <Flags />
+          <button className="tiny desk-logout" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
+        </div>
       </nav>
-      <div className="spacer" />
-      <ThemeToggle />
-      <Flags />
-      <button className="tiny desk-logout" type="button" onClick={async () => { await logout(); dispatch(clearSession()); window.location.href = `/${lng}`; }}>{t('logout')}</button>
       {menuOpen && <button type="button" className="nav-backdrop" aria-label={t('navClose')} onClick={() => setMenuOpen(false)} />}
     </header>
   );
@@ -1308,8 +1324,9 @@ function RequireDesk({ allowExpired = false }) {
     return () => clearTimeout(timer);
   }, []);
   const known = ['trial', 'paper', 'pro', 'active', 'expired'].includes(data?.user?.desk);
-  // Só bloqueia no boot inicial — isFetching em refocus/nav não pode esconder a rota atual.
-  const stillBooting = isLoading && !known && !data?.user && !isError && !waited;
+  const booted = useRef(false);
+  if (data?.user || isError) booted.current = true;
+  const stillBooting = !booted.current && isLoading && !known && !data?.user && !isError && !waited;
   void isFetching;
   if (stillBooting) {
     return (
@@ -1620,7 +1637,7 @@ function TradeBook({ trades, position }) {
   return (
     <div className="book">
       <div className="book-meta">
-        <span>{t('nTrades', { n: shown.length })}</span>
+        <span>{shown.length ? t('nTrades', { n: shown.length }) : t('noTradesYet')}</span>
         <label className="result-filter">
           <span>{t('thResult')}</span>
           <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={t('thResult')}>
@@ -2444,9 +2461,9 @@ function StrategyPage() {
   }
   return (
     <div className="wrap strategy-detail">
-      <Link className="strategy-back" to={`/${lng}/app/relatorios`}>{t('back')}</Link>
+      <Link className="strategy-back" to={`/${lng}/app`}>{t('back')}</Link>
       <div className="strategy-head">
-        <h2>{data?.strategy?.name}</h2>
+        <h2>{presetLabel(data?.strategy?.name, lng)}</h2>
         <Link className="strategy-prod" to={`/${lng}/app/strategies/${id}/producao`}>{t('toProd')}</Link>
       </div>
       <article className="panel composer-top" style={{ marginTop: 12 }}>
@@ -2485,17 +2502,17 @@ function StrategyPage() {
         <p className="assumed strategy-assumed">{t('assumed')} {assumed.map((item) => `${item.label}: ${item.value}`).join(' · ')}</p>
       )}
       {ex && (
-        <div className="split explain-grid">
-          <article className="panel explain">
-            <h3>{t('thesis')}</h3><p>{ex.thesis}</p>
+        <article className="panel explain" style={{ marginTop: 12 }}>
+          <h3>{t('thesis')}</h3>
+          <p>{ex.thesis}</p>
+          <details>
+            <summary>{t('techRule')}</summary>
             <h3>{t('entry')}</h3><p>{ex.entry}</p>
             <h3>{t('exit')}</h3><p>{ex.exit}</p>
-          </article>
-          <article className="panel explain">
             <h3>{t('filters')}</h3><p>{ex.filters}</p>
             <h3>{t('risks')}</h3><p>{ex.risks}</p>
-          </article>
-        </div>
+          </details>
+        </article>
       )}
       <article className="panel" style={{ marginTop: 12 }}>
         <h3>{t('scan')}</h3>
@@ -2548,11 +2565,12 @@ function PlanPicker({ showBody = true, startPath = 'checkout' }) {
   const { lng } = useParams();
   const { data } = usePlansQuery();
   const canBuy = useCanBuySales();
+  const { isSuccess: salesKnown } = useConfigQuery();
   const terms = data?.terms || [
     { months: 1, off: 0, paper: { total: 93.33, monthly: 93.33 }, pro: { total: 139.99, monthly: 139.99 } },
-    { months: 3, off: 0.1, paper: { total: 251.99, monthly: 84 }, pro: { total: 377.97, monthly: 125.99 } },
+    { months: 3, off: 0.1, paper: { total: 252, monthly: 84 }, pro: { total: 377.97, monthly: 125.99 } },
     { months: 6, off: 0.18, paper: { total: 459.18, monthly: 76.53 }, pro: { total: 688.75, monthly: 114.79 } },
-    { months: 12, off: 0.28, paper: { total: 806.37, monthly: 67.2 }, pro: { total: 1209.51, monthly: 100.79 } },
+    { months: 12, off: 0.28, paper: { total: 806.4, monthly: 67.2 }, pro: { total: 1209.51, monthly: 100.79 } },
   ];
   return (
     <div className="plan-board single">
@@ -2560,14 +2578,14 @@ function PlanPicker({ showBody = true, startPath = 'checkout' }) {
         <article key={tier} className={tier}>
           <h3>{t('planPaper')}</h3>
           {showBody && <p>{t('planPaperBody')}</p>}
-          {!canBuy && <p className="mono dim">{t('payBeforeLaunch')}</p>}
+          {salesKnown && !canBuy && <p className="mono dim">{t('payBeforeLaunch')}</p>}
           {terms.map((term) => {
             const quote = term.paper;
             const label = term.months === 12 ? t('termYear') : term.months === 1 ? t('termMonth') : t('termMonths', { n: term.months });
             const to = startPath === 'register'
               ? `/${lng}/register`
               : `/${lng}/app/checkout?tier=${tier}&months=${term.months}`;
-            if (!canBuy && startPath !== 'register') {
+            if (salesKnown && !canBuy && startPath !== 'register') {
               return (
                 <button key={term.months} type="button" className="term term-locked" disabled aria-disabled="true">
                   <strong>{label}</strong>
@@ -2596,6 +2614,7 @@ function Account() {
   useLang();
   const { t } = useTranslation();
   const ask = useConfirm();
+  const loc = useLocation();
   const { data } = useMeQuery();
   const user = data?.user;
   const [patch, { isLoading }] = usePatchMeMutation();
@@ -2637,13 +2656,14 @@ function Account() {
   return (
     <div className="wrap account-page">
       <h2>{t('account')}</h2>
+      {loc.state?.paid && <div className="ok" role="status">{t('payDone')}</div>}
       <p>{user?.email}</p>
       <p className="plan-chip">{statusLabel(user, t)} · {t('accessUntil')} {ends ? formatLocaleDateTime(ends, lng) : '—'} · {user?.daysLeft === 1 ? t('dayLeft') : t('daysLeft', { n: user?.daysLeft || 0 })}</p>
       {user?.expiring && <div className="warn">{t('expiring', { n: user.daysLeft })}</div>}
       {user?.desk === 'expired' && !cancelPending && <div className="error">{t('expired')}</div>}
       <form className="panel" onSubmit={save}>
-        <label>{t('name')}</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} />
+        <label htmlFor="account-name">{t('name')}</label>
+        <input id="account-name" value={name} onChange={(e) => setName(e.target.value)} />
         <div className="row"><button className="solid" disabled={isLoading} type="submit">{t('save')}</button></div>
         {msg && <p>{msg}</p>}
       </form>
@@ -2689,6 +2709,7 @@ function Checkout() {
   const [err, setErr] = useState('');
   const [session, setSessionCheckout] = useState(null);
   const canBuy = useCanBuySales();
+  const { isSuccess: salesKnown } = useConfigQuery();
   const quote = data?.terms?.find((term) => term.months === months)?.[tier];
   async function openPay() {
     if (!canBuy) {
@@ -2713,9 +2734,9 @@ function Checkout() {
       {quote && <p className="price-num">{localMoney(lng, quote.total)}</p>}
       <div className="panel">
         {err && <div className="error">{err}</div>}
-        <p className="muted">{canBuy ? t('payStripeHint') : t('payBeforeLaunch')}</p>
-        <button className="solid" disabled={isLoading || !canBuy} type="button" onClick={openPay}>
-          {isLoading ? t('payConfirming') : t('payActivate')}
+        <p className="muted">{!salesKnown ? '' : canBuy ? t('payStripeHint') : t('payBeforeLaunch')}</p>
+        <button className="solid" disabled={isLoading || !salesKnown || !canBuy} type="button" onClick={openPay}>
+          {isLoading ? t('payOpening') : t('payActivate')}
         </button>
       </div>
       {session?.clientSecret ? (
@@ -2763,7 +2784,21 @@ function CheckoutReturn() {
   return (
     <div className="wrap" style={{ maxWidth: 560 }}>
       <h2 className="checkout-title">{t('checkoutT')}</h2>
-      {err ? <div className="error">{err}</div> : (
+      {err ? (
+        <div className="error">
+          <p>{err}</p>
+          {!params.get('session_id') && (
+            <>
+              <p>{t('payMissingHelp')}</p>
+              <p>
+                <Link to={`/${lng}/app/account`}>{t('payBackPlans')}</Link>
+                {' · '}
+                <Link to={`/${lng}/app`}>{t('payBackDesk')}</Link>
+              </p>
+            </>
+          )}
+        </div>
+      ) : (
         <p className="ok">{done ? t('payDone') : t('payConfirming')}</p>
       )}
     </div>
@@ -3233,13 +3268,13 @@ function PricesBody({ showCta = false }) {
             <h2>{plan.title}</h2>
             <LaunchPrice />
             <p className="price-num">{localMoney(lng, plan.amount)}</p>
-            <p className="plan-anchor">{t('planAnchor')}</p>
+            <p className="plan-anchor">{t('planDaily', { price: localMoney(lng, plan.amount / 30) })}</p>
             {lng !== 'pt-BR' && <p className="mono dim">{t('planTable')} · {brlMoney(plan.amount)}</p>}
           </article>
         ))}
       </div>
       <PlanPicker showBody={false} startPath={showCta ? 'register' : 'checkout'} />
-      <p className="mono dim">{t('planFx')}</p>
+      {lng !== 'pt-BR' && <p className="mono dim">{t('planFx')}</p>}
       <Faq />
     </section>
   );
@@ -3309,8 +3344,9 @@ function App() {
             <Route path="/:lng/app" element={<Guard><RequireDesk /></Guard>}>
               <Route path="onboarding" element={<Navigate to=".." replace />} />
               <Route element={<DeskGateOutlet />}>
-                <Route index element={<DeskHome />} />
+                <Route index element={<ReportsPage />} />
                 <Route path="relatorios" element={<ReportsPage />} />
+                <Route path="criar" element={<DeskHome />} />
                 <Route path="alarmes" element={<AlarmsPage />} />
                 <Route path="strategies/:id/producao" element={<StrategyProduction />} />
                 <Route path="strategies/:id/operar" element={<StrategyProduction />} />

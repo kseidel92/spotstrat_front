@@ -6,7 +6,7 @@ function readTheme() {
 }
 
 /** Horizontal SpotStrat lockup; swaps for light / dark theme. */
-export default function BrandLogo({ className = '', height = 39 }) {
+export default function BrandLogo({ className = '', height = 39, onDark = false }) {
   const [theme, setTheme] = useState(readTheme);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function BrandLogo({ className = '', height = 39 }) {
     return () => obs.disconnect();
   }, []);
 
-  const src = theme === 'light' ? '/brand/logo-light.png' : '/brand/logo-dark.png';
+  const src = !onDark && theme === 'light' ? '/brand/logo-light.png' : '/brand/logo-dark.png';
   return (
     <img
       className={className}

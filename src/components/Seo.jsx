@@ -9,22 +9,22 @@ const DEFAULT_IMAGE = `${SITE}/og.png`;
 const PAGE = {
   home: {
     title: {
-      'pt-BR': 'SpotStrat — Robô de crypto com IA | Simulador Binance',
-      en: 'SpotStrat — AI crypto trading robot | Binance simulator',
-      es: 'SpotStrat — Robot de crypto con IA | Simulador Binance',
-      'es-MX': 'SpotStrat — Robot de crypto con IA | Simulador Binance',
-      fr: 'SpotStrat — Robot crypto avec IA | Simulateur Binance',
-      de: 'SpotStrat — KI-Krypto-Roboter | Binance-Simulator',
-      ja: 'SpotStrat — AI暗号ロボ | Binanceシミュレーター',
+      'pt-BR': 'SpotStrat — Robô de crypto com IA | Simulador',
+      en: 'SpotStrat — AI crypto trading robot | Simulator',
+      es: 'SpotStrat — Robot de crypto con IA | Simulador',
+      'es-MX': 'SpotStrat — Robot de crypto con IA | Simulador',
+      fr: 'SpotStrat — Robot crypto avec IA | Simulateur',
+      de: 'SpotStrat — KI-Krypto-Roboter | Simulator',
+      ja: 'SpotStrat — AI暗号ロボ | シミュレーター',
     },
     description: {
-      'pt-BR': 'Crie estratégias de trading de criptomoedas com IA, teste no simulador com dados reais da Binance sem gastar e opere na sua máquina — a chave fica com você.',
-      en: 'Build crypto trading strategies with AI, test on a live Binance simulator without spending, then run production on your machine — your keys stay with you.',
-      es: 'Crea estrategias de trading crypto con IA, simula con datos reales de Binance sin gastar y opera en tu máquina — la clave queda contigo.',
-      'es-MX': 'Crea estrategias de trading crypto con IA, simula con datos reales de Binance sin gastar y opera en tu máquina — la clave queda contigo.',
-      fr: 'Créez des stratégies crypto avec l’IA, simulez sur Binance sans dépenser, puis opérez sur votre machine — la clé reste chez vous.',
-      de: 'Erstellen Sie Krypto-Strategien mit KI, testen Sie sie im Binance-Simulator ohne Risiko und betreiben Sie sie auf Ihrem Rechner — der Schlüssel bleibt bei Ihnen.',
-      ja: 'AIで暗号トレード戦略を作り、Binanceの実データで無料シミュレーション。本番は自分のPCで——キーはあなたのもとに。',
+      'pt-BR': 'Crie estratégias de trading de criptomoedas com IA, teste no simulador com dados reais de mercado sem gastar e opere na sua máquina — suas credenciais ficam com você.',
+      en: 'Build crypto trading strategies with AI, test on a live market simulator without spending, then run production on your machine — your credentials stay with you.',
+      es: 'Crea estrategias de trading crypto con IA, simula con datos reales de mercado sin gastar y opera en tu máquina — tus credenciales quedan contigo.',
+      'es-MX': 'Crea estrategias de trading crypto con IA, simula con datos reales de mercado sin gastar y opera en tu máquina — tus credenciales quedan contigo.',
+      fr: 'Créez des stratégies crypto avec l’IA, simulez sur des données de marché sans dépenser, puis opérez sur votre machine — vos identifiants restent chez vous.',
+      de: 'Erstellen Sie Krypto-Strategien mit KI, testen Sie sie im Marktdaten-Simulator ohne Risiko und betreiben Sie sie auf Ihrem Rechner — die Zugangsdaten bleiben bei Ihnen.',
+      ja: 'AIで暗号トレード戦略を作り、実市場データで無料シミュレーション。本番は自分のPCで——認証情報はあなたのもとに。',
     },
   },
   prices: {
@@ -86,6 +86,18 @@ const PAGE = {
       de: 'AGB, Datenschutz und Cookies von SpotStrat.',
       ja: 'SpotStratの利用規約・プライバシー・Cookie。',
     },
+  },
+  privacy: {
+    title: { 'pt-BR': 'Privacidade | SpotStrat', en: 'Privacy | SpotStrat' },
+    description: { 'pt-BR': 'Como o SpotStrat trata os seus dados.', en: 'How SpotStrat handles your data.' },
+  },
+  terms: {
+    title: { 'pt-BR': 'Termos | SpotStrat', en: 'Terms | SpotStrat' },
+    description: { 'pt-BR': 'Termos de uso do SpotStrat.', en: 'SpotStrat terms of use.' },
+  },
+  cookies: {
+    title: { 'pt-BR': 'Cookies | SpotStrat', en: 'Cookies | SpotStrat' },
+    description: { 'pt-BR': 'Cookies usados pelo SpotStrat.', en: 'Cookies used by SpotStrat.' },
   },
 };
 
@@ -199,6 +211,38 @@ const AUTH_PAGES = {
       ja: 'メールのコードで新しいパスワードを設定。',
     },
   },
+  simulator: {
+    title: { 'pt-BR': 'Simulador | SpotStrat', en: 'Simulator | SpotStrat' },
+    description: { 'pt-BR': 'Acompanhe as estratégias no simulador com saldo virtual.', en: 'Follow strategies on the simulator with a virtual balance.' },
+  },
+  create: {
+    title: { 'pt-BR': 'Criar estratégia | SpotStrat', en: 'Create strategy | SpotStrat' },
+    description: { 'pt-BR': 'Peça uma estratégia à IA do SpotStrat.', en: 'Ask SpotStrat AI for a strategy.' },
+  },
+  strategy: {
+    title: { 'pt-BR': 'Estratégia | SpotStrat', en: 'Strategy | SpotStrat' },
+    description: { 'pt-BR': 'Detalhe da estratégia no simulador.', en: 'Strategy detail on the simulator.' },
+  },
+  production: {
+    title: { 'pt-BR': 'Operar na sua máquina | SpotStrat', en: 'Run on your machine | SpotStrat' },
+    description: { 'pt-BR': 'Leve a estratégia para o seu computador.', en: 'Take the strategy to your computer.' },
+  },
+  lab: {
+    title: { 'pt-BR': 'Laboratório | SpotStrat', en: 'Lab | SpotStrat' },
+    description: { 'pt-BR': 'Arquivo histórico de candles. Não é o mercado ao vivo.', en: 'Historical candle file. Not the live market.' },
+  },
+  alarms: {
+    title: { 'pt-BR': 'Alertas | SpotStrat', en: 'Alerts | SpotStrat' },
+    description: { 'pt-BR': 'Alertas das suas estratégias.', en: 'Alerts for your strategies.' },
+  },
+  account: {
+    title: { 'pt-BR': 'Conta | SpotStrat', en: 'Account | SpotStrat' },
+    description: { 'pt-BR': 'Sua conta e planos do SpotStrat.', en: 'Your SpotStrat account and plans.' },
+  },
+  checkout: {
+    title: { 'pt-BR': 'Pagamento | SpotStrat', en: 'Checkout | SpotStrat' },
+    description: { 'pt-BR': 'Assinatura do simulador SpotStrat.', en: 'SpotStrat simulator subscription.' },
+  },
   app: {
     title: {
       'pt-BR': 'Painel | SpotStrat',
@@ -226,6 +270,14 @@ function authPageKey(pathname) {
   if (/\/register(\/|$)/.test(pathname)) return 'register';
   if (/\/verify(\/|$)/.test(pathname)) return 'verify';
   if (/\/forgot-password(\/|$)/.test(pathname)) return 'forgot-password';
+  if (/\/app\/checkout(\/|$)/.test(pathname)) return 'checkout';
+  if (/\/app\/account(\/|$)/.test(pathname)) return 'account';
+  if (/\/app\/(laboratorio|pesquisar)(\/|$)/.test(pathname)) return 'lab';
+  if (/\/app\/alarmes(\/|$)/.test(pathname)) return 'alarms';
+  if (/\/app\/criar(\/|$)/.test(pathname)) return 'create';
+  if (/\/app\/strategies\/[^/]+\/(producao|operar)(\/|$)/.test(pathname)) return 'production';
+  if (/\/app\/strategies\//.test(pathname)) return 'strategy';
+  if (/\/app\/relatorios(\/|$)/.test(pathname) || /\/app\/?$/.test(pathname)) return 'simulator';
   if (/\/app(\/|$)/.test(pathname)) return 'app';
   return '';
 }
@@ -233,7 +285,9 @@ function authPageKey(pathname) {
 function pageKey(pathname) {
   if (/\/(precos)(\/|$)/.test(pathname)) return 'prices';
   if (/\/(info|ajuda)(\/|$)/.test(pathname)) return 'info';
-  if (/\/(termos|terms|privacy|cookies)(\/|$)/.test(pathname)) return 'legal';
+  if (/\/privacy(\/|$)/.test(pathname)) return 'privacy';
+  if (/\/cookies(\/|$)/.test(pathname)) return 'cookies';
+  if (/\/(termos|terms)(\/|$)/.test(pathname)) return 'terms';
   if (authPageKey(pathname)) return 'auth';
   return 'home';
 }

@@ -145,3 +145,7 @@
     bottom: 12px;
   }
 }
+
+@media (max-width: 720px) {
+  .root.onLanding { bottom: 96px; }
+}
