@@ -178,101 +178,78 @@
 .frame {
   position: relative;
   z-index: 1;
-  width: min(100%, 340px);
+  width: min(100%, 420px);
   margin-inline: auto;
-  padding: 6px;
-  border-radius: 14px;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
-  box-shadow: var(--shadow);
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  box-shadow: none;
   animation: float 7s ease-in-out infinite;
-}
-
-:global([data-theme="light"]) .frame {
-  background: color-mix(in srgb, var(--bg-elevated) 98%, var(--accent-soft));
-  box-shadow:
-    var(--shadow),
-    0 0 0 1px color-mix(in srgb, var(--border-strong) 85%, var(--accent-soft));
 }
 
 .panelShell {
   position: relative;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
-  border-radius: 10px;
-  background: #0b0e14;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  background: transparent;
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.38);
 }
 
 .panelMedia {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 736 / 852;
   overflow: hidden;
+  border-radius: 20px;
+  container-type: inline-size;
   line-height: 0;
 }
 
-.panelSteps {
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 8px;
-  list-style: none;
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-  background: #0b0e14;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.panelSteps li {
-  flex: 1 1 0;
-  margin: 0;
-  min-width: 0;
-  min-height: 2rem;
-  display: flex;
-  align-items: stretch;
-}
-
-.panelSteps li span {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 7px 4px;
-  border-radius: 8px;
-  text-align: center;
-  font-size: clamp(0.58rem, 2.4vw, 0.68rem);
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1.15;
-  color: rgba(255, 255, 255, 0.94);
-  background: rgba(14, 20, 30, 0.95);
-  border: 1px solid rgba(6, 182, 212, 0.38);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-:global([data-theme="light"]) .panelSteps li span {
-  color: rgba(255, 255, 255, 0.96);
-  background: rgba(10, 14, 22, 0.96);
-}
-
-:global([data-theme="light"]) .panelShell {
-  background: #0f141c;
-  box-shadow:
-    inset 0 0 0 1px rgba(6, 182, 212, 0.12),
-    0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
+/* Video is 832×1104. The window shows the phone (cards included),
+   mapped from source rect (48,128)–(784,980). */
 .panel {
-  display: block;
-  width: 100%;
-  max-height: min(52vw, 280px);
-  height: auto;
-  vertical-align: top;
+  position: absolute;
+  width: calc(832 / 736 * 100%);
+  height: calc(1104 / 852 * 100%);
+  left: calc(-48 / 736 * 100%);
+  top: calc(-128 / 852 * 100%);
+  max-height: none;
   border: 0;
-  object-fit: cover;
-  object-position: center 22%;
-  aspect-ratio: 16 / 14;
+  object-fit: fill;
+  pointer-events: none;
 }
+
+.panelLabels {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.panelLabels li {
+  position: absolute;
+  top: 82.04%;
+  left: 20.72%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  max-width: 23.5%;
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: clamp(10px, 3.25cqw, 15px);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.panelLabels li:nth-child(2) { left: 49.93%; }
+.panelLabels li:nth-child(3) { left: 79.14%; }
 
 :global([data-theme="light"]) .panel {
   filter: brightness(1.04) contrast(1.03) saturate(1.02);
@@ -308,12 +285,7 @@
   }
 
   .frame {
-    width: min(100%, 360px);
-  }
-
-  .panel {
-    max-height: 300px;
-    aspect-ratio: 16 / 13;
+    width: min(100%, 440px);
   }
 
   .visualGlow {
@@ -356,7 +328,7 @@
   .cta { width: 100%; }
   .actions { max-width: none; }
   .rail { max-width: none; }
-  .frame { width: min(100%, 320px); }
+  .frame { width: min(100%, 400px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

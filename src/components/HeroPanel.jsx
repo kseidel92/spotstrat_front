@@ -70,12 +70,12 @@ export default function HeroPanel() {
     <div className={styles.panelShell}>
       <div className={styles.panelMedia}>
         {media}
+        <ul className={styles.panelLabels} aria-label={t('idealT')}>
+          <li>{t('stepCreateT')}</li>
+          <li>{t('stepSimT')}</li>
+          <li>{t('stepLiveT')}</li>
+        </ul>
       </div>
-      <ul className={styles.panelSteps} aria-label={t('idealT')}>
-        <li><span>{t('stepCreateT')}</span></li>
-        <li><span>{t('stepSimT')}</span></li>
-        <li><span>{t('stepLiveT')}</span></li>
-      </ul>
       <span className={styles.srOnly}>{t('heroShotAlt')}</span>
     </div>
   );
