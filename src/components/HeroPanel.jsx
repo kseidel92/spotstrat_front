@@ -38,40 +38,44 @@ export default function HeroPanel() {
     return undefined;
   }, [usePosterOnly]);
 
+  const media = usePosterOnly ? (
+    <img
+      className={styles.panel}
+      src={POSTER}
+      alt={t('heroShotAlt')}
+      width={832}
+      height={1104}
+      decoding="async"
+      fetchPriority="high"
+    />
+  ) : (
+    <video
+      ref={videoRef}
+      className={styles.panel}
+      src={VIDEO}
+      poster={POSTER}
+      width={832}
+      height={1104}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+      onError={() => setUsePosterOnly(true)}
+    />
+  );
+
   return (
     <div className={styles.panelShell}>
+      <div className={styles.panelMedia}>
+        {media}
+      </div>
       <ul className={styles.panelSteps} aria-label={t('idealT')}>
-        <li>{t('stepCreateT')}</li>
-        <li>{t('stepSimT')}</li>
-        <li>{t('stepLiveT')}</li>
+        <li><span>{t('stepCreateT')}</span></li>
+        <li><span>{t('stepSimT')}</span></li>
+        <li><span>{t('stepLiveT')}</span></li>
       </ul>
-      {usePosterOnly ? (
-        <img
-          className={styles.panel}
-          src={POSTER}
-          alt={t('heroShotAlt')}
-          width={832}
-          height={1104}
-          decoding="async"
-          fetchPriority="high"
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          className={styles.panel}
-          src={VIDEO}
-          poster={POSTER}
-          width={832}
-          height={1104}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-hidden="true"
-          onError={() => setUsePosterOnly(true)}
-        />
-      )}
       <span className={styles.srOnly}>{t('heroShotAlt')}</span>
     </div>
   );
